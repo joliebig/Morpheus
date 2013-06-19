@@ -36,23 +36,34 @@ object RefactorVerification extends EvalHelper {
             val configBuild = new File(busyBoxPath + ".config")
             copyFile(config, configBuild)
 
-            buildBusyBox
+            val orgBuild = buildBusyBox
             val org = runTest
+            writeResult(orgBuild, verfiyDir.getCanonicalPath + "/" + configBuild.getName + "_org" + ".build")
+            writeResult(org, verfiyDir.getCanonicalPath + "/" + configBuild.getName + "_org" + ".test")
             bbFile.delete()
             config.delete()
 
             val buildRefFile = new File(verfiyPath)
             copyFile(refFile, buildRefFile)
 
-            buildBusyBox
+            val refBuild = buildBusyBox
             val ref = runTest
+            writeResult(refBuild, verfiyDir.getCanonicalPath + "/" + configBuild.getName + "_ref" + ".build")
+            writeResult(ref, verfiyDir.getCanonicalPath + "/" + configBuild.getName + "_ref" + ".test")
             buildRefFile.delete()
             copyFile(orgFile, new File(verfiyPath))
 
             configBuild.delete()
-            println("Result" + org.equals(ref))
-            true
+            println("Result " + org.equals(ref))
+            org.equals(ref)
         })
+    }
+
+    def writeResult(result: String, file: String) = {
+        val out = new java.io.FileWriter(file)
+        out.write(result)
+        out.flush()
+        out.close()
     }
 
     def runTest: String = {
@@ -80,7 +91,7 @@ object RefactorVerification extends EvalHelper {
         sb.toString()
     }
 
-    def buildBusyBox: Boolean = {
+    def buildBusyBox: String = {
         var error = false
         val pb = new ProcessBuilder("./buildBusyBox.sh")
         pb.directory(new File(busyBoxPath))
@@ -88,15 +99,20 @@ object RefactorVerification extends EvalHelper {
         p.waitFor()
 
         val reader = new BufferedReader(new InputStreamReader(p.getInputStream()))
+        val sb = new StringBuilder
         while (reader.ready()) {
-            println(reader.readLine())
+            val line = reader.readLine()
+            sb.append(line)
+            println(line)
         }
 
         val reader2 = new BufferedReader(new InputStreamReader(p.getErrorStream()))
         while (reader2.ready()) {
             error = true
-            println(reader2.readLine())
+            val line = reader2.readLine()
+            sb.append(line)
+            println(line)
         }
-        !error
+        sb.toString()
     }
 }
