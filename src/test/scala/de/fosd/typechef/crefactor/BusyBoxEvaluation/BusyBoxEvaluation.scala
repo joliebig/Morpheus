@@ -57,7 +57,7 @@ object RefactorVerification extends EvalHelper {
 
     def runTest: String = {
         var error = false
-        val pb = new ProcessBuilder("./runtest.sh")
+        val pb = new ProcessBuilder("./runtest")
         pb.directory(new File(busyBoxPath + "testsuite/"))
         val p = pb.start()
         p.waitFor()
