@@ -43,7 +43,7 @@ trait EvalHelper extends Logging {
         val out = new java.io.FileWriter(dir.getCanonicalPath + File.separatorChar + getFileName(originalFilePath) + ".stats")
         stats.foreach(stat => {
             out.write(stat.toString)
-            out.write("\\n")
+            out.write("\n")
         })
         println("Dir " + dir.getCanonicalPath + File.separatorChar + getFileName(originalFilePath) + ".stats")
         out.flush()

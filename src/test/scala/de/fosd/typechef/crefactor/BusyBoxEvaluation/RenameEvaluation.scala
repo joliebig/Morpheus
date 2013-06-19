@@ -59,7 +59,9 @@ class RenameEvaluation extends BusyBoxEvaluation {
         val refactored = RenameIdentifier.rename(id, refactor_name, morpheus)
         val renamingTime = startRenaming.getTime
         var stats = stat.::(renamingTime)
-        stats ::= id :: toRename._2 :: features
+        stats = stats.::(id)
+        stats = stats.::(toRename._2)
+        stats = stats.::(features)
 
         val morpheus2 = new Morpheus(refactored, morpheus.getFeatureModel)
 
