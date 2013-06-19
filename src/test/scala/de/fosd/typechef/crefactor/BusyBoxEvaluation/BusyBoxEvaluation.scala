@@ -60,6 +60,7 @@ object RefactorVerification extends EvalHelper {
     }
 
     def writeResult(result: String, file: String) = {
+        println("file " + file)
         val out = new java.io.FileWriter(file)
         out.write(result)
         out.flush()
