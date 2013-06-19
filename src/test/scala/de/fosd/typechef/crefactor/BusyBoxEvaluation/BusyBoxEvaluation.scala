@@ -1,6 +1,6 @@
 package de.fosd.typechef.crefactor.BusyBoxEvaluation
 
-import java.io.File
+import java.io.{InputStreamReader, BufferedReader, File}
 import de.fosd.typechef.featureexpr.FeatureModel
 import org.junit.Test
 import de.fosd.typechef.crefactor.util.EvalHelper
@@ -18,9 +18,33 @@ trait BusyBoxEvaluation extends EvalHelper {
 }
 
 
-object RefactorVerification {
+object RefactorVerification extends EvalHelper {
 
-    def verify(refactored: File, originalFile: File, run: Int, fm: FeatureModel): Boolean = {
+    def verify(bbFile: File, run: Int, fm: FeatureModel): Boolean = {
+        // First Build normal busybox
+        buildBusyBox
+        // TODO Test
+        println(bbFile.getCanonicalPath)
         true
+    }
+
+    def buildBusyBox: Boolean = {
+        var error = false
+        val pb = new ProcessBuilder("./buildBusyBox.sh")
+        pb.directory(new File(busyBoxPath))
+        val p = pb.start()
+        p.waitFor()
+
+        val reader = new BufferedReader(new InputStreamReader(p.getInputStream()))
+        while (reader.ready()) {
+            println(reader.readLine())
+        }
+
+        val reader2 = new BufferedReader(new InputStreamReader(p.getErrorStream()))
+        while (reader2.ready()) {
+            error = true
+            println(reader2.readLine())
+        }
+        !error
     }
 }

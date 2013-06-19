@@ -29,7 +29,8 @@ class RenameEvaluation extends BusyBoxEvaluation {
             if (result._2) PrepareRefactoredASTforEval.prepare(result._1, morpheus.getFeatureModel, bb_file.getCanonicalPath, result._3, 0)
 
             writeStats(result._4, bb_file.getCanonicalPath, 0)
-            result._2
+            val verify = RefactorVerification.verify(bb_file, 0, fm)
+            result._2 && verify
         })
         logger.info("Refactor succ: " + refactor.contains(false))
 
