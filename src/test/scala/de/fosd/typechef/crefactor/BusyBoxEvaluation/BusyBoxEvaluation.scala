@@ -21,6 +21,10 @@ trait BusyBoxEvaluation extends EvalHelper {
 object RefactorVerification extends EvalHelper {
 
     def verify(bbFile: File, run: Int, fm: FeatureModel): Boolean = {
+        val orgFile = bbFile.getCanonicalPath.replaceAll("busybox-1.18.5", "busybox-1.18.5_untouched")
+        val refFile = bbFile.getCanonicalPath.replaceAll("busybox-1.18.5", "result") + "/" + run + "/" + bbFile.getName
+        println(bbFile.getCanonicalPath)
+        println(refFile)
         // First Build normal busybox
         buildBusyBox
         // TODO Test
