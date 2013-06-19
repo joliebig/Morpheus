@@ -45,6 +45,7 @@ trait EvalHelper extends Logging {
             out.write(stat.toString)
             out.write("\\n")
         })
+        println("Dir" + dir)
         out.flush()
         out.close()
     }

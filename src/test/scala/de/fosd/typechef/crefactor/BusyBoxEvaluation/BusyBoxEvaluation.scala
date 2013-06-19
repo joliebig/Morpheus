@@ -1,7 +1,7 @@
 package de.fosd.typechef.crefactor.BusyBoxEvaluation
 
 import java.io.File
-import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
+import de.fosd.typechef.featureexpr.FeatureModel
 import org.junit.Test
 import de.fosd.typechef.crefactor.util.EvalHelper
 
@@ -20,7 +20,7 @@ trait BusyBoxEvaluation extends EvalHelper {
 
 object RefactorVerification {
 
-    def verify(refactored: File, originalFile: File, affectedFeatures: List[FeatureExpr], fm: FeatureModel) {
+    def verify(refactored: File, originalFile: File, run: Int, fm: FeatureModel): Boolean = {
 
     }
 }
