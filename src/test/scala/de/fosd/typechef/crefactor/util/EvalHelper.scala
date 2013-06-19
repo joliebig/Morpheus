@@ -45,7 +45,7 @@ trait EvalHelper extends Logging {
             out.write(stat.toString)
             out.write("\\n")
         })
-        println("Dir" + dir)
+        println("Dir " + dir.getCanonicalPath + File.separatorChar + getFileName(originalFilePath) + ".stats")
         out.flush()
         out.close()
     }
