@@ -1,6 +1,6 @@
 package de.fosd.typechef.crefactor.BusyBoxEvaluation
 
-import java.io.{InputStreamReader, BufferedReader, File}
+import java.io._
 import de.fosd.typechef.featureexpr.FeatureModel
 import org.junit.Test
 import de.fosd.typechef.crefactor.util.EvalHelper
@@ -20,15 +20,28 @@ trait BusyBoxEvaluation extends EvalHelper {
 
 object RefactorVerification extends EvalHelper {
 
+    def copyFile(file1: File, file2: File) = {
+        val src = file1
+        val dest = file2
+        new FileOutputStream(dest) getChannel() transferFrom(new FileInputStream(src) getChannel, 0, Long.MaxValue)
+        println(dest.length())
+    }
+
     def verify(bbFile: File, run: Int, fm: FeatureModel): Boolean = {
-        val orgFile = bbFile.getCanonicalPath.replaceAll("busybox-1.18.5", "busybox-1.18.5_untouched")
-        val refFile = bbFile.getCanonicalPath.replaceAll("busybox-1.18.5", "result") + "/" + run + "/" + bbFile.getName
-        println(bbFile.getCanonicalPath)
-        println(refFile)
+        val verfiyPath = bbFile.getCanonicalPath
+        val orgFile = new File(bbFile.getCanonicalPath.replaceAll("busybox-1.18.5", "busybox-1.18.5_untouched"))
+        val refFile = new File(bbFile.getCanonicalPath.replaceAll("busybox-1.18.5", "result") + "/" + run + "/" + bbFile.getName)
+
+        buildBusyBox
+        println(bbFile.length())
+        bbFile.delete()
+
+        copyFile(refFile, new File(verfiyPath))
+
+        // TODO Config
         // First Build normal busybox
         buildBusyBox
         // TODO Test
-        println(bbFile.getCanonicalPath)
         true
     }
 
