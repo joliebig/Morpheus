@@ -21,6 +21,6 @@ trait BusyBoxEvaluation extends EvalHelper {
 object RefactorVerification {
 
     def verify(refactored: File, originalFile: File, run: Int, fm: FeatureModel): Boolean = {
-
+        true
     }
 }
