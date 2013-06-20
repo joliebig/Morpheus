@@ -14,7 +14,7 @@ class RenameEvaluation extends BusyBoxEvaluation {
 
     @Test
     def evaluate() {
-        val files = getBusyBoxFiles
+        val files = getBusyBoxFiles.reverse
         val refactor = files.map(file => {
             var stats = List[Any]()
             val parseTypeCheckMs = new TimeMeasurement
