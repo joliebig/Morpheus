@@ -38,18 +38,17 @@ object RefactorVerification extends EvalHelper {
 
             val orgBuild = buildBusyBox
             val org = runTest
-            writeResult(orgBuild, verfiyDir.getCanonicalPath + "/" + configBuild.getName.replaceFirst(".", "") + "_org" + ".build")
-            writeResult(org, verfiyDir.getCanonicalPath + "/" + configBuild.getName.replaceFirst(".", "") + "_org" + ".test")
+            writeResult(orgBuild, verfiyDir.getCanonicalPath + "/" + config.getName.replaceFirst(".", "") + "_org" + ".build")
+            writeResult(org, verfiyDir.getCanonicalPath + "/" + config.getName.replaceFirst(".", "") + "_org" + ".test")
             bbFile.delete()
-            config.delete()
 
             val buildRefFile = new File(verfiyPath)
             copyFile(refFile, buildRefFile)
 
             val refBuild = buildBusyBox
             val ref = runTest
-            writeResult(refBuild, verfiyDir.getCanonicalPath + "/" + configBuild.getName.replaceFirst(".", "") + "_ref" + ".build")
-            writeResult(ref, verfiyDir.getCanonicalPath + "/" + configBuild.getName.replaceFirst(".", "") + "_ref" + ".test")
+            writeResult(refBuild, verfiyDir.getCanonicalPath + "/" + config.getName.replaceFirst(".", "") + "_ref" + ".build")
+            writeResult(ref, verfiyDir.getCanonicalPath + "/" + config.getName.replaceFirst(".", "") + "_ref" + ".test")
             buildRefFile.delete()
             copyFile(orgFile, new File(verfiyPath))
 
