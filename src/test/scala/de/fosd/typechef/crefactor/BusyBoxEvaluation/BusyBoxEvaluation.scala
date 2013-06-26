@@ -20,7 +20,7 @@ trait BusyBoxEvaluation extends EvalHelper {
 
 object RefactorVerification extends EvalHelper {
 
-    def copyFile(file1: File, file2: File) = new FileOutputStream(file2) getChannel() transferFrom(new FileInputStream(file1) getChannel, 0, Long.MaxValue)
+    def copyFile(file1: File, file2: File) = new FileOutputStream(file2).getChannel() transferFrom(new FileInputStream(file1).getChannel, 0, Long.MaxValue)
 
     def verify(bbFile: File, run: Int, fm: FeatureModel): Boolean = {
         val verfiyPath = bbFile.getCanonicalPath
