@@ -132,6 +132,15 @@ trait EvalHelper extends Logging {
         writer.close()
     }
 
+    def writeError(error: String, originalFilePath: String, run: Int) = {
+        val dir = getResultDir(originalFilePath, run)
+        val out = new java.io.FileWriter(dir.getCanonicalPath + File.separatorChar + getFileName(originalFilePath) + ".stats")
+        out.write(error)
+        out.write("\n")
+        out.flush()
+        out.close()
+    }
+
     def writeStats(stats: List[Any], originalFilePath: String, run: Int) = {
         val dir = getResultDir(originalFilePath, run)
         val out = new java.io.FileWriter(dir.getCanonicalPath + File.separatorChar + getFileName(originalFilePath) + ".stats")

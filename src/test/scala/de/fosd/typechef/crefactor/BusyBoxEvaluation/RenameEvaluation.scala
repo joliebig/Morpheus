@@ -16,22 +16,30 @@ class RenameEvaluation extends BusyBoxEvaluation {
     def evaluate() {
         val files = getBusyBoxFiles.reverse
         val refactor = files.map(file => {
-            var stats = List[Any]()
-            val parseTypeCheckMs = new TimeMeasurement
-            val bb_file = new File(busyBoxPath + file)
-            val parsed = parse(bb_file)
-            val ast = parsed._1
-            val fm = parsed._2
-            val morpheus = new Morpheus(ast, fm)
-            val parseTypeCheckTime = parseTypeCheckMs.getTime
-            stats ::= parseTypeCheckTime
-            val result = applyRefactor(morpheus, stats)
-            if (result._2) PrepareRefactoredASTforEval.prepare(result._1, morpheus.getFeatureModel, bb_file.getCanonicalPath, result._3, 0)
+            try {
+                var stats = List[Any]()
+                val parseTypeCheckMs = new TimeMeasurement
+                val bb_file = new File(busyBoxPath + file)
+                val parsed = parse(bb_file)
+                val ast = parsed._1
+                val fm = parsed._2
+                val morpheus = new Morpheus(ast, fm)
+                val parseTypeCheckTime = parseTypeCheckMs.getTime
+                stats ::= parseTypeCheckTime
+                val result = applyRefactor(morpheus, stats)
+                if (result._2) PrepareRefactoredASTforEval.prepare(result._1, morpheus.getFeatureModel, bb_file.getCanonicalPath, result._3, 0)
 
-            val verify = RefactorVerification.verify(bb_file, 0, fm)
-            var stat2 = result._4
-            stat2 = stat2.::(result._2 && verify)
-            writeStats(stat2, bb_file.getCanonicalPath, 0)
+                val verify = RefactorVerification.verify(bb_file, 0, fm)
+                var stat2 = result._4
+                stat2 = stat2.::(result._2 && verify)
+                writeStats(stat2, bb_file.getCanonicalPath, 0)
+                verify
+            } catch {
+                case e: Exception => {
+
+                    false
+                }
+            }
         })
         logger.info("Refactor succ: " + refactor.contains(false))
 
