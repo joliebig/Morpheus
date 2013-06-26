@@ -16,10 +16,10 @@ class RenameEvaluation extends BusyBoxEvaluation {
     def evaluate() {
         val files = getBusyBoxFiles.reverse
         val refactor = files.map(file => {
+            val bb_file = new File(busyBoxPath + file)
             try {
                 var stats = List[Any]()
                 val parseTypeCheckMs = new TimeMeasurement
-                val bb_file = new File(busyBoxPath + file)
                 val parsed = parse(bb_file)
                 val ast = parsed._1
                 val fm = parsed._2
@@ -36,13 +36,13 @@ class RenameEvaluation extends BusyBoxEvaluation {
                 verify
             } catch {
                 case e: Exception => {
-
+                    writeError(e.getCause + "\n" + e.getStackTrace, bb_file.getCanonicalPath, 0)
                     false
                 }
             }
         })
         logger.info("Refactor succ: " + refactor.contains(false))
-
+        refactor.contains(false)
     }
 
     def applyRefactor(morpheus: Morpheus, stat: List[Any]): (AST, Boolean, List[FeatureExpr], List[Any]) = {
