@@ -6,12 +6,9 @@ import de.fosd.typechef.parser.c._
 import de.fosd.typechef.crefactor.frontend.util.Selection
 import de.fosd.typechef.crewrite.ASTEnv
 import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureExprFactory}
-import de.fosd.typechef.typesystem.{CType, DeclarationKind}
+import de.fosd.typechef.typesystem._
 import de.fosd.typechef.conditional
-import conditional.Choice
 import conditional.Conditional
-import conditional.One
-import conditional.Opt
 import scala._
 import de.fosd.typechef.parser.c.SwitchStatement
 import scala.Some
@@ -19,16 +16,19 @@ import de.fosd.typechef.parser.c.NAryExpr
 import de.fosd.typechef.parser.c.DoStatement
 import de.fosd.typechef.parser.c.Initializer
 import de.fosd.typechef.parser.c.AssignExpr
+import de.fosd.typechef.conditional.One
 import de.fosd.typechef.parser.c.DeclParameterDeclList
 import de.fosd.typechef.parser.c.Id
 import de.fosd.typechef.parser.c.DeclarationStatement
 import de.fosd.typechef.parser.c.CompoundStatement
+import de.fosd.typechef.conditional.Opt
 import de.fosd.typechef.parser.c.CaseStatement
 import de.fosd.typechef.parser.c.InitDeclaratorE
 import de.fosd.typechef.parser.c.PostfixExpr
 import de.fosd.typechef.parser.c.ArrayAccess
 import de.fosd.typechef.parser.c.ReturnStatement
 import de.fosd.typechef.parser.c.CompoundStatementExpr
+import de.fosd.typechef.conditional.Choice
 import de.fosd.typechef.typesystem.CUnknown
 import de.fosd.typechef.typesystem.CFunction
 import de.fosd.typechef.parser.c.FunctionCall
@@ -50,7 +50,7 @@ object InlineFunction extends ASTSelection with Refactor {
 
     def getSelectedElements(morpheus: Morpheus, selection: Selection): List[AST] = {
         val functions = (filterASTElems[FunctionDef](morpheus.getAST) ::: filterASTElems[FunctionCall](morpheus.getAST)
-                ::: filterAllASTElems[NestedFunctionDef](morpheus.getAST)).filter(x => isSelected(x, morpheus.getASTEnv, selection))
+            ::: filterAllASTElems[NestedFunctionDef](morpheus.getAST)).filter(x => isSelected(x, morpheus.getASTEnv, selection))
         filterASTElementsForFile(functions, selection.getFilePath).sortWith(comparePosition)
     }
 
@@ -479,7 +479,7 @@ object InlineFunction extends ASTSelection with Refactor {
 
     private def isDeclared(id: Id, env: Env, statement: CompoundStatement, morpheuseus: Morpheus): Boolean = {
 
-        def checkOne(one: Conditional[(CType, DeclarationKind, Int)], recursive: Boolean = false): Boolean = {
+        def checkOne(one: Conditional[(CType, DeclarationKind, Int, Linkage)], recursive: Boolean = false): Boolean = {
             one match {
                 case One((CUnknown(_), _, _)) =>
                     if (!recursive) (false || checkConditional(morpheuseus.getEnv(statement.innerStatements.last.entry).varEnv.lookup(id.name), true))
@@ -495,7 +495,7 @@ object InlineFunction extends ASTSelection with Refactor {
             }
         }
 
-        def checkConditional(conditional: Conditional[(CType, DeclarationKind, Int)], recursive: Boolean = false): Boolean = {
+        def checkConditional(conditional: Conditional[(CType, DeclarationKind, Int, Linkage)], recursive: Boolean = false): Boolean = {
             conditional match {
                 case c@Choice(feature, then, elseB) => checkConditional(then, recursive) || checkConditional(elseB, recursive)
                 case o@One((_)) => checkOne(conditional, recursive)
