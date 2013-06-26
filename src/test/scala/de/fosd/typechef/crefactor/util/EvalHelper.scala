@@ -173,6 +173,8 @@ trait EvalHelper extends Logging {
     def parse(file: File): (AST, FeatureModel) = {
         def getTypeChefArguments(file: String) = Array(file, "-c", systemProperties, "-x", "CONFIG_", "--include", includeHeader, "-I", includeDir, "--featureModelFExpr", featureModel, "--debugInterface", "--recordTiming", "--parserstatistics", "-U", "HAVE_LIBDMALLOC", "-DCONFIG_FIND", "-U", "CONFIG_FEATURE_WGET_LONG_OPTIONS", "-U", "ENABLE_NC_110_COMPAT", "-U", "CONFIG_EXTRA_COMPAT", "-D_GNU_SOURCE")
         Frontend.main(getTypeChefArguments(file.getAbsolutePath))
+        println("AST: " + Frontend.getAST == null)
+        Thread.sleep(100000)
         (Frontend.getAST, Frontend.getFeatureModel)
     }
 
