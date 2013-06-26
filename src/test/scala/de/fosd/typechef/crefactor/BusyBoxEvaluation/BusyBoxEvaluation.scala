@@ -38,7 +38,7 @@ object RefactorVerification extends EvalHelper {
 
             val orgBuild = buildBusyBox
             val org = runTest
-            writeResult(orgBuild, verfiyDir.getCanonicalPath + "/" + config.getName + "_org" + ".build")
+            writeResult(orgBuild._1, verfiyDir.getCanonicalPath + "/" + config.getName + "_org" + ".build")
             writeResult(org, verfiyDir.getCanonicalPath + "/" + config.getName + "_org" + ".test")
             bbFile.delete()
 
@@ -47,7 +47,7 @@ object RefactorVerification extends EvalHelper {
 
             val refBuild = buildBusyBox
             val ref = runTest
-            writeResult(refBuild, verfiyDir.getCanonicalPath + "/" + config.getName + "_ref" + ".build")
+            writeResult(refBuild._1, verfiyDir.getCanonicalPath + "/" + config.getName + "_ref" + ".build")
             writeResult(ref, verfiyDir.getCanonicalPath + "/" + config.getName + "_ref" + ".test")
             buildRefFile.delete()
             copyFile(orgFile, new File(verfiyPath))
@@ -93,28 +93,29 @@ object RefactorVerification extends EvalHelper {
         sb.toString()
     }
 
-    def buildBusyBox: String = {
+    def buildBusyBox: (String, String) = {
         var error = false
         val pb = new ProcessBuilder("./buildBusyBox.sh")
         pb.directory(new File(busyBoxPath))
         val p = pb.start()
         p.waitFor()
 
-        val reader = new BufferedReader(new InputStreamReader(p.getInputStream()))
-        val sb = new StringBuilder
+        val reader = new BufferedReader(new InputStreamReader(p.getInputStream))
+        val builderOut = new StringBuilder
         while (reader.ready()) {
             val line = reader.readLine()
-            sb.append(line)
+            builderOut.append(line)
             println(line)
         }
 
-        val reader2 = new BufferedReader(new InputStreamReader(p.getErrorStream()))
+        val builderErr = new StringBuilder
+        val reader2 = new BufferedReader(new InputStreamReader(p.getErrorStream))
         while (reader2.ready()) {
             error = true
             val line = reader2.readLine()
-            sb.append(line)
+            builderErr.append(line)
             println(line)
         }
-        sb.toString()
+        (builderOut.toString(), builderErr.toString())
     }
 }
