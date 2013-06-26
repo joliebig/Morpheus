@@ -6,7 +6,6 @@ import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr, SingleFeat
 import java.util.regex.Pattern
 import scala.io.Source
 import de.fosd.typechef.crefactor.Logging
-import de.fosd.typechef.ProductGeneration.SimpleConfiguration
 import de.fosd.typechef.Frontend
 import java.util.IdentityHashMap
 import java.util
@@ -29,6 +28,101 @@ trait EvalHelper extends Logging {
     private val includeHeader: String = completeBusyBoxPath + "/config.h"
     private val includeDir: String = completeBusyBoxPath + "/busybox-1.18.5/include"
     private val featureModel: String = completeBusyBoxPath + "/featureModel"
+
+    /**
+     * The following class it not part of the default TypeChef Branch. In order to read in csv - configurations correctly
+     * the following class is copied from https://github.com/ckaestne/TypeChef/blob/liveness/Sampling/src/main/scala/de/fosd/typechef/FamilyBasedVsSampleBased.scala
+     */
+
+    /** Maps SingleFeatureExpr Objects to IDs (IDs only known/used in this file) */
+    private var featureIDHashmap: Map[SingleFeatureExpr, Int] = null
+    /** List of all features found in the currently processed file */
+    private var features: List[SingleFeatureExpr] = null
+
+    // representation of a product configuration that can be dumped into a file
+    // and loaded at further runs
+    class SimpleConfiguration(private val config: scala.collection.immutable.BitSet) extends scala.Serializable {
+
+        def this(trueSet: List[SingleFeatureExpr], falseSet: List[SingleFeatureExpr]) = this(
+        {
+            val ret: scala.collection.mutable.BitSet = scala.collection.mutable.BitSet()
+            for (tf: SingleFeatureExpr <- trueSet) ret.add(featureIDHashmap(tf))
+            for (ff: SingleFeatureExpr <- falseSet) ret.remove(featureIDHashmap(ff))
+            ret.toImmutable
+        }
+        )
+
+        def getTrueSet: Set[SingleFeatureExpr] = {
+            features.filter({
+                fex: SingleFeatureExpr => config.apply(featureIDHashmap(fex))
+            }).toSet
+        }
+
+        def getFalseSet: Set[SingleFeatureExpr] = {
+            features.filterNot({
+                fex: SingleFeatureExpr => config.apply(featureIDHashmap(fex))
+            }).toSet
+        }
+
+        override def toString: String = {
+            features.map(
+            {
+                fex: SingleFeatureExpr => if (config.apply(featureIDHashmap(fex))) fex else fex.not()
+            }
+            ).mkString("&&")
+        }
+
+        // caching, values of this field will not be serialized
+        @transient
+        private var featureExpression: FeatureExpr = null
+
+        def toFeatureExpr: FeatureExpr = {
+            if (featureExpression == null)
+                featureExpression = FeatureExprFactory.createFeatureExprFast(getTrueSet, getFalseSet)
+            featureExpression
+        }
+
+        /**
+         * This method assumes that all features in the parameter-set appear in either the trueList, or in the falseList
+         * @param features given feature set
+         * @return
+         */
+        def containsAllFeaturesAsEnabled(features: Set[SingleFeatureExpr]): Boolean = {
+            for (fex <- features) {
+                if (!config.apply(featureIDHashmap(fex))) return false
+            }
+            true
+        }
+
+        /**
+         * This method assumes that all features in the parameter-set appear in the configuration (either as true or as false)
+         * @param features given feature set
+         * @return
+         */
+        def containsAllFeaturesAsDisabled(features: Set[SingleFeatureExpr]): Boolean = {
+            for (fex <- features) {
+                if (config.apply(featureIDHashmap(fex))) return false
+            }
+            true
+        }
+
+        def containsAtLeastOneFeatureAsEnabled(set: Set[SingleFeatureExpr]): Boolean =
+            !containsAllFeaturesAsDisabled(set)
+
+        def containsAtLeastOneFeatureAsDisabled(set: Set[SingleFeatureExpr]): Boolean =
+            !containsAllFeaturesAsEnabled(set)
+
+        override def equals(other: Any): Boolean = {
+            if (!other.isInstanceOf[SimpleConfiguration]) super.equals(other)
+            else {
+                val otherSC = other.asInstanceOf[SimpleConfiguration]
+                otherSC.config.equals(this.config)
+            }
+        }
+
+        override def hashCode(): Int = config.hashCode()
+    }
+
 
     def writeAST(ast: AST, filePath: String) {
         val writer = new FileWriter(filePath)

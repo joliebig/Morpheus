@@ -481,10 +481,10 @@ object InlineFunction extends ASTSelection with Refactor {
 
         def checkOne(one: Conditional[(CType, DeclarationKind, Int, Linkage)], recursive: Boolean = false): Boolean = {
             one match {
-                case One((CUnknown(_), _, _)) =>
+                case One((CUnknown(_), _, _, _)) =>
                     if (!recursive) (false || checkConditional(morpheuseus.getEnv(statement.innerStatements.last.entry).varEnv.lookup(id.name), true))
                     else false
-                case One((CFunction(_, _), _, _)) => parentAST(id, morpheuseus.getASTEnv) match {
+                case One((CFunction(_, _), _, _, _)) => parentAST(id, morpheuseus.getASTEnv) match {
                     case PostfixExpr(_, FunctionCall(_)) => false
                     case _ => parentOpt(id, morpheuseus.getASTEnv).entry match {
                         case f: FunctionDef => false
