@@ -12,6 +12,7 @@ class RenameEvaluation extends BusyBoxEvaluation {
 
     private val refactor_name = "refactoredID"
 
+
     @Test
     def evaluate() {
         val files = getBusyBoxFiles.reverse
