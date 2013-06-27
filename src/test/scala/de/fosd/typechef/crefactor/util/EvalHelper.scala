@@ -23,7 +23,7 @@ trait EvalHelper extends Logging {
     val filterFeatures = List("def(CONFIG_SELINUX)", "CONFIG_SELINUX")
     val allFeaturesFile = getClass.getResource("/BusyBoxAllFeatures.config").getFile
     val allFeatures = getAllFeaturesFromConfigFile(null, new File(allFeaturesFile))
-    val pairWiseFeatures = getClass.getResource("/busyBox_pairwise_configs.csv").getFile
+    val pairWiseFeatures = getClass.getResource("/busyBox_pairwise.configs").getFile
 
     private val systemProperties: String = completeBusyBoxPath + "/redhat.properties"
     private val includeHeader: String = completeBusyBoxPath + "/config.h"
