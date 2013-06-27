@@ -23,11 +23,13 @@ trait EvalHelper extends Logging {
     val filterFeatures = List("def(CONFIG_SELINUX)", "CONFIG_SELINUX")
     val allFeaturesFile = getClass.getResource("/BusyBoxAllFeatures.config").getFile
     val allFeatures = getAllFeaturesFromConfigFile(null, new File(allFeaturesFile))
+    val pairWiseFeatures = getClass.getResource("/busyBox_pairwise_configs.csv").getFile
 
     private val systemProperties: String = completeBusyBoxPath + "/redhat.properties"
     private val includeHeader: String = completeBusyBoxPath + "/config.h"
     private val includeDir: String = completeBusyBoxPath + "/busybox-1.18.5/include"
     private val featureModel: String = completeBusyBoxPath + "/featureModel"
+    private val featureModel_DIMACS: String = completeBusyBoxPath + "/BB_fm.dimacs"
 
     /**
      * The following class it not part of the default TypeChef Branch. In order to read in csv - configurations correctly
@@ -121,6 +123,86 @@ trait EvalHelper extends Logging {
         }
 
         override def hashCode(): Int = config.hashCode()
+    }
+
+    def loadConfigurationsFromCSVFile(csvFile: File, dimacsFile: File, features: List[SingleFeatureExpr], fm: FeatureModel, fnamePrefix: String = ""): (List[SimpleConfiguration], String) = {
+        var retList: List[SimpleConfiguration] = List()
+
+        // determine the feature ids used by the sat solver from the dimacs file
+        // dimacs format (c stands for comment) is "c 3779 AT76C50X_USB"
+        // we have to pre-set index 0, so that the real indices start with 1
+        var featureNamesTmp: List[String] = List("--dummy--")
+        val featureMap: scala.collection.mutable.HashMap[String, SingleFeatureExpr] = new scala.collection.mutable.HashMap()
+        var currentLine: Int = 1
+
+        for (line: String <- Source.fromFile(dimacsFile).getLines().takeWhile(_.startsWith("c"))) {
+            val lineElements: Array[String] = line.split(" ")
+            if (!lineElements(1).endsWith("$")) {
+                // feature indices ending with $ are artificial and can be ignored here
+                assert(augmentString(lineElements(1)).toInt.equals(currentLine), "\"" + lineElements(1) + "\"" + " != " + currentLine)
+                featureNamesTmp ::= lineElements(2)
+            }
+            currentLine += 1
+        }
+
+        // maintain a hashmap that maps feature names to corresponding feature expressions (SingleFeatureExpr)
+        // we only store those features that occur in the file (keeps configuration small);
+        // the rest is not important for the configuration;
+        val featureNames: Array[String] = featureNamesTmp.reverse.toArray
+        featureNamesTmp = null
+        for (i <- 0.to(featureNames.length - 1)) {
+            val searchResult = features.find(_.feature.equals(fnamePrefix + featureNames(i)))
+            if (searchResult.isDefined) {
+                featureMap.update(featureNames(i), searchResult.get)
+            }
+        }
+
+        // parse configurations
+        // format is:
+        // Feature\Product;0;..;N;       // number of Products (N+1)
+        // FeatureA;-;X;....;            // exclusion of FeatureA in Product 0 and inclusion of FeatureA in Product 1
+        // FeatureB                      // additional features
+        // ...
+        val csvLines = Source.fromFile(csvFile).getLines()
+        val numProducts = csvLines.next().split(";").last.toInt + 1
+
+        // create and initialize product configurations array
+        val pconfigurations = new Array[(List[SingleFeatureExpr], List[SingleFeatureExpr])](numProducts)
+        for (i <- 0 to numProducts - 1) {
+            pconfigurations.update(i, (List(), List()))
+        }
+
+        // iterate over all lines with Features, determine the selection/deselection in available products and add it to
+        // product configurations (true features / false features)
+        while (csvLines.hasNext) {
+            val featureLine = csvLines.next().split(";")
+
+            for (i <- 1 to numProducts) {
+                if (featureMap.contains(featureLine(0))) {
+                    var product = pconfigurations(i - 1)
+                    if (featureLine(i) == "X") {
+                        product = product.copy(_1 = featureMap(featureLine(0)) :: product._1)
+                    } else {
+                        product = product.copy(_2 = featureMap(featureLine(0)) :: product._2)
+                    }
+                    pconfigurations.update(i - 1, product)
+                }
+            }
+        }
+
+        // create a single configuration from the true features and false features list
+        for (i <- 0 to pconfigurations.length - 1) {
+            val config = new SimpleConfiguration(pconfigurations(i)._1, pconfigurations(i)._2)
+
+            // need to check the configuration here again.
+            if (!config.toFeatureExpr.getSatisfiableAssignment(fm, features.toSet, 1 == 1).isDefined) {
+                println("no satisfiable solution for product (" + i + "): " + csvFile)
+            } else {
+                retList ::= config
+            }
+        }
+
+        (retList, "Generated Configs: " + retList.size + "\n")
     }
 
 
@@ -341,85 +423,4 @@ trait EvalHelper extends Logging {
         }
         (trueFeatures.toList, assignValues)
     }
-
-    def loadConfigurationsFromCSVFile(csvFile: File, dimacsFile: File, features: List[SingleFeatureExpr], fm: FeatureModel, fnamePrefix: String = ""): (List[SimpleConfiguration], String) = {
-        var retList: List[SimpleConfiguration] = List()
-
-        // determine the feature ids used by the sat solver from the dimacs file
-        // dimacs format (c stands for comment) is "c 3779 AT76C50X_USB"
-        // we have to pre-set index 0, so that the real indices start with 1
-        var featureNamesTmp: List[String] = List("--dummy--")
-        val featureMap: scala.collection.mutable.HashMap[String, SingleFeatureExpr] = new scala.collection.mutable.HashMap()
-        var currentLine: Int = 1
-
-        for (line: String <- Source.fromFile(dimacsFile).getLines().takeWhile(_.startsWith("c"))) {
-            val lineElements: Array[String] = line.split(" ")
-            if (!lineElements(1).endsWith("$")) {
-                // feature indices ending with $ are artificial and can be ignored here
-                assert(augmentString(lineElements(1)).toInt.equals(currentLine), "\"" + lineElements(1) + "\"" + " != " + currentLine)
-                featureNamesTmp ::= lineElements(2)
-            }
-            currentLine += 1
-        }
-
-        // maintain a hashmap that maps feature names to corresponding feature expressions (SingleFeatureExpr)
-        // we only store those features that occur in the file (keeps configuration small);
-        // the rest is not important for the configuration;
-        val featureNames: Array[String] = featureNamesTmp.reverse.toArray
-        featureNamesTmp = null
-        for (i <- 0.to(featureNames.length - 1)) {
-            val searchResult = features.find(_.feature.equals(fnamePrefix + featureNames(i)))
-            if (searchResult.isDefined) {
-                featureMap.update(featureNames(i), searchResult.get)
-            }
-        }
-
-        // parse configurations
-        // format is:
-        // Feature\Product;0;..;N;       // number of Products (N+1)
-        // FeatureA;-;X;....;            // exclusion of FeatureA in Product 0 and inclusion of FeatureA in Product 1
-        // FeatureB                      // additional features
-        // ...
-        val csvLines = Source.fromFile(csvFile).getLines()
-        val numProducts = csvLines.next().split(";").last.toInt + 1
-
-        // create and initialize product configurations array
-        val pconfigurations = new Array[(List[SingleFeatureExpr], List[SingleFeatureExpr])](numProducts)
-        for (i <- 0 to numProducts - 1) {
-            pconfigurations.update(i, (List(), List()))
-        }
-
-        // iterate over all lines with Features, determine the selection/deselection in available products and add it to
-        // product configurations (true features / false features)
-        while (csvLines.hasNext) {
-            val featureLine = csvLines.next().split(";")
-
-            for (i <- 1 to numProducts) {
-                if (featureMap.contains(featureLine(0))) {
-                    var product = pconfigurations(i - 1)
-                    if (featureLine(i) == "X") {
-                        product = product.copy(_1 = featureMap(featureLine(0)) :: product._1)
-                    } else {
-                        product = product.copy(_2 = featureMap(featureLine(0)) :: product._2)
-                    }
-                    pconfigurations.update(i - 1, product)
-                }
-            }
-        }
-
-        // create a single configuration from the true features and false features list
-        for (i <- 0 to pconfigurations.length - 1) {
-            val config = new SimpleConfiguration(pconfigurations(i)._1, pconfigurations(i)._2)
-
-            // need to check the configuration here again.
-            if (!config.toFeatureExpr.getSatisfiableAssignment(fm, features.toSet, 1 == 1).isDefined) {
-                println("no satisfiable solution for product (" + i + "): " + csvFile)
-            } else {
-                retList ::= config
-            }
-        }
-
-        (retList, "Generated Configs: " + retList.size + "\n")
-    }
-
 }
