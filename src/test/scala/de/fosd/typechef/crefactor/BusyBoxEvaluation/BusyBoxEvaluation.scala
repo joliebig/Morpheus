@@ -73,51 +73,40 @@ object RefactorVerification extends EvalHelper {
         out.close()
     }
 
-    def runTest: String = {
-        var error = false
-        val pb = new ProcessBuilder("./runtest")
-        pb.directory(new File(busyBoxPath + "testsuite/"))
-        val p = pb.start()
-        p.waitFor()
-
-        val reader = new BufferedReader(new InputStreamReader(p.getInputStream()))
-        val sb = new StringBuilder
+    def readIn(reader: BufferedReader, builder: StringBuilder): String = {
         while (reader.ready()) {
             val line = reader.readLine()
-            sb.append(line)
-            println(line)
+            builder.append(line)
         }
+        builder.toString()
+    }
 
-        val reader2 = new BufferedReader(new InputStreamReader(p.getErrorStream()))
-        while (reader2.ready()) {
-            error = true
-            val line = reader2.readLine()
-            sb.append(line)
-            println(line)
-        }
-        sb.toString()
+    def runScript(script: String, dir: String): (InputStream, InputStream) = {
+        val pb = new ProcessBuilder(script)
+        pb.directory(new File(dir))
+        val p = pb.start()
+        p.waitFor()
+        (p.getInputStream, p.getErrorStream)
+    }
+
+    def runTest: String = {
+        val result = runScript("./runtest", busyBoxPath + "testsuite/")
+        val stream = streamsToString(result)
+        stream._1 + "\n" + stream._2
     }
 
     def buildBusyBox: (Boolean, String, String) = {
-        def readIn(reader: BufferedReader, builder: StringBuilder): String = {
-            while (reader.ready()) {
-                val line = reader.readLine()
-                builder.append(line)
-            }
-            builder.toString()
-        }
+        val result = runScript("./buildBusyBox.sh", busyBoxPath)
+        val stream = streamsToString(result)
+        (stream._1.contains("Success_Build"), stream._1, stream._2)
+    }
 
-        val pb = new ProcessBuilder("./buildBusyBox.sh")
-        pb.directory(new File(busyBoxPath))
-        val p = pb.start()
-        p.waitFor()
+    private def streamsToString(streams: (InputStream, InputStream)): (String, String) = {
+        val readerOut = new BufferedReader(new InputStreamReader(streams._1))
+        val readerErr = new BufferedReader(new InputStreamReader(streams._2))
 
-        val readerOut = new BufferedReader(new InputStreamReader(p.getInputStream))
-        val readerErr = new BufferedReader(new InputStreamReader(p.getErrorStream))
-
-        val out: String = readIn(readerOut, new StringBuilder)
-        val err: String = readIn(readerErr, new StringBuilder)
-
-        (out.contains("Success_Build"), out, err)
+        val out = readIn(readerOut, new StringBuilder)
+        val err = readIn(readerErr, new StringBuilder)
+        (out, err)
     }
 }
