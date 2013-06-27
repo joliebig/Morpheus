@@ -23,13 +23,13 @@ trait EvalHelper extends Logging {
     val filterFeatures = List("def(CONFIG_SELINUX)", "CONFIG_SELINUX")
     val allFeaturesFile = getClass.getResource("/BusyBoxAllFeatures.config").getFile
     val allFeatures = getAllFeaturesFromConfigFile(null, new File(allFeaturesFile))
-    val pairWiseFeatures = getClass.getResource("/busyBox_pairwise.configs").getFile
+    val pairWiseFeaturesFile = getClass.getResource("/busyBox_pairwise.configs").getFile
 
-    private val systemProperties: String = completeBusyBoxPath + "/redhat.properties"
-    private val includeHeader: String = completeBusyBoxPath + "/config.h"
-    private val includeDir: String = completeBusyBoxPath + "/busybox-1.18.5/include"
-    private val featureModel: String = completeBusyBoxPath + "/featureModel"
-    private val featureModel_DIMACS: String = completeBusyBoxPath + "/BB_fm.dimacs"
+    val systemProperties: String = completeBusyBoxPath + "/redhat.properties"
+    val includeHeader: String = completeBusyBoxPath + "/config.h"
+    val includeDir: String = completeBusyBoxPath + "/busybox-1.18.5/include"
+    val featureModel: String = completeBusyBoxPath + "/featureModel"
+    val featureModel_DIMACS: String = completeBusyBoxPath + "/BB_fm.dimacs"
 
     /**
      * The following class it not part of the default TypeChef Branch. In order to read in csv - configurations correctly
