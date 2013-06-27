@@ -1,7 +1,7 @@
 package de.fosd.typechef.crefactor.util
 
-import java.io.{FileReader, BufferedReader, FileWriter, File}
-import de.fosd.typechef.parser.c.{GnuAsmExpr, Id, PrettyPrinter, AST}
+import java.io._
+import de.fosd.typechef.parser.c.{PrettyPrinter, AST}
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr, SingleFeatureExpr, FeatureModel}
 import java.util.regex.Pattern
 import scala.io.Source
@@ -9,6 +9,8 @@ import de.fosd.typechef.crefactor.Logging
 import de.fosd.typechef.Frontend
 import java.util.IdentityHashMap
 import java.util
+import de.fosd.typechef.parser.c.GnuAsmExpr
+import de.fosd.typechef.parser.c.Id
 
 trait EvalHelper extends Logging {
 
@@ -205,6 +207,43 @@ trait EvalHelper extends Logging {
         (retList, "Generated Configs: " + retList.size + "\n")
     }
 
+    def copyFile(file1: File, file2: File) = new FileOutputStream(file2).getChannel.transferFrom(new FileInputStream(file1).getChannel, 0, Long.MaxValue)
+
+    def streamsToString(streams: (InputStream, InputStream)): (String, String) = {
+        val readerOut = new BufferedReader(new InputStreamReader(streams._1))
+        val readerErr = new BufferedReader(new InputStreamReader(streams._2))
+
+        val out = readIn(readerOut, new StringBuilder)
+        val err = readIn(readerErr, new StringBuilder)
+        (out, err)
+    }
+
+    def readIn(reader: BufferedReader, builder: StringBuilder): String = {
+        while (reader.ready()) {
+            val line = reader.readLine()
+            builder.append(line)
+        }
+        builder.toString()
+    }
+
+    def runScript(script: String, dir: String): (InputStream, InputStream) = {
+        val pb = new ProcessBuilder(script)
+        pb.directory(new File(dir))
+        val p = pb.start()
+        p.waitFor()
+        (p.getInputStream, p.getErrorStream)
+    }
+
+
+    def writeResult(result: String, file: String) = {
+        var out: FileWriter = null
+        if (file.startsWith(".")) out = new java.io.FileWriter(file.replaceFirst(".", ""))
+        else out = new java.io.FileWriter(file)
+
+        out.write(result)
+        out.flush()
+        out.close()
+    }
 
     def writeAST(ast: AST, filePath: String) {
         val writer = new FileWriter(filePath)
