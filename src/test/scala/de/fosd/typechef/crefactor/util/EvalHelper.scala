@@ -11,6 +11,8 @@ import java.util.IdentityHashMap
 import java.util
 import de.fosd.typechef.parser.c.GnuAsmExpr
 import de.fosd.typechef.parser.c.Id
+import scala.collection.immutable.HashMap
+import de.fosd.typechef.conditional.{Opt, Choice}
 
 trait EvalHelper extends Logging {
 
@@ -41,7 +43,7 @@ trait EvalHelper extends Logging {
     /** Maps SingleFeatureExpr Objects to IDs (IDs only known/used in this file) */
     private var featureIDHashmap: Map[SingleFeatureExpr, Int] = null
     /** List of all features found in the currently processed file */
-    private var features: List[SingleFeatureExpr] = null
+    private var features: List[SingleFeatureExpr] = allFeatures._1
 
     // representation of a product configuration that can be dumped into a file
     // and loaded at further runs
@@ -125,6 +127,48 @@ trait EvalHelper extends Logging {
         }
 
         override def hashCode(): Int = config.hashCode()
+    }
+
+    def initializeFeatureList(family_ast: AST) {
+        features = getAllFeatures(family_ast)
+        featureIDHashmap = new HashMap[SingleFeatureExpr, Int]().++(features.zipWithIndex)
+    }
+
+    /**
+     * Returns a sorted list of all features in this AST, including Opt and Choice Nodes
+     * @param root input element
+     * @return
+     */
+    def getAllFeatures(root: Product): List[SingleFeatureExpr] = {
+        var featuresSorted: List[SingleFeatureExpr] = getAllFeaturesRec(root).toList
+        // sort to eliminate any non-determinism caused by the set
+        featuresSorted = featuresSorted.sortWith({
+            (x: SingleFeatureExpr, y: SingleFeatureExpr) => x.feature.compare(y.feature) > 0
+        })
+        println("found " + featuresSorted.size + " features")
+        featuresSorted //.map({s:String => FeatureExprFactory.createDefinedExternal(s)});
+    }
+
+    private def getAllFeaturesRec(root: Any): Set[SingleFeatureExpr] = {
+        root match {
+            case x: Opt[_] => x.feature.collectDistinctFeatureObjects.toSet ++ getAllFeaturesRec(x.entry)
+            case x: Choice[_] => x.feature.collectDistinctFeatureObjects.toSet ++ getAllFeaturesRec(x.thenBranch) ++ getAllFeaturesRec(x.elseBranch)
+            case l: List[_] => {
+                var ret: Set[SingleFeatureExpr] = Set()
+                for (x <- l) {
+                    ret = ret ++ getAllFeaturesRec(x)
+                }
+                ret
+            }
+            case x: Product => {
+                var ret: Set[SingleFeatureExpr] = Set()
+                for (y <- x.productIterator.toList) {
+                    ret = ret ++ getAllFeaturesRec(y)
+                }
+                ret
+            }
+            case o => Set()
+        }
     }
 
     def loadConfigurationsFromCSVFile(csvFile: File, dimacsFile: File, features: List[SingleFeatureExpr], fm: FeatureModel, fnamePrefix: String = ""): (List[SimpleConfiguration], String) = {
