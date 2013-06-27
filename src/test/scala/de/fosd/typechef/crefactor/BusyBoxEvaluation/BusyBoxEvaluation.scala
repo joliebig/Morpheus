@@ -36,7 +36,7 @@ object RefactorVerification extends EvalHelper {
                 val testResult = runTest
                 writeResult(buildResult._2, verfiyDir.getCanonicalPath + "/" + config.getName + ext + ".buildAndTest")
                 writeResult(testResult, verfiyDir.getCanonicalPath + "/" + config.getName + ext + ".test")
-                bbFile.delete()
+                busyBoxFile.delete()
                 testResult
             }
 
