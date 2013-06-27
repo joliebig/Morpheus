@@ -36,8 +36,9 @@ class RenameEvaluation extends BusyBoxEvaluation {
                 verify
             } catch {
                 case e: Exception => {
-                    println(e.getStackTrace.mkString)
-                    writeError(e.getStackTrace.mkString + "\n" + e.getMessage, bb_file.getCanonicalPath, 0)
+                    println(e.getMessage)
+                    println(e.getStackTrace.mkString("\n"))
+                    writeError(e.getMessage + "\n" + e.getStackTrace.mkString("\n"), bb_file.getCanonicalPath, 0)
                     false
                 }
             }
