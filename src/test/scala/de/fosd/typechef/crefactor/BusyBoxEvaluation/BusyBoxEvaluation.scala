@@ -60,14 +60,14 @@ object RefactorVerification extends EvalHelper {
             configBuild.delete()
 
             if (!orgTest._1) {
-                writeError("Invalid Config", workingPath, run)
+                writeError("Invalid Config.\n", workingPath + "_" + config.getName, run)
                 writeResult("Invalid Config", verfiyDir.getCanonicalPath + "/" + config.getName + ".result")
                 true
             } else if (refTest._1) {
                 writeResult(orgTest.equals(refTest).toString, verfiyDir.getCanonicalPath + "/" + config.getName + ".result")
                 orgTest.equals(refTest)
             } else {
-                writeError("Refactor build failed!", workingPath, run)
+                writeError("Refactor build failed!\n", workingPath + "_" + config.getName, run)
                 writeResult("Refactor build failed!", verfiyDir.getCanonicalPath + "/" + config.getName + ".result")
                 false
             }
