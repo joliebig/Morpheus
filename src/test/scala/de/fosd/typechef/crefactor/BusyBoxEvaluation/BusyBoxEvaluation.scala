@@ -10,7 +10,6 @@ trait BusyBoxEvaluation extends EvalHelper {
 
     val FORCE_VARIABILITY = true
     val MAX_DEPTH = 27
-
     val amountOfRefactorings = 3
 
     @Test
@@ -39,6 +38,9 @@ object RefactorVerification extends EvalHelper {
                 busyBoxFile.delete()
                 testResult
             }
+
+            // clean dir first
+            runScript("./buildClean.sh", busyBoxPath)
 
             val configBuild = new File(busyBoxPath + ".config")
             copyFile(config, configBuild)
