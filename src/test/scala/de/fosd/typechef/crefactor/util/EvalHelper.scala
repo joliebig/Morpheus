@@ -43,7 +43,7 @@ trait EvalHelper extends Logging {
     /** Maps SingleFeatureExpr Objects to IDs (IDs only known/used in this file) */
     private var featureIDHashmap: Map[SingleFeatureExpr, Int] = null
     /** List of all features found in the currently processed file */
-    private var features: List[SingleFeatureExpr] = allFeatures._1
+    private var features: List[SingleFeatureExpr] = null
 
     // representation of a product configuration that can be dumped into a file
     // and loaded at further runs
@@ -265,7 +265,7 @@ trait EvalHelper extends Logging {
     def readIn(reader: BufferedReader, builder: StringBuilder): String = {
         while (reader.ready()) {
             val line = reader.readLine()
-            builder.append(line)
+            builder.append(line + "\n")
         }
         builder.toString()
     }
