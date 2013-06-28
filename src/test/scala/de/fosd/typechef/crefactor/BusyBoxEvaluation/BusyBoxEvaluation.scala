@@ -29,7 +29,7 @@ object RefactorVerification extends EvalHelper {
             def accept(input: File, file: String): Boolean = file.endsWith(".config")
         })
 
-        configs.forall(config => {
+        val result = configs.map(config => {
             def buildAndTest(busyBoxFile: File, ext: String): (Boolean, String) = {
                 val buildResult = buildBusyBox
                 val testResult = runTest
@@ -73,6 +73,7 @@ object RefactorVerification extends EvalHelper {
             }
 
         })
+        result.forall(_ == true)
     }
 
     def runTest: String = {
