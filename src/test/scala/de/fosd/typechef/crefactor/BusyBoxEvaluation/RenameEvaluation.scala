@@ -32,14 +32,14 @@ class RenameEvaluation extends BusyBoxEvaluation {
 
                 val verify = RefactorVerification.verify(bb_file, 0, fm)
                 var stat2 = result._4
-                stat2 = stat2.::(result._2 && verify)
+                stat2 = stat2.::(result._2 + "\n" + verify)
                 writeStats(stat2, bb_file.getCanonicalPath, 0)
                 verify
             } catch {
                 case e: Exception => {
                     println(e.getMessage)
                     println(e.getStackTrace.mkString("\n"))
-                    writeError(e.getMessage + "\n" + e.getStackTrace.mkString("\n"), bb_file.getCanonicalPath, 0)
+                    writeExeception(e.getMessage + "\n" + e.getStackTrace.mkString("\n"), bb_file.getCanonicalPath, 0)
                     false
                 }
             }
