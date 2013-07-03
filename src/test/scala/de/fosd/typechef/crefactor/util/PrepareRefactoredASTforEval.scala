@@ -79,7 +79,7 @@ object PrepareRefactoredASTforEval extends EvalHelper {
 
         pairWiseConfigs._1.foreach(pairConfig => {
             val enabledFeatures = pairConfig.getTrueSet.filterNot(ft => filterFeatures.contains(ft.feature))
-            writeConfig(enabledFeatures, dir, pairCounter + "pairwise")
+            writeConfig(enabledFeatures, dir, pairCounter + "pairwise.config")
             pairCounter += 1
 
         })
