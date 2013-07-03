@@ -65,7 +65,8 @@ object Verification extends EvalHelper {
                 true
             } else if (refTest._1) {
                 writeResult(orgTest.equals(refTest).toString, resultDir.getCanonicalPath + "/" + config.getName + ".result")
-                orgTest.equals(refTest)
+                val succ = orgTest.equals(refTest)
+                if (!succ) writeError("Test failed!\n", resultDir.getCanonicalPath + "/" + config.getName, run)
             } else {
                 writeError("Refactor build failed!\n", resultDir.getCanonicalPath + "/" + config.getName, run)
                 writeResult("Refactor build failed!", resultDir.getCanonicalPath + "/" + config.getName + ".result")
@@ -73,7 +74,7 @@ object Verification extends EvalHelper {
             }
 
         })
-        result.forall(_ == true)
+        !result.contains(false)
     }
 
     def runTest: String = {
