@@ -46,13 +46,18 @@ class Morpheus(ast: AST, fm: FeatureModel, file: File) extends Observable with C
     def getFile = file
 }
 
-object Parse {
+object Parser {
 
-    /*
-    def parse(args: Array[String]): (AST, FeatureModel) = {
-        Frontend.main(args)
-        (Frontend.getAST, Frontend.getFeatureModel)
-    } */
+    def getDefaultTypeChefArguments(file: String, systemProperties: String, includeHeader: String, includeDir: String, featureModel: String) =
+        Array(file, "-c", systemProperties, "-x", "CONFIG_", "--include", includeHeader,
+            "-I", includeDir, "--featureModelFExpr", featureModel, "--debugInterface", "--recordTiming", "--lexNoStdout",
+            "--parserstatistics", "-U", "HAVE_LIBDMALLOC", "-DCONFIG_FIND", "-U", "CONFIG_FEATURE_WGET_LONG_OPTIONS",
+            "-U", "ENABLE_NC_110_COMPAT", "-U", "CONFIG_EXTRA_COMPAT", "-D_GNU_SOURCE")
+
+    def parse(file: String, systemProperties: String, includeHeader: String, includeDir: String, featureModel: String): (AST, FeatureModel) = {
+        val args = getDefaultTypeChefArguments(file, systemProperties, includeHeader, includeDir, featureModel)
+        parse(args)
+    }
 
     def parse(args: Array[String]): (AST, FeatureModel) = {
         // Parsing Frontend is adapted by the original typechef frontend
@@ -70,22 +75,11 @@ object Parse {
         processFile(opt)
     }
 
-    def parse(file: String, systemProperties: String, includeHeader: String, includeDir: String, featureModel: String): (AST, FeatureModel) = {
-        val args = getDefaultTypeChefArguments(file, systemProperties, includeHeader, includeDir, featureModel)
-        parse(args)
-    }
-
-    def getDefaultTypeChefArguments(file: String, systemProperties: String, includeHeader: String, includeDir: String, featureModel: String) =
-        Array(file, "-c", systemProperties, "-x", "CONFIG_", "--include", includeHeader,
-            "-I", includeDir, "--featureModelFExpr", featureModel, "--debugInterface", "--recordTiming", "--lexNoStdout",
-            "--parserstatistics", "-U", "HAVE_LIBDMALLOC", "-DCONFIG_FIND", "-U", "CONFIG_FEATURE_WGET_LONG_OPTIONS",
-            "-U", "ENABLE_NC_110_COMPAT", "-U", "CONFIG_EXTRA_COMPAT", "-D_GNU_SOURCE")
-
     private def processFile(opt: FrontendOptions): (AST, FeatureModel) = {
         val errorXML = new ErrorXML(opt.getErrorXMLFile)
         opt.setRenderParserError(errorXML.renderParserError)
 
-        val fm = opt.getLexerFeatureModel().and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
+        val fm = opt.getLexerFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
         opt.setFeatureModel(fm) //otherwise the lexer does not get the updated feature model with file presence conditions
 
         if (!opt.getFilePresenceCondition.isSatisfiable(fm)) {
@@ -96,10 +90,8 @@ object Parse {
         var ast: AST = null
         var featureModel: FeatureModel = null
         if (opt.reuseAST && opt.parse && new File(opt.getSerializedASTFilename).exists()) {
-            println("loading AST.")
             ast = loadSerializedAST(opt.getSerializedASTFilename)
-            if (ast == null)
-                println("... failed reading AST\n")
+            if (ast == null) println("... failed reading AST\n")
         }
 
         val in = if (ast == null) lex(opt) else null
@@ -111,8 +103,7 @@ object Parse {
                 ast = parserMain.parserMain(in, opt)
             }
 
-            if (ast != null)
-                featureModel = opt.getTypeSystemFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
+            if (ast != null) featureModel = opt.getTypeSystemFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
             errorXML.write()
         }
 

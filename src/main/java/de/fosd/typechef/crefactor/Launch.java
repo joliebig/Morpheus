@@ -61,7 +61,7 @@ public final class Launch {
 
                 final ThreadMXBean tb = ManagementFactory.getThreadMXBean();
                 final long parseStart = tb.getCurrentThreadCpuTime();
-                final AST ast = Parse.parse(typeChefConfig)._1();
+                final AST ast = Parser$.parse(typeChefConfig)._1();
                 logger.info("Parsing duration: " + (tb.getCurrentThreadCpuTime() - parseStart) / 1000000 + "ms");
 
                 if (ast == null) {

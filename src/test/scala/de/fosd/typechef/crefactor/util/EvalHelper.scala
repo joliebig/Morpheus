@@ -5,7 +5,7 @@ import de.fosd.typechef.parser.c.{PrettyPrinter, AST}
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr, SingleFeatureExpr, FeatureModel}
 import java.util.regex.Pattern
 import scala.io.Source
-import de.fosd.typechef.crefactor.{Parse, Logging}
+import de.fosd.typechef.crefactor.{Parser, Logging}
 import java.util.IdentityHashMap
 import java.util
 import de.fosd.typechef.parser.c.GnuAsmExpr
@@ -352,7 +352,7 @@ trait EvalHelper extends Logging {
         result
     }
 
-    def parse(file: File): (AST, FeatureModel) = Parse.parse(file.getAbsolutePath, systemProperties, includeHeader, includeDir, featureModel)
+    def parse(file: File): (AST, FeatureModel) = Parser.parse(file.getAbsolutePath, systemProperties, includeHeader, includeDir, featureModel)
 
     def getAllRelevantIds(a: Any): List[Id] = {
         a match {
