@@ -46,7 +46,7 @@ class Morpheus(ast: AST, fm: FeatureModel, file: File) extends Observable with C
     def getFile = file
 }
 
-object Parser {
+object MorphFrontend {
 
     def getDefaultTypeChefArguments(file: String, systemProperties: String, includeHeader: String, includeDir: String, featureModel: String) =
         Array(file, "-c", systemProperties, "-x", "CONFIG_", "--include", includeHeader,
@@ -60,7 +60,7 @@ object Parser {
     }
 
     def parse(args: Array[String]): (AST, FeatureModel) = {
-        // Parsing Frontend is adapted by the original typechef frontend
+        // Parsing MorphFrontend is adapted by the original typechef frontend
         val opt = new FrontendOptionsWithConfigFiles()
 
         try {

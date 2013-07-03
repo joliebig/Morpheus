@@ -40,7 +40,7 @@ object PrepareRefactoredASTforEval extends EvalHelper {
         })
     }
 
-    def prepare(refactored: AST, fm: FeatureModel, originalFilePath: String, affectedFeatures: List[FeatureExpr], run: Int) {
+    def makeConfigs(refactored: AST, fm: FeatureModel, originalFilePath: String, affectedFeatures: List[FeatureExpr], run: Int) {
         val dir = getResultDir(originalFilePath, run)
         val path = dir.getCanonicalPath + File.separatorChar + getFileName(originalFilePath)
 
@@ -49,8 +49,41 @@ object PrepareRefactoredASTforEval extends EvalHelper {
         val configRes = getClass.getResource("/busybox_Configs/")
         val configs = new File(configRes.getFile)
 
-        // val pairWiseConfigs = loadConfigurationsFromCSVFile(new File(pairWiseFeaturesFile), new File(featureModel_DIMACS), List[SingleFeatureExpr](), fm)
-        // println(pairWiseConfigs)
+        val singleFeatures = affectedFeatures.flatMap(expr => {
+            expr.equivalentTo(FeatureExprFactory.True) match {
+                case true => None
+                case false => expr.collectDistinctFeatureObjects.toList
+            }
+        })
+
+        initializeFeatureList(refactored)
+        val pairWiseConfigs = loadConfigurationsFromCSVFile(new File(pairWiseFeaturesFile), new File(featureModel_DIMACS), features, fm, "CONFIG_")
+
+        println(pairWiseConfigs._1.head.getTrueSet)
+
+        if (!singleFeatures.isEmpty) {
+
+            pairWiseConfigs._1.foreach(x => println(x.getFalseSet.size))
+            pairWiseConfigs._1.distinct.foreach(println(_))
+            println(pairWiseConfigs._2)
+            println(singleFeatures)
+        }
+
+        var pairCounter = 0
+
+        /*
+        val genPairConfigs = pairWiseConfigs._1.map(pairConfig => {
+            val enabledFeatures = pairConfig.getTrueSet.toList
+            ("pairwise" + pairCounter, generateConfigsWithAffectedFeatures(enabledFeatures, affectedFeatures, fm))
+        })   */
+
+        pairWiseConfigs._1.foreach(pairConfig => {
+            val enabledFeatures = pairConfig.getTrueSet.filterNot(ft => filterFeatures.contains(ft.feature))
+            writeConfig(enabledFeatures, dir, pairCounter + "pairwise")
+            pairCounter += 1
+
+        })
+
 
         val generatedConfigs = configs.listFiles().map(config => {
             val enabledFeatures = getEnabledFeaturesFromConfigFile(fm, config)
