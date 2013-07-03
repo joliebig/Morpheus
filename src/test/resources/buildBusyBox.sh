@@ -6,7 +6,7 @@ echo "Failure_Timeout";
 kill $mainpid) &
 watchdogpid=$!
 
-make -j 8
+make -j 3
 
 RETVAL=$?
 [ $RETVAL -eq 0 ] && echo "Success_Build"

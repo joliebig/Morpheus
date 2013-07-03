@@ -5,8 +5,7 @@ import de.fosd.typechef.parser.c.{PrettyPrinter, AST}
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr, SingleFeatureExpr, FeatureModel}
 import java.util.regex.Pattern
 import scala.io.Source
-import de.fosd.typechef.crefactor.Logging
-import de.fosd.typechef.Frontend
+import de.fosd.typechef.crefactor.{Parse, Logging}
 import java.util.IdentityHashMap
 import java.util
 import de.fosd.typechef.parser.c.GnuAsmExpr
@@ -41,9 +40,9 @@ trait EvalHelper extends Logging {
      */
 
     /** Maps SingleFeatureExpr Objects to IDs (IDs only known/used in this file) */
-    private var featureIDHashmap: Map[SingleFeatureExpr, Int] = null
+    var featureIDHashmap: Map[SingleFeatureExpr, Int] = null
     /** List of all features found in the currently processed file */
-    private var features: List[SingleFeatureExpr] = null
+    var features: List[SingleFeatureExpr] = null
 
     // representation of a product configuration that can be dumped into a file
     // and loaded at further runs
@@ -353,11 +352,7 @@ trait EvalHelper extends Logging {
         result
     }
 
-    def parse(file: File): (AST, FeatureModel) = {
-        def getTypeChefArguments(file: String) = Array(file, "-c", systemProperties, "-x", "CONFIG_", "--include", includeHeader, "-I", includeDir, "--featureModelFExpr", featureModel, "--debugInterface", "--recordTiming", "--lexNoStdout", "--parserstatistics", "-U", "HAVE_LIBDMALLOC", "-DCONFIG_FIND", "-U", "CONFIG_FEATURE_WGET_LONG_OPTIONS", "-U", "ENABLE_NC_110_COMPAT", "-U", "CONFIG_EXTRA_COMPAT", "-D_GNU_SOURCE")
-        Frontend.main(getTypeChefArguments(file.getAbsolutePath))
-        (Frontend.getAST, Frontend.getFeatureModel)
-    }
+    def parse(file: File): (AST, FeatureModel) = Parse.parse(file.getAbsolutePath, systemProperties, includeHeader, includeDir, featureModel)
 
     def getAllRelevantIds(a: Any): List[Id] = {
         a match {
