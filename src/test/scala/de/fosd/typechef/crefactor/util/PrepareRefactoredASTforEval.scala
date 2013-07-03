@@ -12,46 +12,20 @@ object PrepareRefactoredASTforEval extends EvalHelper {
         // default start config, it all starts from this config
         val startConfig = List(enabledFeatures)
 
+        // iterate over every affected feature and activate or deactivate it on all configs and generated configes
         singleAffectedFeatures.foldLeft(startConfig)((configs, singleAffectFeature) => {
             configs ::: configs.map(config => {
-                if (config.contains(singleAffectFeature)) config.diff(List(singleAffectFeature))
-                else singleAffectFeature :: config
+                var generatedConfig: List[SingleFeatureExpr] = List()
+                if (config.contains(singleAffectFeature)) generatedConfig = config.diff(List(singleAffectFeature))
+                else generatedConfig = singleAffectFeature :: config
+
+                val generatedFeatureExpr = generatedConfig.foldLeft(FeatureExprFactory.True)((fExpr, singleFxpr) => {
+                    fExpr.and(singleFxpr)
+                })
+
+                if (generatedFeatureExpr.isSatisfiable(fm)) generatedConfig
+                else List()
             }).distinct
-            // configs ::: genConfigurations
-        })
-    }
-
-
-    private def generateConfigsWithAffectedFeatures(enabledFeatures: List[SingleFeatureExpr], affectedFeatures: List[FeatureExpr], fm: FeatureModel): List[List[SingleFeatureExpr]] = {
-
-        def generateConfig(affectedFeature: SingleFeatureExpr, enabledFeatures: List[SingleFeatureExpr], model: FeatureModel): List[SingleFeatureExpr] = {
-            var found = false
-            val config = enabledFeatures.foldLeft((List[SingleFeatureExpr](), FeatureExprFactory.True))((current, feature) => {
-                if (feature.equals(affectedFeature)) {
-                    found = true
-                    current
-                } else {
-                    val currentConf = current._1.::(feature)
-                    val expr = current._2.and(feature)
-                    (currentConf, expr)
-                }
-            })
-            if (config._2.isSatisfiable(fm)) config._1
-            else List()
-        }
-
-        affectedFeatures.flatMap(expr => {
-            val singleFeatures = expr.collectDistinctFeatureObjects.filterNot(ft => filterFeatures.contains(ft.feature))
-
-            // default start config, it all starts from this config
-            val startConfig = List(enabledFeatures)
-
-            singleFeatures.foldLeft(startConfig)((configs, singleFt) =>
-                configs.foldLeft(configs)((workingConfigs, config) => {
-                    val current = generateConfig(singleFt, config, fm)
-                    if (current.isEmpty) workingConfigs
-                    else workingConfigs.::(current)
-                }))
         })
     }
 
@@ -64,13 +38,6 @@ object PrepareRefactoredASTforEval extends EvalHelper {
         val configRes = getClass.getResource("/busybox_Configs/")
         val configs = new File(configRes.getFile)
 
-        val singleFeatures = affectedFeatures.flatMap(expr => {
-            expr.equivalentTo(FeatureExprFactory.True) match {
-                case true => None
-                case false => expr.collectDistinctFeatureObjects.toList
-            }
-        })
-
         initializeFeatureList(refactored)
         val pairWiseConfigs = loadConfigurationsFromCSVFile(new File(pairWiseFeaturesFile), new File(featureModel_DIMACS), features, fm, "CONFIG_")
 
@@ -80,7 +47,6 @@ object PrepareRefactoredASTforEval extends EvalHelper {
             val enabledFeatures = pairConfig.getTrueSet.filterNot(ft => filterFeatures.contains(ft.feature))
             writeConfig(enabledFeatures, dir, pairCounter + "pairwise.config")
             pairCounter += 1
-
         })
 
 
