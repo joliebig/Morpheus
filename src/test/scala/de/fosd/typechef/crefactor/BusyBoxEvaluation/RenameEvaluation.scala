@@ -49,22 +49,31 @@ class RenameEvaluation extends BusyBoxEvaluation {
     }
 
     def applyRefactor(morpheus: Morpheus, stat: List[Any]): (AST, Boolean, List[FeatureExpr], List[Any]) = {
-        val ids = morpheus.getUseDeclMap.values().toArray(Array[List[Id]]()).par.foldLeft(List[Id]())((list, entry) => list ::: entry).toList
-        def getVariableIdForRename(depth: Int = 0): (Id, Int, List[FeatureExpr]) = {
-            val id = ids.apply((math.random * ids.size).toInt)
+        def getVariableIdToRename: (Id, Int, List[FeatureExpr]) = {
+            val ids = morpheus.getUseDeclMap.values().toArray(Array[List[Id]]()).par.foldLeft(List[Id]())((list, entry) => list ::: entry)
 
-            val amountOfIds = RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).length
-            val features = RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).map(x => morpheus.getASTEnv.featureExpr(x))
-            // check recursive only for variable ids
-            val writeAble = RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).forall(i => new File(i.getFile.get.replaceFirst("file ", "")).canWrite)
-            if (!writeAble || id.name.equals("main")) getVariableIdForRename(depth)
-            else if ((features.distinct.length == 1) && features.contains("True") && FORCE_VARIABILITY && (depth < MAX_DEPTH)) getVariableIdForRename(depth + 1)
-            else (id, amountOfIds, features)
+            val writeableIds = ids.par.filter(id =>
+                RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).forall(i => new File(i.getFile.get.replaceFirst("file ", "")).canWrite)
+            )
+
+            val variabaleIds = writeableIds.par.filter(id => {
+                val associatedIds = RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap)
+                val features = associatedIds.map(x => morpheus.getASTEnv.featureExpr(x))
+
+                if (id.name.equals("main")) false
+                else !((features.distinct.length == 1) && features.contains("True"))
+            })
+
+            var id: Id = null
+
+            if (!variabaleIds.isEmpty) id = variabaleIds.apply((math.random * variabaleIds.size).toInt)
+            else id = writeableIds.apply((math.random * writeableIds.size).toInt)
+
+            val associatedIds = RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap)
+            (id, associatedIds.length, associatedIds.map(morpheus.getASTEnv.featureExpr(_)).distinct)
         }
 
-
-
-        val toRename = getVariableIdForRename()
+        val toRename = getVariableIdToRename
         val id = toRename._1
         val features = toRename._3
 
