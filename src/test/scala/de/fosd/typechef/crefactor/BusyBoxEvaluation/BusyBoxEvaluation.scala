@@ -41,7 +41,7 @@ object Verification extends EvalHelper {
             }
 
             // clean dir first
-            // runScript("./buildClean.sh", busyBoxPath)
+            runScript("./buildClean.sh", busyBoxPath)
 
             val configBuild = new File(busyBoxPath + ".config")
             copyFile(config, configBuild)
@@ -81,7 +81,7 @@ object Verification extends EvalHelper {
     def runTest: String = {
         val result = runScript("./runtest", busyBoxPath + "testsuite/")
         val stream = streamsToString(result)
-        stream._1 + "\n" + stream._2
+        stream._1
     }
 
     def buildBusyBox: (Boolean, String, String) = {
