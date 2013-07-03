@@ -59,23 +59,7 @@ object PrepareRefactoredASTforEval extends EvalHelper {
         initializeFeatureList(refactored)
         val pairWiseConfigs = loadConfigurationsFromCSVFile(new File(pairWiseFeaturesFile), new File(featureModel_DIMACS), features, fm, "CONFIG_")
 
-        println(pairWiseConfigs._1.head.getTrueSet)
-
-        if (!singleFeatures.isEmpty) {
-
-            pairWiseConfigs._1.foreach(x => println(x.getFalseSet.size))
-            pairWiseConfigs._1.distinct.foreach(println(_))
-            println(pairWiseConfigs._2)
-            println(singleFeatures)
-        }
-
         var pairCounter = 0
-
-        /*
-        val genPairConfigs = pairWiseConfigs._1.map(pairConfig => {
-            val enabledFeatures = pairConfig.getTrueSet.toList
-            ("pairwise" + pairCounter, generateConfigsWithAffectedFeatures(enabledFeatures, affectedFeatures, fm))
-        })   */
 
         pairWiseConfigs._1.foreach(pairConfig => {
             val enabledFeatures = pairConfig.getTrueSet.filterNot(ft => filterFeatures.contains(ft.feature))
@@ -84,7 +68,7 @@ object PrepareRefactoredASTforEval extends EvalHelper {
 
         })
 
-        /*
+
         val generatedConfigs = configs.listFiles().map(config => {
             val enabledFeatures = getEnabledFeaturesFromConfigFile(fm, config)
             (config, generateConfigsWithAffectedFeatures(enabledFeatures, affectedFeatures, fm))
@@ -97,7 +81,7 @@ object PrepareRefactoredASTforEval extends EvalHelper {
                 writeConfig(genConfig, dir, configNumber + name)
                 configNumber += 1
             })
-        }) */
+        })
     }
 
 }
