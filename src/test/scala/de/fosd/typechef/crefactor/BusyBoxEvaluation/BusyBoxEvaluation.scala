@@ -67,6 +67,7 @@ object Verification extends EvalHelper {
                 writeResult(orgTest.equals(refTest).toString, resultDir.getCanonicalPath + "/" + config.getName + ".result")
                 val succ = orgTest.equals(refTest)
                 if (!succ) writeError("Test failed!\n", resultDir.getCanonicalPath + "/" + config.getName, run)
+                succ
             } else {
                 writeError("Refactor build failed!\n", resultDir.getCanonicalPath + "/" + config.getName, run)
                 writeResult("Refactor build failed!", resultDir.getCanonicalPath + "/" + config.getName + ".result")
