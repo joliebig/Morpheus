@@ -17,15 +17,15 @@ trait BusyBoxEvaluation extends EvalHelper {
 }
 
 
-object RefactorVerification extends EvalHelper {
+object Verification extends EvalHelper {
 
     def verify(bbFile: File, run: Int, fm: FeatureModel): Boolean = {
         val workingPath = bbFile.getCanonicalPath
         val orgFile = new File(bbFile.getCanonicalPath.replaceAll("busybox-1.18.5", "busybox-1.18.5_untouched"))
         val refFile = new File(bbFile.getCanonicalPath.replaceAll("busybox-1.18.5", "result") + "/" + run + "/" + bbFile.getName)
-        val verfiyDir = new File(bbFile.getCanonicalPath.replaceAll("busybox-1.18.5", "result") + "/" + run + "/")
+        val resultDir = new File(bbFile.getCanonicalPath.replaceAll("busybox-1.18.5", "result") + "/" + run + "/")
 
-        val configs = verfiyDir.listFiles(new FilenameFilter {
+        val configs = resultDir.listFiles(new FilenameFilter {
             def accept(input: File, file: String): Boolean = file.endsWith(".config")
         })
 
@@ -33,15 +33,15 @@ object RefactorVerification extends EvalHelper {
             def buildAndTest(busyBoxFile: File, ext: String): (Boolean, String) = {
                 val buildResult = buildBusyBox
                 val testResult = runTest
-                writeResult(buildResult._2, verfiyDir.getCanonicalPath + "/" + config.getName + ext + ".build")
-                if (!buildResult._1) writeResult(buildResult._3, verfiyDir.getCanonicalPath + "/" + config.getName + ext + ".buildErr")
-                writeResult(testResult, verfiyDir.getCanonicalPath + "/" + config.getName + ext + ".test")
+                writeResult(buildResult._2, resultDir.getCanonicalPath + "/" + config.getName + ext + ".build")
+                if (!buildResult._1) writeResult(buildResult._3, resultDir.getCanonicalPath + "/" + config.getName + ext + ".buildErr")
+                writeResult(testResult, resultDir.getCanonicalPath + "/" + config.getName + ext + ".test")
                 busyBoxFile.delete()
                 (buildResult._1, testResult)
             }
 
             // clean dir first
-            runScript("./buildClean.sh", busyBoxPath)
+            // runScript("./buildClean.sh", busyBoxPath)
 
             val configBuild = new File(busyBoxPath + ".config")
             copyFile(config, configBuild)
@@ -60,15 +60,15 @@ object RefactorVerification extends EvalHelper {
             configBuild.delete()
 
             if (!orgTest._1) {
-                writeError("Invalid Config.\n", verfiyDir.getCanonicalPath + "/" + config.getName, run)
-                writeResult("Invalid Config", verfiyDir.getCanonicalPath + "/" + config.getName + ".result")
+                writeError("Invalid Config.\n", resultDir.getCanonicalPath + "/" + config.getName, run)
+                writeResult("Invalid Config", resultDir.getCanonicalPath + "/" + config.getName + ".result")
                 true
             } else if (refTest._1) {
-                writeResult(orgTest.equals(refTest).toString, verfiyDir.getCanonicalPath + "/" + config.getName + ".result")
+                writeResult(orgTest.equals(refTest).toString, resultDir.getCanonicalPath + "/" + config.getName + ".result")
                 orgTest.equals(refTest)
             } else {
-                writeError("Refactor build failed!\n", verfiyDir.getCanonicalPath + "/" + config.getName, run)
-                writeResult("Refactor build failed!", verfiyDir.getCanonicalPath + "/" + config.getName + ".result")
+                writeError("Refactor build failed!\n", resultDir.getCanonicalPath + "/" + config.getName, run)
+                writeResult("Refactor build failed!", resultDir.getCanonicalPath + "/" + config.getName + ".result")
                 false
             }
 

@@ -5,7 +5,7 @@ import de.fosd.typechef.parser.c.{PrettyPrinter, AST}
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr, SingleFeatureExpr, FeatureModel}
 import java.util.regex.Pattern
 import scala.io.Source
-import de.fosd.typechef.crefactor.{Parser, Logging}
+import de.fosd.typechef.crefactor.{MorphFrontend, Logging}
 import java.util.IdentityHashMap
 import java.util
 import de.fosd.typechef.parser.c.GnuAsmExpr
@@ -23,7 +23,7 @@ trait EvalHelper extends Logging {
     val busyBoxPathUntouched = completeBusyBoxPath + caseStudyPath + "/busybox-1.18.5_untouched/"
     val result = "/result/"
 
-    val filterFeatures = List("def(CONFIG_SELINUX)", "CONFIG_SELINUX")
+    val filterFeatures = List("def(CONFIG_SELINUX)", "CONFIG_SELINUX", "def(CONFIG_TCPSVD)", "CONFIG_TCPSVD", "def(CONFIG_UDPSVD)", "CONFIG_UDPSVD")
     val allFeaturesFile = getClass.getResource("/BusyBoxAllFeatures.config").getFile
     val allFeatures = getAllFeaturesFromConfigFile(null, new File(allFeaturesFile))
     val pairWiseFeaturesFile = getClass.getResource("/busyBox_pairwise.configs").getFile
@@ -325,6 +325,8 @@ trait EvalHelper extends Logging {
         out.close()
     }
 
+    def writeConfig(config: Set[SingleFeatureExpr], dir: File, name: String) = writeConfig(config.toList, dir, name)
+
     def writeConfig(config: List[SingleFeatureExpr], dir: File, name: String) {
         val out = new java.io.FileWriter(dir.getCanonicalPath + File.separatorChar + name)
         val disabledFeatures = allFeatures._1.diff(config)
@@ -352,7 +354,7 @@ trait EvalHelper extends Logging {
         result
     }
 
-    def parse(file: File): (AST, FeatureModel) = Parser.parse(file.getAbsolutePath, systemProperties, includeHeader, includeDir, featureModel)
+    def parse(file: File): (AST, FeatureModel) = MorphFrontend.parse(file.getAbsolutePath, systemProperties, includeHeader, includeDir, featureModel)
 
     def getAllRelevantIds(a: Any): List[Id] = {
         a match {
@@ -366,6 +368,18 @@ trait EvalHelper extends Logging {
 
     def analsyeDeclUse(map: IdentityHashMap[Id, List[Id]]): List[Int] = map.keySet().toArray(Array[Id]()).map(key => map.get(key).length).toList
 
+    def getBusyBoxFiles: List[String] = {
+        def readIn(reader: BufferedReader): List[String] = {
+            reader.readLine() match {
+                case null => List()
+                case x => List(x + ".c").:::(readIn(reader))
+            }
+        }
+        val reader = new BufferedReader(new FileReader(busyBoxFiles))
+        val files = readIn(reader)
+        reader.close()
+        files
+    }
 
     def getEnabledFeaturesFromConfigFile(fm: FeatureModel, file: File): List[SingleFeatureExpr] = {
         val correctFeatureModelIncompatibility = false
@@ -429,19 +443,6 @@ trait EvalHelper extends Logging {
             }
         }
         trueFeatures.toList
-    }
-
-    def getBusyBoxFiles: List[String] = {
-        def readIn(reader: BufferedReader): List[String] = {
-            reader.readLine() match {
-                case null => List()
-                case x => List(x + ".c").:::(readIn(reader))
-            }
-        }
-        val reader = new BufferedReader(new FileReader(busyBoxFiles))
-        val files = readIn(reader)
-        reader.close()
-        files
     }
 
     def getAllFeaturesFromConfigFile(fm: FeatureModel, file: File): (List[SingleFeatureExpr], IdentityHashMap[String, String]) = {
