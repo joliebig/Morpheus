@@ -6,8 +6,8 @@ import java.io.File
 
 object PrepareRefactoredASTforEval extends EvalHelper {
 
-    private def genAllConfigVariantsForFeatures(enabledFeatures: List[SingleFeatureExpr], affectedFeatures: List[FeatureExpr], fm: FeatureModel): List[List[SingleFeatureExpr]] = {
-
+    private def genAllConfigVariantsForFeatures(enabledFeatures: List[SingleFeatureExpr], affectedFeatures: List[FeatureExpr], fm: FeatureModel, dir: File): List[List[SingleFeatureExpr]] = {
+        var wrongCounter = 0
         val singleAffectedFeatures = affectedFeatures.flatMap(_.collectDistinctFeatureObjects.filterNot(ft => filterFeatures.contains(ft.feature))).distinct
         // default start config, it all starts from this config
         val startConfig = List(enabledFeatures)
@@ -25,7 +25,8 @@ object PrepareRefactoredASTforEval extends EvalHelper {
 
                 if (generatedFeatureExpr.isSatisfiable(fm)) generatedConfig
                 else {
-                    println("Invalid Config!")
+                    writeConfig(generatedConfig, dir, wrongCounter + ".invalidConfig")
+                    wrongCounter += 1
                     List()
                 }
             }).distinct
@@ -52,7 +53,7 @@ object PrepareRefactoredASTforEval extends EvalHelper {
 
         val generatedConfigs = configs.listFiles().map(config => {
             val enabledFeatures = getEnabledFeaturesFromConfigFile(fm, config)
-            (config, genAllConfigVariantsForFeatures(enabledFeatures, affectedFeatures, fm))
+            (config, genAllConfigVariantsForFeatures(enabledFeatures, affectedFeatures, fm, dir))
         })
 
         generatedConfigs.foreach(genConfigs => {
