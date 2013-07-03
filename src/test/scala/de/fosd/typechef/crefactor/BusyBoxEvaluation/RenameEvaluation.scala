@@ -28,7 +28,12 @@ class RenameEvaluation extends BusyBoxEvaluation {
                 val parseTypeCheckTime = parseTypeCheckMs.getTime
                 stats ::= parseTypeCheckTime
                 val result = applyRefactor(morpheus, stats)
-                if (result._2) PrepareRefactoredASTforEval.makeConfigs(result._1, morpheus.getFeatureModel, bb_file.getCanonicalPath, result._3, 0)
+                if (result._2) {
+                    val dir = getResultDir(bb_file.getCanonicalPath, 0)
+                    val path = dir.getCanonicalPath + File.separatorChar + getFileName(bb_file.getCanonicalPath)
+                    writeAST(result._1, path)
+                    PrepareRefactoredASTforEval.makeConfigs(result._1, morpheus.getFeatureModel, bb_file.getCanonicalPath, result._3, 0)
+                }
 
                 val verify = Verification.verify(bb_file, 0, fm)
                 var stat2 = result._4

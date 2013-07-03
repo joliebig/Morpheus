@@ -24,16 +24,16 @@ object PrepareRefactoredASTforEval extends EvalHelper {
                 })
 
                 if (generatedFeatureExpr.isSatisfiable(fm)) generatedConfig
-                else List()
+                else {
+                    println("Invalid Config!")
+                    List()
+                }
             }).distinct
         })
     }
 
     def makeConfigs(refactored: AST, fm: FeatureModel, originalFilePath: String, affectedFeatures: List[FeatureExpr], run: Int) {
         val dir = getResultDir(originalFilePath, run)
-        val path = dir.getCanonicalPath + File.separatorChar + getFileName(originalFilePath)
-
-        writeAST(refactored, path)
 
         val configRes = getClass.getResource("/busybox_Configs/")
         val configs = new File(configRes.getFile)
