@@ -6,6 +6,21 @@ import java.io.File
 
 object PrepareRefactoredASTforEval extends EvalHelper {
 
+    private def genAllConfigVariantsForFeatures(enabledFeatures: List[SingleFeatureExpr], affectedFeatures: List[FeatureExpr], fm: FeatureModel): List[List[SingleFeatureExpr]] = {
+
+        val singleAffectedFeatures = affectedFeatures.flatMap(_.collectDistinctFeatureObjects.filterNot(ft => filterFeatures.contains(ft.feature))).distinct
+        // default start config, it all starts from this config
+        val startConfig = List(enabledFeatures)
+
+        singleAffectedFeatures.foldLeft(startConfig)((configs, singleAffectFeature) => {
+            configs ::: configs.map(config => {
+                if (config.contains(singleAffectFeature)) config.diff(List(singleAffectFeature))
+                else singleAffectFeature :: config
+            }).distinct
+            // configs ::: genConfigurations
+        })
+    }
+
 
     private def generateConfigsWithAffectedFeatures(enabledFeatures: List[SingleFeatureExpr], affectedFeatures: List[FeatureExpr], fm: FeatureModel): List[List[SingleFeatureExpr]] = {
 
@@ -71,7 +86,7 @@ object PrepareRefactoredASTforEval extends EvalHelper {
 
         val generatedConfigs = configs.listFiles().map(config => {
             val enabledFeatures = getEnabledFeaturesFromConfigFile(fm, config)
-            (config, generateConfigsWithAffectedFeatures(enabledFeatures, affectedFeatures, fm))
+            (config, genAllConfigVariantsForFeatures(enabledFeatures, affectedFeatures, fm))
         })
 
         generatedConfigs.foreach(genConfigs => {
