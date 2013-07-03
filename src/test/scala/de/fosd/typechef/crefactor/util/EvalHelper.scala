@@ -325,7 +325,7 @@ trait EvalHelper extends Logging {
         out.close()
     }
 
-    def writeConfig(config: Set[SingleFeatureExpr], dir: File, name: String) = writeConfig(config.toList, dir, name)
+    def writeConfig(config: Set[SingleFeatureExpr], dir: File, name: String): Unit = writeConfig(config.toList, dir, name)
 
     def writeConfig(config: List[SingleFeatureExpr], dir: File, name: String) {
         val out = new java.io.FileWriter(dir.getCanonicalPath + File.separatorChar + name)
