@@ -94,13 +94,11 @@ object Parser {
             if (ast == null) println("... failed reading AST\n")
         }
 
-        val in = if (ast == null) lex(opt) else null
-
         if (opt.parse) {
             if (ast == null) {
                 //no parsing and serialization if read serialized ast
                 val parserMain = new ParserMain(new CParser(fm))
-                ast = parserMain.parserMain(in, opt)
+                ast = parserMain.parserMain(lex(opt), opt)
             }
 
             if (ast != null) featureModel = opt.getTypeSystemFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
