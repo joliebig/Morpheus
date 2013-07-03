@@ -84,7 +84,7 @@ object PrepareRefactoredASTforEval extends EvalHelper {
 
         })
 
-
+        /*
         val generatedConfigs = configs.listFiles().map(config => {
             val enabledFeatures = getEnabledFeaturesFromConfigFile(fm, config)
             (config, generateConfigsWithAffectedFeatures(enabledFeatures, affectedFeatures, fm))
@@ -97,7 +97,7 @@ object PrepareRefactoredASTforEval extends EvalHelper {
                 writeConfig(genConfig, dir, configNumber + name)
                 configNumber += 1
             })
-        })
+        }) */
     }
 
 }
