@@ -83,7 +83,7 @@ class RenameEvaluation extends BusyBoxEvaluation {
                 val features = associatedIds.map(x => morpheus.getASTEnv.featureExpr(x))
 
                 if (id.name.equals("main")) false
-                else !(features.distinct.length == 1 && features.contains("True"))
+                else !(features.distinct.length == 1 && features.distinct.contains("True"))
             })
 
             var id: Id = null
