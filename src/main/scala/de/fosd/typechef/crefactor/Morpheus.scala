@@ -69,7 +69,7 @@ object MorphFrontend {
             case o: OptionException =>
                 println("Invocation error: " + o.getMessage)
                 println("use parameter --help for more information.")
-                (null, null)
+                throw o
         }
 
         processFile(opt)

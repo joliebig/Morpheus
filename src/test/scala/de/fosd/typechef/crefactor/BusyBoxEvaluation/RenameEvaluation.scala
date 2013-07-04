@@ -12,7 +12,7 @@ class RenameEvaluation extends BusyBoxEvaluation {
 
     private val REFACTOR_NAME = "refactoredID"
 
-    private val MAX = 3
+    private val MAX = 1
 
 
     @Test
