@@ -3,7 +3,7 @@ package de.fosd.typechef.crefactor.BusyBoxEvaluation
 import org.junit.Test
 import java.io.File
 import de.fosd.typechef.parser.c.{Id, AST}
-import de.fosd.typechef.featureexpr.{FeatureModel, FeatureExpr}
+import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureModel, FeatureExpr}
 import de.fosd.typechef.crefactor.util.{PrepareRefactoredASTforEval, TimeMeasurement}
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.backend.refactor.RenameIdentifier
@@ -83,7 +83,7 @@ class RenameEvaluation extends BusyBoxEvaluation {
                 val features = associatedIds.map(x => morpheus.getASTEnv.featureExpr(x))
 
                 if (id.name.equals("main")) false
-                else !(features.distinct.length == 1 && features.distinct.contains("True"))
+                else !(features.distinct.length == 1 && features.distinct.contains(FeatureExprFactory.True))
             })
 
             var id: Id = null

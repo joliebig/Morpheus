@@ -50,6 +50,9 @@ object Verification extends EvalHelper {
 
             val buildRefFile = new File(workingPath)
 
+            // clean dir first
+            runScript("./buildClean.sh", busyBoxPath)
+
             // Replace original file with refactored file
             copyFile(refFile, buildRefFile)
 
