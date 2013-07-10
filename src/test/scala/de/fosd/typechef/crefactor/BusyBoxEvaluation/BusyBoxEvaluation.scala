@@ -4,9 +4,10 @@ import java.io._
 import de.fosd.typechef.featureexpr.FeatureModel
 import org.junit.Test
 import de.fosd.typechef.crefactor.util.EvalHelper
+import de.fosd.typechef.crewrite.{ConditionalNavigation, ASTNavigation}
 
 
-trait BusyBoxEvaluation extends EvalHelper {
+trait BusyBoxEvaluation extends EvalHelper with ASTNavigation with ConditionalNavigation {
 
     val FORCE_VARIABILITY = true
     val MAX_DEPTH = 27

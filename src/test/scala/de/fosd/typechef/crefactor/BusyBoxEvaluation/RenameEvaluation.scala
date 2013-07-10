@@ -2,11 +2,14 @@ package de.fosd.typechef.crefactor.BusyBoxEvaluation
 
 import org.junit.Test
 import java.io.File
-import de.fosd.typechef.parser.c.{Id, AST}
+import de.fosd.typechef.parser.c._
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureModel, FeatureExpr}
 import de.fosd.typechef.crefactor.util.{PrepareRefactoredASTforEval, TimeMeasurement}
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.backend.refactor.RenameIdentifier
+import de.fosd.typechef.parser.c.Id
+import de.fosd.typechef.parser.c.FunctionDef
+import de.fosd.typechef.parser.c.Declaration
 
 class RenameEvaluation extends BusyBoxEvaluation {
 
@@ -70,27 +73,35 @@ class RenameEvaluation extends BusyBoxEvaluation {
     }
 
     def applyRefactor(morpheus: Morpheus, stat: List[Any]): (AST, Boolean, List[FeatureExpr], List[Any]) = {
-
         def getVariableIdToRename: (Id, Int, List[FeatureExpr]) = {
+            def isValidId(id: Id, morpheus: Morpheus): Boolean = {
+                val isFunc = findPriorASTElem[FunctionDef](id, morpheus.getASTEnv) match {
+                    case None => false
+                    case entry => entry.get.declarator.getId.eq(id)
+                }
+                val isExternalFunc = findPriorASTElem[Declaration](id, morpheus.getASTEnv) match {
+                    case None => false
+                    case entry => entry.get.declSpecs.exists(spec => spec.entry match {
+                        case ExternSpecifier() => true
+                        case _ => false
+                    })
+                }
+                !(id.name.equals("main") || isFunc || isExternalFunc)
+            }
+
             val ids = morpheus.getUseDeclMap.values().toArray(Array[List[Id]]()).par.foldLeft(List[Id]())((list, entry) => list ::: entry)
 
-            val writeableIds = ids.par.filter(id =>
-                RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).forall(i => new File(i.getFile.get.replaceFirst("file ", "")).canWrite)
-            )
+            val writeAbleIds = ids.filter(id =>
+                RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).par.forall(i =>
+                    new File(i.getFile.get.replaceFirst("file ", "")).canWrite && isValidId(i, morpheus)))
 
-            val variabaleIds = writeableIds.par.filter(id => {
+            val variabaleIds = writeAbleIds.par.filter(id => {
                 val associatedIds = RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap)
                 val features = associatedIds.map(x => morpheus.getASTEnv.featureExpr(x))
-
-                if (id.name.equals("main")) false
-                else !(features.distinct.length == 1 && features.distinct.contains(FeatureExprFactory.True))
+                !(features.distinct.length == 1 && features.distinct.contains(FeatureExprFactory.True))
             })
 
-            var id: Id = null
-
-            if (!variabaleIds.isEmpty) id = variabaleIds.apply((math.random * variabaleIds.size).toInt)
-            else id = writeableIds.apply((math.random * writeableIds.size).toInt)
-
+            val id = if (!variabaleIds.isEmpty) variabaleIds.apply((math.random * variabaleIds.size).toInt) else writeAbleIds.apply((math.random * writeAbleIds.size).toInt)
             val associatedIds = RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap)
             (id, associatedIds.length, associatedIds.map(morpheus.getASTEnv.featureExpr(_)).distinct)
         }
