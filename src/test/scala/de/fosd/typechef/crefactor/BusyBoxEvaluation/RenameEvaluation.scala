@@ -63,13 +63,13 @@ class RenameEvaluation extends BusyBoxEvaluation {
                 RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).par.forall(i =>
                     new File(i.getFile.get.replaceFirst("file ", "")).canWrite && isValidId(i, morpheus)))
 
-            val variabaleIds = writeAbleIds.par.filter(id => {
+            val variableIds = writeAbleIds.par.filter(id => {
                 val associatedIds = RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap)
                 val features = associatedIds.map(x => morpheus.getASTEnv.featureExpr(x))
                 !(features.distinct.length == 1 && features.distinct.contains(FeatureExprFactory.True))
             })
 
-            val id = if (!variabaleIds.isEmpty) variabaleIds.apply((math.random * variabaleIds.size).toInt) else writeAbleIds.apply((math.random * writeAbleIds.size).toInt)
+            val id = if (!variableIds.isEmpty) variableIds.apply((math.random * variableIds.size).toInt) else writeAbleIds.apply((math.random * writeAbleIds.size).toInt)
             val associatedIds = RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap)
             (id, associatedIds.length, associatedIds.map(morpheus.getASTEnv.featureExpr(_)).distinct)
         }
