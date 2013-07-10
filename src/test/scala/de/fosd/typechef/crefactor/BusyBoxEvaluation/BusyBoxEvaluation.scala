@@ -3,8 +3,9 @@ package de.fosd.typechef.crefactor.BusyBoxEvaluation
 import java.io._
 import de.fosd.typechef.featureexpr.FeatureModel
 import org.junit.Test
-import de.fosd.typechef.crefactor.util.EvalHelper
+import de.fosd.typechef.crefactor.util.{TimeMeasurement, EvalHelper}
 import de.fosd.typechef.crewrite.{ConditionalNavigation, ASTNavigation}
+import de.fosd.typechef.crefactor.Morpheus
 
 
 trait BusyBoxEvaluation extends EvalHelper with ASTNavigation with ConditionalNavigation {
@@ -12,9 +13,37 @@ trait BusyBoxEvaluation extends EvalHelper with ASTNavigation with ConditionalNa
     val FORCE_VARIABILITY = true
     val MAX_DEPTH = 27
     val amountOfRefactorings = 3
+    val MAX = 1
 
     @Test
-    def evaluate()
+    def evaluate() {
+        val files = getBusyBoxFiles.reverse
+        val refactor = files.map(file => {
+            val bb_file = new File(busyBoxPath + file)
+            try {
+                var stats = List[Any]()
+                val parseTypeCheckMs = new TimeMeasurement
+                val parsed = parse(bb_file)
+                val ast = parsed._1
+                val fm = parsed._2
+                val morpheus = new Morpheus(ast, fm)
+                val parseTypeCheckTime = parseTypeCheckMs.getTime
+                stats ::= parseTypeCheckTime
+                runRefactor(morpheus, stats, bb_file, fm, 0, MAX)
+            } catch {
+                case e: Exception => {
+                    println(e.getMessage)
+                    println(e.getStackTrace.mkString("\n"))
+                    writeExeception(e.getMessage + "\n" + e.getStackTrace.mkString("\n"), bb_file.getCanonicalPath, 0)
+                    false
+                }
+            }
+        })
+        println("Refactor succ: " + refactor.contains(false))
+        refactor.contains(false)
+    }
+
+    def runRefactor(morpheus: Morpheus, stats: List[Any], bb_file: File, fm: FeatureModel, run: Int, max: Int, lastResult: Boolean = true): Boolean
 }
 
 
