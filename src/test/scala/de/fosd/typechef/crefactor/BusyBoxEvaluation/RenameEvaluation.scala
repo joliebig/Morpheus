@@ -1,6 +1,5 @@
 package de.fosd.typechef.crefactor.BusyBoxEvaluation
 
-import org.junit.Test
 import java.io.File
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureModel, FeatureExpr}
@@ -15,64 +14,33 @@ class RenameEvaluation extends BusyBoxEvaluation {
 
     private val REFACTOR_NAME = "refactoredID"
 
-    private val MAX = 1
+    def runRefactor(morpheus: Morpheus, stats: List[Any], bb_file: File, fm: FeatureModel, run: Int, max: Int, lastResult: Boolean = true): Boolean = {
+        if (run >= max) return lastResult
+        try {
+            val result = applyRefactor(morpheus, stats)
+            if (result._2) {
+                val dir = getResultDir(bb_file.getCanonicalPath, run)
+                val path = dir.getCanonicalPath + File.separatorChar + getFileName(bb_file.getCanonicalPath)
+                writeAST(result._1, path)
+                PrepareRefactoredASTforEval.makeConfigs(result._1, morpheus.getFeatureModel, bb_file.getCanonicalPath, result._3, run)
+            }
 
-
-    @Test
-    def evaluate() {
-        def runRefactor(morpheus: Morpheus, stats: List[Any], bb_file: File, fm: FeatureModel, run: Int, max: Int, lastResult: Boolean = true): Boolean = {
-            if (run >= max) return lastResult
-            try {
-                val result = applyRefactor(morpheus, stats)
-                if (result._2) {
-                    val dir = getResultDir(bb_file.getCanonicalPath, run)
-                    val path = dir.getCanonicalPath + File.separatorChar + getFileName(bb_file.getCanonicalPath)
-                    writeAST(result._1, path)
-                    PrepareRefactoredASTforEval.makeConfigs(result._1, morpheus.getFeatureModel, bb_file.getCanonicalPath, result._3, run)
-                }
-
-                val verify = Verification.verify(bb_file, run, fm)
-                var stat2 = result._4
-                stat2 = stat2.::(result._2 + "\n" + verify)
-                writeStats(stat2, bb_file.getCanonicalPath, run)
-                verify && runRefactor(morpheus, stats, bb_file, fm, run + 1, MAX)
-            } catch {
-                case e: Exception => {
-                    println(e.getMessage)
-                    println(e.getStackTrace.mkString("\n"))
-                    writeExeception(e.getMessage + "\n" + e.getStackTrace.mkString("\n"), bb_file.getCanonicalPath, run)
-                    false
-                }
+            val verify = Verification.verify(bb_file, run, fm)
+            var stat2 = result._4
+            stat2 = stat2.::(result._2 + "\n" + verify)
+            writeStats(stat2, bb_file.getCanonicalPath, run)
+            verify && runRefactor(morpheus, stats, bb_file, fm, run + 1, MAX)
+        } catch {
+            case e: Exception => {
+                println(e.getMessage)
+                println(e.getStackTrace.mkString("\n"))
+                writeExeception(e.getMessage + "\n" + e.getStackTrace.mkString("\n"), bb_file.getCanonicalPath, run)
+                false
             }
         }
-
-        val files = getBusyBoxFiles.reverse
-        val refactor = files.map(file => {
-            val bb_file = new File(busyBoxPath + file)
-            try {
-                var stats = List[Any]()
-                val parseTypeCheckMs = new TimeMeasurement
-                val parsed = parse(bb_file)
-                val ast = parsed._1
-                val fm = parsed._2
-                val morpheus = new Morpheus(ast, fm)
-                val parseTypeCheckTime = parseTypeCheckMs.getTime
-                stats ::= parseTypeCheckTime
-                runRefactor(morpheus, stats, bb_file, fm, 0, MAX)
-            } catch {
-                case e: Exception => {
-                    println(e.getMessage)
-                    println(e.getStackTrace.mkString("\n"))
-                    writeExeception(e.getMessage + "\n" + e.getStackTrace.mkString("\n"), bb_file.getCanonicalPath, 0)
-                    false
-                }
-            }
-        })
-        println("Refactor succ: " + refactor.contains(false))
-        refactor.contains(false)
     }
 
-    def applyRefactor(morpheus: Morpheus, stat: List[Any]): (AST, Boolean, List[FeatureExpr], List[Any]) = {
+    private def applyRefactor(morpheus: Morpheus, stat: List[Any]): (AST, Boolean, List[FeatureExpr], List[Any]) = {
         def getVariableIdToRename: (Id, Int, List[FeatureExpr]) = {
             def isValidId(id: Id, morpheus: Morpheus): Boolean = {
                 val isFunc = findPriorASTElem[FunctionDef](id, morpheus.getASTEnv) match {
