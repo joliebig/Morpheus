@@ -10,7 +10,6 @@ import de.fosd.typechef.crefactor.frontend.util.Selection
 import de.fosd.typechef.parser.c.Id
 import scala.Some
 import de.fosd.typechef.parser.c.TranslationUnit
-import de.fosd.typechef.typesystem.CUnknown
 import de.fosd.typechef.parser.c.CompoundStatement
 import de.fosd.typechef.conditional.{Choice, Conditional, Opt, One}
 import de.fosd.typechef.featureexpr.FeatureExpr
@@ -95,14 +94,14 @@ trait Refactor extends CEnvCache with ASTNavigation with ConditionalNavigation {
     }
 
     def isDeclaredVarInEnv(name: String, env: Env) = env.varEnv(name) match {
-        case One(CUnknown(_)) => false
+        case One(x) => !x.isUnknown
         case _ => true
     }
 
     def isDeclaredStructOrUnionInEnv(name: String, env: Env) = env.structEnv.someDefinition(name, false) || env.structEnv.someDefinition(name, true)
 
     def isDeclaredTypeDefInEnv(name: String, env: Env) = env.typedefEnv(name) match {
-        case One(CUnknown(_)) => false
+        case One(x) => !x.isUnknown
         case _ => true
     }
 

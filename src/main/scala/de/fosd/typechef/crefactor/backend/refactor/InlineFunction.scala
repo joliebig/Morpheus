@@ -27,8 +27,6 @@ import de.fosd.typechef.parser.c.ArrayAccess
 import de.fosd.typechef.parser.c.ReturnStatement
 import de.fosd.typechef.parser.c.CompoundStatementExpr
 import de.fosd.typechef.conditional.Choice
-import de.fosd.typechef.typesystem.CUnknown
-import de.fosd.typechef.typesystem.CFunction
 import de.fosd.typechef.parser.c.FunctionCall
 import de.fosd.typechef.parser.c.IfStatement
 import de.fosd.typechef.parser.c.NArySubExpr
@@ -40,6 +38,7 @@ import de.fosd.typechef.parser.c.ElifStatement
 import de.fosd.typechef.parser.c.FunctionDef
 import de.fosd.typechef.parser.c.NestedFunctionDef
 import de.fosd.typechef.parser.c.ParameterDeclarationD
+import de.fosd.typechef.crefactor.frontend.util.Selection
 
 /**
  * Implements the technique of inlining a function
@@ -479,16 +478,20 @@ object InlineFunction extends ASTSelection with Refactor {
 
         def checkOne(one: Conditional[(CType, DeclarationKind, Int, Linkage)], recursive: Boolean = false): Boolean = {
             one match {
-                case One((CUnknown(_), _, _, _)) =>
-                    if (!recursive) (false || checkConditional(morpheuseus.getEnv(statement.innerStatements.last.entry).varEnv.lookup(id.name), true))
-                    else false
-                case One((CFunction(_, _), _, _, _)) => parentAST(id, morpheuseus.getASTEnv) match {
-                    case PostfixExpr(_, FunctionCall(_)) => false
-                    case _ => parentOpt(id, morpheuseus.getASTEnv).entry match {
-                        case f: FunctionDef => false
-                        case _ => true
+                case One(x) =>
+                    if (x._1.isUnknown) {
+                        if (!recursive) (false || checkConditional(morpheuseus.getEnv(statement.innerStatements.last.entry).varEnv.lookup(id.name), true))
+                        else false
+                    } else if (x._1.isFunction) {
+                        parentAST(id, morpheuseus.getASTEnv) match {
+                            case PostfixExpr(_, FunctionCall(_)) => false
+                            case _ => parentOpt(id, morpheuseus.getASTEnv).entry match {
+                                case f: FunctionDef => false
+                                case _ => true
+                            }
+                        }
                     }
-                }
+                    else true
                 case _ => true
             }
         }

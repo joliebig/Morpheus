@@ -1,6 +1,5 @@
 package de.fosd.typechef.crefactor
 
-import de.fosd.typechef.crewrite.{CASTEnv, ASTEnv}
 import de.fosd.typechef.featureexpr.FeatureModel
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.typesystem._

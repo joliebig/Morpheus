@@ -4,8 +4,8 @@ import java.io._
 import de.fosd.typechef.featureexpr.FeatureModel
 import org.junit.Test
 import de.fosd.typechef.crefactor.util.{TimeMeasurement, EvalHelper}
-import de.fosd.typechef.crewrite.{ConditionalNavigation, ASTNavigation}
 import de.fosd.typechef.crefactor.Morpheus
+import de.fosd.typechef.parser.c.{ConditionalNavigation, ASTNavigation}
 
 
 trait BusyBoxEvaluation extends EvalHelper with ASTNavigation with ConditionalNavigation {
