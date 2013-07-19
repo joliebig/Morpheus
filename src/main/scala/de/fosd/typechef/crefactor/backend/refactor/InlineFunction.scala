@@ -4,7 +4,7 @@ import de.fosd.typechef.crefactor._
 import backend.ASTSelection
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureExprFactory}
-import de.fosd.typechef.typesystem.{CType, DeclarationKind}
+import de.fosd.typechef.typesystem._
 import de.fosd.typechef.conditional
 import conditional.Conditional
 import scala._
@@ -477,12 +477,12 @@ object InlineFunction extends ASTSelection with Refactor {
 
     private def isDeclared(id: Id, env: Env, statement: CompoundStatement, morpheuseus: Morpheus): Boolean = {
 
-        def checkOne(one: Conditional[(CType, DeclarationKind, Int)], recursive: Boolean = false): Boolean = {
+        def checkOne(one: Conditional[(CType, DeclarationKind, Int, Linkage)], recursive: Boolean = false): Boolean = {
             one match {
-                case One((CUnknown(_), _, _)) =>
+                case One((CUnknown(_), _, _, _)) =>
                     if (!recursive) (false || checkConditional(morpheuseus.getEnv(statement.innerStatements.last.entry).varEnv.lookup(id.name), true))
                     else false
-                case One((CFunction(_, _), _, _)) => parentAST(id, morpheuseus.getASTEnv) match {
+                case One((CFunction(_, _), _, _, _)) => parentAST(id, morpheuseus.getASTEnv) match {
                     case PostfixExpr(_, FunctionCall(_)) => false
                     case _ => parentOpt(id, morpheuseus.getASTEnv).entry match {
                         case f: FunctionDef => false
@@ -493,7 +493,7 @@ object InlineFunction extends ASTSelection with Refactor {
             }
         }
 
-        def checkConditional(conditional: Conditional[(CType, DeclarationKind, Int)], recursive: Boolean = false): Boolean = {
+        def checkConditional(conditional: Conditional[(CType, DeclarationKind, Int, Linkage)], recursive: Boolean = false): Boolean = {
             conditional match {
                 case c@Choice(feature, then, elseB) => checkConditional(then, recursive) || checkConditional(elseB, recursive)
                 case o@One((_)) => checkOne(conditional, recursive)

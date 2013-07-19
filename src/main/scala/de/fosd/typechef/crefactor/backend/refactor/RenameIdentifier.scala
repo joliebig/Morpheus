@@ -4,8 +4,8 @@ import de.fosd.typechef.crefactor.backend.ASTSelection
 import de.fosd.typechef.parser.c.{Id, AST}
 import de.fosd.typechef.crefactor.frontend.util.Selection
 import de.fosd.typechef.crefactor.Morpheus
-import de.fosd.typechef.crefactor.util.Configuration
 import java.io.File
+import de.fosd.typechef.crefactor.util.Configuration
 
 /**
  * Implements the technique of correctly renaming an identifier.

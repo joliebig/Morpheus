@@ -1,74 +1,95 @@
 package de.fosd.typechef.crefactor.BusyBoxEvaluation
 
-import org.junit.Test
 import java.io.File
-import de.fosd.typechef.parser.c.{Id, AST}
-import de.fosd.typechef.featureexpr.FeatureExpr
+import de.fosd.typechef.parser.c._
+import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureModel, FeatureExpr}
 import de.fosd.typechef.crefactor.util.{PrepareRefactoredASTforEval, TimeMeasurement}
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.backend.refactor.RenameIdentifier
+import de.fosd.typechef.parser.c.Id
+import de.fosd.typechef.parser.c.FunctionDef
+import de.fosd.typechef.parser.c.Declaration
 
 class RenameEvaluation extends BusyBoxEvaluation {
 
-    private val refactor_name = "refactoredID"
+    private val REFACTOR_NAME = "refactoredID"
 
-    @Test
-    def evaluate() {
-        val files = getBusyBoxFiles.reverse
-        val refactor = files.map(file => {
-            var stats = List[Any]()
-            val parseTypeCheckMs = new TimeMeasurement
-            val bb_file = new File(busyBoxPath + file)
-            val parsed = parse(bb_file)
-            val ast = parsed._1
-            val fm = parsed._2
-            val morpheus = new Morpheus(ast, fm)
-            val parseTypeCheckTime = parseTypeCheckMs.getTime
-            stats ::= parseTypeCheckTime
+    def runRefactor(morpheus: Morpheus, stats: List[Any], bb_file: File, fm: FeatureModel, run: Int, max: Int, lastResult: Boolean = true): Boolean = {
+        if (run >= max) return lastResult
+        try {
             val result = applyRefactor(morpheus, stats)
-            if (result._2) PrepareRefactoredASTforEval.prepare(result._1, morpheus.getFeatureModel, bb_file.getCanonicalPath, result._3, 0)
+            if (result._2) {
+                val dir = getResultDir(bb_file.getCanonicalPath, run)
+                val path = dir.getCanonicalPath + File.separatorChar + getFileName(bb_file.getCanonicalPath)
+                writeAST(result._1, path)
+                PrepareRefactoredASTforEval.makeConfigs(result._1, morpheus.getFeatureModel, bb_file.getCanonicalPath, result._3, run)
+            }
 
-            val verify = RefactorVerification.verify(bb_file, 0, fm)
+            val verify = Verification.verify(bb_file, run, fm)
             var stat2 = result._4
-            stat2 = stat2.::(result._2 && verify)
-            writeStats(stat2, bb_file.getCanonicalPath, 0)
-        })
-        logger.info("Refactor succ: " + refactor.contains(false))
-
+            stat2 = stat2.::(result._2 + "\n" + verify)
+            writeStats(stat2, bb_file.getCanonicalPath, run)
+            verify && runRefactor(morpheus, stats, bb_file, fm, run + 1, MAX)
+        } catch {
+            case e: Exception => {
+                println(e.getMessage)
+                println(e.getStackTrace.mkString("\n"))
+                writeExeception(e.getMessage + "\n" + e.getStackTrace.mkString("\n"), bb_file.getCanonicalPath, run)
+                false
+            }
+        }
     }
 
-    def applyRefactor(morpheus: Morpheus, stat: List[Any]): (AST, Boolean, List[FeatureExpr], List[Any]) = {
-        val ids = morpheus.getUseDeclMap.values().toArray(Array[List[Id]]()).par.foldLeft(List[Id]())((list, entry) => list ::: entry).toList
-        def getVariableIdForRename(depth: Int = 0): (Id, Int, List[FeatureExpr]) = {
-            val id = ids.apply((math.random * ids.size).toInt)
+    private def applyRefactor(morpheus: Morpheus, stat: List[Any]): (AST, Boolean, List[FeatureExpr], List[Any]) = {
+        def getVariableIdToRename: (Id, Int, List[FeatureExpr]) = {
+            def isValidId(id: Id, morpheus: Morpheus): Boolean = {
+                val isFunc = findPriorASTElem[FunctionDef](id, morpheus.getASTEnv) match {
+                    case None => false
+                    case entry => entry.get.declarator.getId.eq(id)
+                }
+                val isExternalFunc = findPriorASTElem[Declaration](id, morpheus.getASTEnv) match {
+                    case None => false
+                    case entry => entry.get.declSpecs.exists(spec => spec.entry match {
+                        case ExternSpecifier() => true
+                        case _ => false
+                    })
+                }
+                !(id.name.equals("main") || isFunc || isExternalFunc)
+            }
 
-            val amountOfIds = RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).length
-            val features = RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).map(x => morpheus.getASTEnv.featureExpr(x))
-            // check recursive only for variable ids
-            val writeAble = RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).forall(i => new File(i.getFile.get.replaceFirst("file ", "")).canWrite)
-            if (!writeAble || id.name.equals("main")) getVariableIdForRename(depth)
-            else if ((features.distinct.length == 1) && features.contains("True") && FORCE_VARIABILITY && (depth < MAX_DEPTH)) getVariableIdForRename(depth + 1)
-            else (id, amountOfIds, features)
+            val ids = morpheus.getUseDeclMap.values().toArray(Array[List[Id]]()).par.foldLeft(List[Id]())((list, entry) => list ::: entry)
+
+            val writeAbleIds = ids.filter(id =>
+                RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).par.forall(i =>
+                    new File(i.getFile.get.replaceFirst("file ", "")).canWrite && isValidId(i, morpheus)))
+
+            val variableIds = writeAbleIds.par.filter(id => {
+                val associatedIds = RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap)
+                val features = associatedIds.map(x => morpheus.getASTEnv.featureExpr(x))
+                !(features.distinct.length == 1 && features.distinct.contains(FeatureExprFactory.True))
+            })
+
+            val id = if (!variableIds.isEmpty) variableIds.apply((math.random * variableIds.size).toInt) else writeAbleIds.apply((math.random * writeAbleIds.size).toInt)
+            val associatedIds = RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap)
+            (id, associatedIds.length, associatedIds.map(morpheus.getASTEnv.featureExpr(_)).distinct)
         }
 
-
-
-        val toRename = getVariableIdForRename()
+        val toRename = getVariableIdToRename
         val id = toRename._1
         val features = toRename._3
 
         val startRenaming = new TimeMeasurement
-        val refactored = RenameIdentifier.rename(id, refactor_name, morpheus)
+        val refactored = RenameIdentifier.rename(id, REFACTOR_NAME, morpheus)
         val renamingTime = startRenaming.getTime
         var stats = stat.::(renamingTime)
         stats = stats.::(id)
         stats = stats.::(toRename._2)
         stats = stats.::(features)
 
-        val morpheus2 = new Morpheus(refactored, morpheus.getFeatureModel)
+        val morpheus_ref = new Morpheus(refactored, morpheus.getFeatureModel)
 
         val originAmount = analsyeDeclUse(morpheus.getDeclUseMap).sorted
-        val newAmount = analsyeDeclUse(morpheus2.getDeclUseMap).sorted
+        val newAmount = analsyeDeclUse(morpheus_ref.getDeclUseMap).sorted
 
         (refactored, originAmount == newAmount, features, stats)
     }
