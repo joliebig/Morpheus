@@ -15,24 +15,24 @@ import de.fosd.typechef.conditional.{Opt, Choice}
 
 trait EvalHelper extends Logging {
 
+    val caseStudyPath: String
+    val completeBusyBoxPath: String
+    val busyBoxFiles: String
+    val busyBoxPath: String
+    val busyBoxPathUntouched: String
+    val result: String
 
-    val caseStudyPath = "../busybox/"
-    val completeBusyBoxPath = new File(caseStudyPath).getCanonicalPath
-    val busyBoxFiles: String = completeBusyBoxPath + "/busybox_files"
-    val busyBoxPath = completeBusyBoxPath + "/busybox-1.18.5/"
-    val busyBoxPathUntouched = completeBusyBoxPath + caseStudyPath + "/busybox-1.18.5_untouched/"
-    val result = "/result/"
+    val filterFeatures: List[String]
+    val allFeaturesFile: String
+    val allFeatures:  (List[SingleFeatureExpr], IdentityHashMap[String, String])
+    val pairWiseFeaturesFile : String
 
-    val filterFeatures = List("def(CONFIG_SELINUX)", "CONFIG_SELINUX", "def(CONFIG_TCPSVD)", "CONFIG_TCPSVD", "def(CONFIG_UDPSVD)", "CONFIG_UDPSVD")
-    val allFeaturesFile = getClass.getResource("/BusyBoxAllFeatures.config").getFile
-    val allFeatures = getAllFeaturesFromConfigFile(null, new File(allFeaturesFile))
-    val pairWiseFeaturesFile = getClass.getResource("/busyBox_pairwise.configs").getFile
+    val systemProperties: String
+    val includeHeader: String
+    val includeDir: String
+    val featureModel: String
+    val featureModel_DIMACS: String
 
-    val systemProperties: String = completeBusyBoxPath + "/redhat.properties"
-    val includeHeader: String = completeBusyBoxPath + "/config.h"
-    val includeDir: String = completeBusyBoxPath + "/busybox-1.18.5/include"
-    val featureModel: String = completeBusyBoxPath + "/featureModel"
-    val featureModel_DIMACS: String = completeBusyBoxPath + "/BB_fm.dimacs"
 
     /**
      * The following class it not part of the default TypeChef Branch. In order to read in csv - configurations correctly

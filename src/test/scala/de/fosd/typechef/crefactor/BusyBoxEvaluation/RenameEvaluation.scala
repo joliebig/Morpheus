@@ -3,7 +3,7 @@ package de.fosd.typechef.crefactor.BusyBoxEvaluation
 import java.io.File
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureModel, FeatureExpr}
-import de.fosd.typechef.crefactor.util.{PrepareRefactoredASTforEval, TimeMeasurement}
+import de.fosd.typechef.crefactor.util.TimeMeasurement
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.backend.refactor.RenameIdentifier
 import de.fosd.typechef.parser.c.Id

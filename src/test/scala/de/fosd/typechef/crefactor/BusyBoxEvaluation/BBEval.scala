@@ -1,10 +1,33 @@
-package de.fosd.typechef.crefactor.util
+package de.fosd.typechef.crefactor.BusyBoxEvaluation
 
-import de.fosd.typechef.parser.c.AST
-import de.fosd.typechef.featureexpr.{FeatureExprFactory, SingleFeatureExpr, FeatureModel, FeatureExpr}
+import de.fosd.typechef.crefactor.util.EvalHelper
 import java.io.File
+import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureModel, FeatureExpr, SingleFeatureExpr}
+import de.fosd.typechef.parser.c.AST
 
-object PrepareRefactoredASTforEval extends EvalHelper {
+trait BBEval extends EvalHelper {
+
+    val caseStudyPath = "../busybox/"
+    val completeBusyBoxPath = new File(caseStudyPath).getCanonicalPath
+    val busyBoxFiles: String = completeBusyBoxPath + "/busybox_files"
+    val busyBoxPath = completeBusyBoxPath + "/busybox-1.18.5/"
+    val busyBoxPathUntouched = completeBusyBoxPath + caseStudyPath + "/busybox-1.18.5_untouched/"
+    val result = "/result/"
+
+    val filterFeatures = List("def(CONFIG_SELINUX)", "CONFIG_SELINUX", "def(CONFIG_TCPSVD)", "CONFIG_TCPSVD", "def(CONFIG_UDPSVD)", "CONFIG_UDPSVD", "def(CONFIG_MKFS_EXT2)", "CONFIG_MKFS_EXT2")
+    val allFeaturesFile = getClass.getResource("/BusyBoxAllFeatures.config").getFile
+    val allFeatures = getAllFeaturesFromConfigFile(null, new File(allFeaturesFile))
+    val pairWiseFeaturesFile = getClass.getResource("/busyBox_pairwise.configs").getFile
+
+    val systemProperties: String = completeBusyBoxPath + "/redhat.properties"
+    val includeHeader: String = completeBusyBoxPath + "/config.h"
+    val includeDir: String = completeBusyBoxPath + "/busybox-1.18.5/include"
+    val featureModel: String = completeBusyBoxPath + "/featureModel"
+    val featureModel_DIMACS: String = completeBusyBoxPath + "/BB_fm.dimacs"
+
+}
+
+object PrepareRefactoredASTforEval extends BBEval {
 
     private def genAllConfigVariantsForFeatures(enabledFeatures: List[SingleFeatureExpr], affectedFeatures: List[FeatureExpr], fm: FeatureModel, dir: File): List[List[SingleFeatureExpr]] = {
         var wrongCounter = 0
@@ -67,3 +90,5 @@ object PrepareRefactoredASTforEval extends EvalHelper {
     }
 
 }
+
+

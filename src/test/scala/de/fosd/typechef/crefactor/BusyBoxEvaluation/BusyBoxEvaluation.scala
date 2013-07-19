@@ -3,12 +3,12 @@ package de.fosd.typechef.crefactor.BusyBoxEvaluation
 import java.io._
 import de.fosd.typechef.featureexpr.FeatureModel
 import org.junit.Test
-import de.fosd.typechef.crefactor.util.{TimeMeasurement, EvalHelper}
+import de.fosd.typechef.crefactor.util.TimeMeasurement
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.parser.c.{ConditionalNavigation, ASTNavigation}
 
 
-trait BusyBoxEvaluation extends EvalHelper with ASTNavigation with ConditionalNavigation {
+trait BusyBoxEvaluation extends BBEval with ASTNavigation with ConditionalNavigation {
 
     val FORCE_VARIABILITY = true
     val MAX_DEPTH = 27
@@ -47,7 +47,7 @@ trait BusyBoxEvaluation extends EvalHelper with ASTNavigation with ConditionalNa
 }
 
 
-object Verification extends EvalHelper {
+object Verification extends BBEval {
 
     def verify(bbFile: File, run: Int, fm: FeatureModel): Boolean = {
         val workingPath = bbFile.getCanonicalPath
