@@ -1,4 +1,4 @@
-package de.fosd.typechef.crefactor.BusyBoxEvaluation
+package de.fosd.typechef.crefactor.BusyBoxEvaluation.refactors
 
 import java.io.File
 import de.fosd.typechef.parser.c._
@@ -9,8 +9,9 @@ import de.fosd.typechef.crefactor.backend.refactor.RenameIdentifier
 import de.fosd.typechef.parser.c.Id
 import de.fosd.typechef.parser.c.FunctionDef
 import de.fosd.typechef.parser.c.Declaration
+import de.fosd.typechef.crefactor.BusyBoxEvaluation.{BusyBoxVerification, PrepareASTforVerification, BusyBoxRefactor}
 
-class RenameEvaluation extends BusyBoxEvaluation {
+class Rename extends BusyBoxRefactor {
 
     private val REFACTOR_NAME = "refactoredID"
 
@@ -22,10 +23,10 @@ class RenameEvaluation extends BusyBoxEvaluation {
                 val dir = getResultDir(bb_file.getCanonicalPath, run)
                 val path = dir.getCanonicalPath + File.separatorChar + getFileName(bb_file.getCanonicalPath)
                 writeAST(result._1, path)
-                PrepareRefactoredASTforEval.makeConfigs(result._1, morpheus.getFeatureModel, bb_file.getCanonicalPath, result._3, run)
+                PrepareASTforVerification.makeConfigs(result._1, morpheus.getFeatureModel, bb_file.getCanonicalPath, result._3, run)
             }
 
-            val verify = Verification.verify(bb_file, run, fm)
+            val verify = BusyBoxVerification.verify(bb_file, run, fm)
             var stat2 = result._4
             stat2 = stat2.::(result._2 + "\n" + verify)
             writeStats(stat2, bb_file.getCanonicalPath, run)

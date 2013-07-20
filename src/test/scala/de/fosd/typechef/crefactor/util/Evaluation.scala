@@ -13,7 +13,7 @@ import de.fosd.typechef.parser.c.Id
 import scala.collection.immutable.HashMap
 import de.fosd.typechef.conditional.{Opt, Choice}
 
-trait EvalHelper extends Logging {
+trait Evaluation extends Logging {
 
     val caseStudyPath: String
     val completeBusyBoxPath: String
@@ -24,8 +24,8 @@ trait EvalHelper extends Logging {
 
     val filterFeatures: List[String]
     val allFeaturesFile: String
-    val allFeatures:  (List[SingleFeatureExpr], IdentityHashMap[String, String])
-    val pairWiseFeaturesFile : String
+    val allFeatures: (List[SingleFeatureExpr], IdentityHashMap[String, String])
+    val pairWiseFeaturesFile: String
 
     val systemProperties: String
     val includeHeader: String
