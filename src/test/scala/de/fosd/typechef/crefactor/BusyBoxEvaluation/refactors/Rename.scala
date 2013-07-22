@@ -18,11 +18,8 @@ class Rename extends BusyBoxRefactor {
     def runRefactor(morpheus: Morpheus, stats: List[Any], bb_file: File, fm: FeatureModel, run: Int, max: Int, lastResult: Boolean = true): Boolean = {
         if (run >= max) return lastResult
         try {
-            val dir = getResultDir(bb_file.getCanonicalPath, run)
-            val path = dir.getCanonicalPath + File.separatorChar + getFileName(bb_file.getCanonicalPath)
-            if (morpheus.getAST == null) println("AST IS NULL!")
-            writeAST(morpheus.getAST, path)
             val result = applyRefactor(morpheus, stats)
+            if (result._1 == null) println("AST IS NULL!")
             if (result._2) {
                 val dir = getResultDir(bb_file.getCanonicalPath, run)
                 val path = dir.getCanonicalPath + File.separatorChar + getFileName(bb_file.getCanonicalPath)
