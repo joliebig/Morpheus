@@ -441,7 +441,7 @@ trait Evaluation extends Logging {
                 }
             }
         }
-        trueFeatures.toList
+        trueFeatures.par.filterNot(ft => filterFeatures.contains(ft.feature)).toList
     }
 
     def getAllFeaturesFromConfigFile(fm: FeatureModel, file: File): (List[SingleFeatureExpr], IdentityHashMap[String, String]) = {
