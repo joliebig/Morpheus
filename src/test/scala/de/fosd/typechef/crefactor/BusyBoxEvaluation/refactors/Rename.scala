@@ -24,6 +24,7 @@ class Rename extends BusyBoxRefactor {
                 val dir = getResultDir(bb_file.getCanonicalPath, run)
                 val path = dir.getCanonicalPath + File.separatorChar + getFileName(bb_file.getCanonicalPath)
                 writeAST(result._1, path)
+                writePlainAST(result._1, path + ".ast")
                 PrepareASTforVerification.makeConfigs(result._1, morpheus.getFeatureModel, bb_file.getCanonicalPath, result._3, run)
             }
 

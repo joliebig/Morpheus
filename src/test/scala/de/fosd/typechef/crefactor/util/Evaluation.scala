@@ -295,6 +295,13 @@ trait Evaluation extends Logging {
         writer.close()
     }
 
+    def writePlainAST(ast: AST, filePath: String) {
+        val writer = new FileWriter(filePath)
+        writer.write(ast.toString)
+        writer.flush()
+        writer.close()
+    }
+
     def writeError(error: String, originalFilePath: String, run: Int) = {
         val out = new java.io.FileWriter(originalFilePath + ".error")
         out.write(error)
