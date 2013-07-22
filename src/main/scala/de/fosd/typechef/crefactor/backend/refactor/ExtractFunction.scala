@@ -408,7 +408,7 @@ object ExtractFunction extends ASTSelection with Refactor {
                             case None => false
                             case _ => true
                         })) assert(false, "Type Declaration for " + i + " would be invisible after extraction!")
-                    case s@StructOrUnionSpecifier(_, Some(i@Id(_)), _) =>
+                    case s@StructOrUnionSpecifier(_, Some(i@Id(_)), _, _, _) =>
                         if (morpheus.getUseDeclMap.get(i).exists(t => findPriorASTElem[CompoundStatement](t, morpheus.getASTEnv) match {
                             case None => false
                             case _ => true
@@ -416,7 +416,7 @@ object ExtractFunction extends ASTSelection with Refactor {
                     case _ => logger.debug("Specs " + spec)
                 }
             })
-            val pD = Opt(feature, ParameterDeclarationD(decl.declSpecs, declDeclPointerMap.get(decl)))
+            val pD = Opt(feature, ParameterDeclarationD(decl.declSpecs, declDeclPointerMap.get(decl), List()))
             val expr = Opt(feature, PointerCreationExpr(Id(declDeclPointerMap.get(decl).getName)))
             val id = declIdMap.get(decl)
             Some((pD, expr, id))
@@ -517,8 +517,8 @@ object ExtractFunction extends ASTSelection with Refactor {
         val nextState = nextOpt(expr2, morpheus.getASTEnv)
 
         if (((prevState != null) && (prevState.feature.equals(expr2.feature)))
-                || ((nextState != null) && (nextState.feature.equals(expr1.feature)))
-                || ((prevState != null) && (nextState != null) && nextState.feature.equals(prevState.feature))) return true
+            || ((nextState != null) && (nextState.feature.equals(expr1.feature)))
+            || ((prevState != null) && (nextState != null) && nextState.feature.equals(prevState.feature))) return true
         // prev feature and next feature are the same -> eligible
         // TODO Null States!
         false
