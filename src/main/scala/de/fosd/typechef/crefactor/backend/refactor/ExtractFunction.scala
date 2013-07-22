@@ -61,7 +61,6 @@ import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 /**
  * Implements the strategy of extracting a function.
  */
-// TODO Replace original ExtractFunction -> Delete and Refactor
 object ExtractFunction extends ASTSelection with Refactor {
 
     private var lastSelection: Selection = null
@@ -196,17 +195,17 @@ object ExtractFunction extends ASTSelection with Refactor {
         case false => List[Id]() // returns a empty list to signalize a valid selection was found
     }
 
-    def isAvailable(morpheus: Morpheus, selection: Selection): Boolean = {
-        val selectedElements = getSelectedElements(morpheus, selection)
-        // Validate selection
+    def isAvailable(morpheus: Morpheus, selectedElements: List[AST]): Boolean = {
         if (selectedElements.isEmpty) false
         else if (!selectedElements.par.forall(element => isPartOfAFunction(element, morpheus))) false
         else if (!isPartOfSameCompStmt(selectedElements, morpheus)) false
-        else if (!filterAllASTElems[ReturnStatement](selectedElements, morpheus.getFeatureModel, morpheus.getASTEnv).isEmpty) false
+        else if (!filterAllASTElems[ReturnStatement](selectedElements).isEmpty) false
         else if (!selectedElements.par.forall(element => !isBadExtractStatement(element, selectedElements, morpheus))) false
         // else if (!isConditionalComplete(selectedElements, getParentFunction(selectedElements, morpheus), morpheus)) false // Not Relevant?
         else true
     }
+
+    def isAvailable(morpheus: Morpheus, selection: Selection): Boolean = isAvailable(morpheus, getSelectedElements(morpheus, selection))
 
     def extract(morpheus: Morpheus, selection: List[AST], funcName: String): AST = {
         verifyFunctionName(funcName, selection, morpheus)

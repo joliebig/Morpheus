@@ -35,7 +35,7 @@ class Rename extends BusyBoxRefactor {
             verify && runRefactor(morpheus, stats, bb_file, fm, run + 1, MAX)
         } catch {
             case e: Exception => {
-                println(e.getMessage)
+                println(e.getCause)
                 println(e.getStackTrace.mkString("\n"))
                 writeExeception(e.getMessage + "\n" + e.getStackTrace.mkString("\n"), bb_file.getCanonicalPath, run)
                 false

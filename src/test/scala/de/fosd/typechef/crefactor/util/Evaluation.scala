@@ -517,4 +517,6 @@ trait Evaluation extends Logging {
         }
         (trueFeatures.toList, assignValues)
     }
+
+    def constantSlice[T](list: List[T], start: Int, end: Int) = list.drop(start).take(end - start)
 }
