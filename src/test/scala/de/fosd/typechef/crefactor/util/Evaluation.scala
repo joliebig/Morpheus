@@ -12,6 +12,7 @@ import de.fosd.typechef.parser.c.GnuAsmExpr
 import de.fosd.typechef.parser.c.Id
 import scala.collection.immutable.HashMap
 import de.fosd.typechef.conditional.{Opt, Choice}
+import de.fosd.typechef.typesystem.linker.CInterface
 
 trait Evaluation extends Logging {
 
@@ -360,7 +361,7 @@ trait Evaluation extends Logging {
         result
     }
 
-    def parse(file: File): (AST, FeatureModel) = MorphFrontend.parse(file.getAbsolutePath, systemProperties, includeHeader, includeDir, featureModel)
+    def parse(file: File): (AST, FeatureModel, CInterface) = MorphFrontend.parse(file.getAbsolutePath, systemProperties, includeHeader, includeDir, featureModel)
 
     def getAllRelevantIds(a: Any): List[Id] = {
         a match {

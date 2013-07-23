@@ -10,6 +10,7 @@ import de.fosd.typechef.options.{FrontendOptions, OptionException, FrontendOptio
 import de.fosd.typechef.parser.TokenReader
 import de.fosd.typechef.parser.c.CTypeContext
 import de.fosd.typechef.parser.c.TranslationUnit
+import de.fosd.typechef.typesystem.linker.CInterface
 
 class Morpheus(ast: AST, fm: FeatureModel, file: File) extends Observable with CDeclUse with CTypeEnv with CEnvCache with CTypeCache with CTypeSystem with Logging {
     def this(ast: AST) = this(ast, null, null)
@@ -53,12 +54,12 @@ object MorphFrontend {
             "--parserstatistics", "-U", "HAVE_LIBDMALLOC", "-DCONFIG_FIND", "-U", "CONFIG_FEATURE_WGET_LONG_OPTIONS",
             "-U", "ENABLE_NC_110_COMPAT", "-U", "CONFIG_EXTRA_COMPAT", "-D_GNU_SOURCE")
 
-    def parse(file: String, systemProperties: String, includeHeader: String, includeDir: String, featureModel: String): (AST, FeatureModel) = {
+    def parse(file: String, systemProperties: String, includeHeader: String, includeDir: String, featureModel: String): (AST, FeatureModel, CInterface) = {
         val args = getDefaultTypeChefArguments(file, systemProperties, includeHeader, includeDir, featureModel)
         parse(args)
     }
 
-    def parse(args: Array[String]): (AST, FeatureModel) = {
+    def parse(args: Array[String]): (AST, FeatureModel, CInterface) = {
         // Parsing MorphFrontend is adapted by the original typechef frontend
         val opt = new FrontendOptionsWithConfigFiles()
 
@@ -74,7 +75,7 @@ object MorphFrontend {
         processFile(opt)
     }
 
-    private def processFile(opt: FrontendOptions): (AST, FeatureModel) = {
+    private def processFile(opt: FrontendOptions): (AST, FeatureModel, CInterface) = {
         val errorXML = new ErrorXML(opt.getErrorXMLFile)
         opt.setRenderParserError(errorXML.renderParserError)
 
@@ -83,7 +84,7 @@ object MorphFrontend {
 
         if (!opt.getFilePresenceCondition.isSatisfiable(fm)) {
             println("file has contradictory presence condition. existing.") //otherwise this can lead to strange parser errors, because True is satisfiable, but anything else isn't
-            return (null, null)
+            return (null, null, null)
         }
 
         var ast: AST = null
@@ -103,28 +104,13 @@ object MorphFrontend {
             if (ast != null) featureModel = opt.getTypeSystemFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
             errorXML.write()
 
-            val ts = new CTypeSystemFrontend(ast.asInstanceOf[TranslationUnit], featureModel, opt)
-            val typeCheckStatus = ts.checkAST()
-            val interface = ts.getInferredInterface().and(opt.getFilePresenceCondition)
-
-            println("+++ TypeCheck +++")
-            println(typeCheckStatus)
-            println("+++ Interface Stats +++")
-            println(opt.getFile)
-            println("+++ ToString +++")
-            println(interface.toString)
-            println("+++ Declared Features +++")
-            println(interface.declaredFeatures)
-            println("+++ Exports +++")
-            println(interface.exports)
-            println("+++ Imports +++")
-            println(interface.imports)
-            println("+++ Imported Features +++")
-            println(interface.importedFeatures)
 
         }
 
-        (ast, featureModel)
+        val ts = new CTypeSystemFrontend(ast.asInstanceOf[TranslationUnit], featureModel, opt)
+        ts.checkAST()
+        val interface = ts.getInferredInterface().and(opt.getFilePresenceCondition)
+        (ast, featureModel, interface)
     }
 
 
