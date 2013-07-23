@@ -107,6 +107,7 @@ object MorphFrontend {
             val interface = ts.getInferredInterface().and(opt.getFilePresenceCondition)
 
             println("+++ Interface Stats +++")
+            println(opt.getFile)
             println("+++ Declared Features +++")
             println(interface.declaredFeatures)
             println("+++ Exports +++")
