@@ -102,6 +102,20 @@ object MorphFrontend {
 
             if (ast != null) featureModel = opt.getTypeSystemFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
             errorXML.write()
+
+            val ts = new CTypeSystemFrontend(ast.asInstanceOf[TranslationUnit], featureModel, opt)
+            val interface = ts.getInferredInterface().and(opt.getFilePresenceCondition)
+
+            println("+++ Interface Stats +++")
+            println("+++ Declared Features +++")
+            println(interface.declaredFeatures)
+            println("+++ Exports +++")
+            println(interface.exports)
+            println("+++ Imports +++")
+            println(interface.imports)
+            println("+++ Imported Features +++")
+            println(interface.importedFeatures)
+
         }
 
         (ast, featureModel)
