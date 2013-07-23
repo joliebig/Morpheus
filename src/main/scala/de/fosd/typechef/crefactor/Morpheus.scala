@@ -49,7 +49,7 @@ object MorphFrontend {
 
     def getDefaultTypeChefArguments(file: String, systemProperties: String, includeHeader: String, includeDir: String, featureModel: String) =
         Array(file, "-c", systemProperties, "-x", "CONFIG_", "--include", includeHeader,
-            "-I", includeDir, "--featureModelFExpr", featureModel, "--debugInterface", "--recordTiming", "--lexNoStdout",
+            "-I", includeDir, "--featureModelFExpr", featureModel, "--interface", "--debugInterface", "--recordTiming", "--lexNoStdout",
             "--parserstatistics", "-U", "HAVE_LIBDMALLOC", "-DCONFIG_FIND", "-U", "CONFIG_FEATURE_WGET_LONG_OPTIONS",
             "-U", "ENABLE_NC_110_COMPAT", "-U", "CONFIG_EXTRA_COMPAT", "-D_GNU_SOURCE")
 
@@ -108,6 +108,8 @@ object MorphFrontend {
 
             println("+++ Interface Stats +++")
             println(opt.getFile)
+            println("+++ ToString +++")
+            println(interface.toString)
             println("+++ Declared Features +++")
             println(interface.declaredFeatures)
             println("+++ Exports +++")
