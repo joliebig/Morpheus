@@ -104,8 +104,11 @@ object MorphFrontend {
             errorXML.write()
 
             val ts = new CTypeSystemFrontend(ast.asInstanceOf[TranslationUnit], featureModel, opt)
+            val typeCheckStatus = ts.checkAST()
             val interface = ts.getInferredInterface().and(opt.getFilePresenceCondition)
 
+            println("+++ TypeCheck +++")
+            println(typeCheckStatus)
             println("+++ Interface Stats +++")
             println(opt.getFile)
             println("+++ ToString +++")
