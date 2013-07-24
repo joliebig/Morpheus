@@ -17,30 +17,21 @@ class Rename extends BusyBoxRefactor {
 
     def runRefactor(morpheus: Morpheus, stats: List[Any], bb_file: File, fm: FeatureModel, run: Int, max: Int, lastResult: Boolean = true): Boolean = {
         if (run >= max) return lastResult
-        try {
-            val result = applyRefactor(morpheus, stats)
-            if (result._1 == null) println("AST IS NULL!")
-            if (result._2) {
-                val dir = getResultDir(bb_file.getCanonicalPath, run)
-                val path = dir.getCanonicalPath + File.separatorChar + getFileName(bb_file.getCanonicalPath)
-                writeAST(result._1, path)
-                writePlainAST(result._1, path + ".ast")
-                PrepareASTforVerification.makeConfigs(result._1, morpheus.getFeatureModel, bb_file.getCanonicalPath, result._3, run)
-            }
-
-            val verify = BusyBoxVerification.verify(bb_file, run, fm)
-            var stat2 = result._4
-            stat2 = stat2.::(result._2 + "\n" + verify)
-            writeStats(stat2, bb_file.getCanonicalPath, run)
-            verify && runRefactor(morpheus, stats, bb_file, fm, run + 1, MAX)
-        } catch {
-            case e: Exception => {
-                println(e.getCause)
-                println(e.getStackTrace.mkString("\n"))
-                writeExeception(e.getMessage + "\n" + e.getStackTrace.mkString("\n"), bb_file.getCanonicalPath, run)
-                false
-            }
+        val result = applyRefactor(morpheus, stats)
+        if (result._1 == null) println("AST IS NULL!")
+        if (result._2) {
+            val dir = getResultDir(bb_file.getCanonicalPath, run)
+            val path = dir.getCanonicalPath + File.separatorChar + getFileName(bb_file.getCanonicalPath)
+            writeAST(result._1, path)
+            writePlainAST(result._1, path + ".ast")
+            PrepareASTforVerification.makeConfigs(result._1, morpheus.getFeatureModel, bb_file.getCanonicalPath, result._3, run)
         }
+
+        val verify = BusyBoxVerification.verify(bb_file, run, fm)
+        var stat2 = result._4
+        stat2 = stat2.::(result._2 + "\n" + verify)
+        writeStats(stat2, bb_file.getCanonicalPath, run)
+        verify && runRefactor(morpheus, stats, bb_file, fm, run + 1, MAX)
     }
 
     private def applyRefactor(morpheus: Morpheus, stat: List[Any]): (AST, Boolean, List[FeatureExpr], List[Any]) = {

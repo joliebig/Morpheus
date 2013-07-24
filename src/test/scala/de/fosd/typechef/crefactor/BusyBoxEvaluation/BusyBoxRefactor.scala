@@ -24,9 +24,10 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
                 runRefactor(morpheus, stats, bb_file, fm, 0, MAX)
             } catch {
                 case e: Exception => {
+                    println(e.getCause.toString)
                     println(e.getMessage)
                     println(e.getStackTrace.mkString("\n"))
-                    writeExeception(e.getMessage + "\n" + e.getStackTrace.mkString("\n"), bb_file.getCanonicalPath, 0)
+                    writeExeception(e.getCause.toString + "\n" + e.getMessage + "\n" + e.getStackTrace.mkString("\n"), bb_file.getCanonicalPath, 0)
                     false
                 }
             }
