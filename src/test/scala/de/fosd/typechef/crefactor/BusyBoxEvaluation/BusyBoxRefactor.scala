@@ -9,20 +9,21 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
 
     @Test
     def evaluate() =
-        getBusyBoxFiles.reverse.foreach(file => {
-            val bb_file = new File(busyBoxPath + file)
-            try {
-                runEval(bb_file)
-            } catch {
-                case e: Exception => {
-                    println(e.getCause.toString)
-                    println(e.getMessage)
-                    println(e.getStackTrace.mkString("\n"))
-                    writeExeception(e.getCause.toString + "\n" + e.getMessage + "\n" + e.getStackTrace.mkString("\n"), bb_file.getCanonicalPath, -1)
+        getBusyBoxFiles.reverse.foreach(file => println(file))
+    getBusyBoxFiles.reverse.foreach(file => {
+        val bb_file = new File(busyBoxPath + file)
+        try {
+            runEval(bb_file)
+        } catch {
+            case e: Exception => {
+                println(e.getCause.toString)
+                println(e.getMessage)
+                println(e.getStackTrace.mkString("\n"))
+                writeExeception(e.getCause.toString + "\n" + e.getMessage + "\n" + e.getStackTrace.mkString("\n"), bb_file.getCanonicalPath, -1)
 
-                }
             }
-        })
+        }
+    })
 
 
     private def runEval(bb_file: File): Boolean = {
