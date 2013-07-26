@@ -8,7 +8,7 @@ import org.junit.Test
 trait Refactor extends Evaluation {
 
     @Test
-    def evaluate(file: String)
+    def evaluate()
 
     def runRefactor(morpheus: Morpheus, stats: List[Any], bb_file: File, fm: FeatureModel, run: Int, max: Int, lastResult: Boolean = true): Boolean
 }

@@ -8,9 +8,24 @@ import de.fosd.typechef.crefactor.Morpheus
 trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
 
     @Test
-    def evaluate(file: String) {
-        // val files = getBusyBoxFiles.reverse
-        val bb_file = new File(busyBoxPath + file)
+    def evaluate() =
+        getBusyBoxFiles.reverse.foreach(file => {
+            val bb_file = new File(busyBoxPath + file)
+            try {
+                runEval(bb_file)
+            } catch {
+                case e: Exception => {
+                    println(e.getCause.toString)
+                    println(e.getMessage)
+                    println(e.getStackTrace.mkString("\n"))
+                    writeExeception(e.getCause.toString + "\n" + e.getMessage + "\n" + e.getStackTrace.mkString("\n"), bb_file.getCanonicalPath, -1)
+
+                }
+            }
+        })
+
+
+    private def runEval(bb_file: File): Boolean = {
         var ref_result: Boolean = false
         try {
             var stats = List[Any]()
@@ -31,8 +46,6 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
                 ref_result = false
             }
         }
-        println("Refactor succ: " + result)
         ref_result
     }
-
 }
