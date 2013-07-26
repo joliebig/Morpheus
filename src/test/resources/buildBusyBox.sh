@@ -1,15 +1,10 @@
 #!/bin/bash
-
-mainpid=$$
-(sleep 600;
-echo "Failure_Timeout";
-kill $mainpid) &
-watchdogpid=$!
-
-make -j 3
+make clean
+timeout 600 make -j 8
 
 RETVAL=$?
 [ $RETVAL -eq 0 ] && echo "Success_Build"
+[ $RETVAL -eq 124 ] && echo "Success_Timeout"
 [ $RETVAL -ne 0 ] && echo "Failure_Build"
 
-kill $watchdogpid
+exit
