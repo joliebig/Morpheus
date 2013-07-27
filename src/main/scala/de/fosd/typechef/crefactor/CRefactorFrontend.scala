@@ -12,9 +12,9 @@ import de.fosd.typechef.parser.c.TranslationUnit
 import de.fosd.typechef.parser.c.CTypeContext
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 
-object CRefactorFrontend {
+object CRefactorFrontend extends App {
 
-    def main(args: Array[String]): Unit = parse(args)
+    override def main(args: Array[String]): Unit = parse(args)
 
     def parse(args: Array[String]): (AST, FeatureModel, CTypeSystemFrontend) = {
         // Parsing MorphFrontend is adapted by the original typechef frontend
