@@ -1,4 +1,4 @@
-package de.fosd.typechef.crefactor.util
+package de.fosd.typechef.crefactor.evaluation
 
 import java.io.File
 import de.fosd.typechef.featureexpr.FeatureModel

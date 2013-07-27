@@ -1,4 +1,4 @@
-package de.fosd.typechef.crefactor.util;
+package de.fosd.typechef.crefactor.evaluation_utils;
 
 import org.apache.commons.io.IOUtils;
 

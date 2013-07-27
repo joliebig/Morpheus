@@ -1,7 +1,7 @@
 package de.fosd.typechef.crefactor.frontend;
 
+import de.fosd.typechef.crefactor.evaluation_utils.Configuration;
 import de.fosd.typechef.crefactor.frontend.actions.refactor.Analyse;
-import de.fosd.typechef.crefactor.util.Configuration;
 
 import javax.swing.*;
 

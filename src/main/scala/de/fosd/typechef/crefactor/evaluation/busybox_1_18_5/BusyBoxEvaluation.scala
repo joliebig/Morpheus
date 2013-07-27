@@ -1,8 +1,8 @@
-package de.fosd.typechef.crefactor.BusyBoxEvaluation
+package de.fosd.typechef.crefactor.evaluation.busybox_1_18_5
 
 import java.io._
-import de.fosd.typechef.crefactor.util.Evaluation
 import de.fosd.typechef.parser.c.{ConditionalNavigation, ASTNavigation}
+import de.fosd.typechef.crefactor.evaluation.Evaluation
 
 
 trait BusyBoxEvaluation extends Evaluation with ASTNavigation with ConditionalNavigation {
@@ -11,7 +11,7 @@ trait BusyBoxEvaluation extends Evaluation with ASTNavigation with ConditionalNa
     val completeBusyBoxPath = new File(caseStudyPath).getCanonicalPath
     val busyBoxFiles: String = completeBusyBoxPath + "/busybox_files"
     val busyBoxPath = completeBusyBoxPath + "/busybox-1.18.5/"
-    val busyBoxPathUntouched = completeBusyBoxPath + caseStudyPath + "/busybox-1.18.5_untouched/"
+    val busyBoxPathUntouched = completeBusyBoxPath + "/busybox-1.18.5_untouched/"
     val result = "/result/"
 
     val filterFeatures = List("def(CONFIG_SELINUX)", "CONFIG_SELINUX", "def(CONFIG_TCPSVD)", "CONFIG_TCPSVD", "def(CONFIG_UDPSVD)", "CONFIG_UDPSVD", "def(CONFIG_MKFS_EXT2)", "CONFIG_MKFS_EXT2")

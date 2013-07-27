@@ -5,7 +5,7 @@ import de.fosd.typechef.parser.c._
 import de.fosd.typechef.crefactor.frontend.util.Selection
 import java.util
 import de.fosd.typechef.crefactor.Morpheus
-import de.fosd.typechef.crefactor.util.Configuration
+import de.fosd.typechef.crefactor.evaluation_utils.Configuration
 import util.{IdentityHashMap, Collections}
 import management.ManagementFactory
 import de.fosd.typechef.typesystem._
@@ -61,7 +61,7 @@ import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 /**
  * Implements the strategy of extracting a function.
  */
-object ExtractFunction extends ASTSelection with Refactor {
+object CExtractFunction extends ASTSelection with CRefactor {
 
     private var lastSelection: Selection = null
 

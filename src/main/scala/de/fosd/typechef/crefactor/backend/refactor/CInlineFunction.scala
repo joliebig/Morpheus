@@ -43,7 +43,7 @@ import de.fosd.typechef.crefactor.frontend.util.Selection
 /**
  * Implements the technique of inlining a function
  */
-object InlineFunction extends ASTSelection with Refactor {
+object CInlineFunction extends ASTSelection with CRefactor {
 
     def getSelectedElements(morpheus: Morpheus, selection: Selection): List[AST] = {
         val functions = (filterASTElems[FunctionDef](morpheus.getAST) ::: filterASTElems[FunctionCall](morpheus.getAST)

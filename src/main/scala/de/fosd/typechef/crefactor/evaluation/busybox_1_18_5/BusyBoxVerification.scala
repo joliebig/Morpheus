@@ -1,9 +1,9 @@
-package de.fosd.typechef.crefactor.BusyBoxEvaluation
+package de.fosd.typechef.crefactor.evaluation.busybox_1_18_5
 
 import java.io.{FilenameFilter, File}
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr, SingleFeatureExpr, FeatureModel}
 import de.fosd.typechef.parser.c.AST
-import de.fosd.typechef.crefactor.util.Verification
+import de.fosd.typechef.crefactor.evaluation.Verification
 
 object BusyBoxVerification extends BusyBoxEvaluation with Verification {
 

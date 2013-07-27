@@ -1,18 +1,16 @@
-package de.fosd.typechef.crefactor.util
+package de.fosd.typechef.crefactor.evaluation
 
 import java.io._
 import de.fosd.typechef.parser.c.{PrettyPrinter, AST}
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr, SingleFeatureExpr, FeatureModel}
 import java.util.regex.Pattern
 import scala.io.Source
-import de.fosd.typechef.crefactor.{MorphFrontend, Logging}
+import de.fosd.typechef.crefactor.Logging
 import java.util.IdentityHashMap
-import java.util
 import de.fosd.typechef.parser.c.GnuAsmExpr
 import de.fosd.typechef.parser.c.Id
 import scala.collection.immutable.HashMap
 import de.fosd.typechef.conditional.{Opt, Choice}
-import de.fosd.typechef.typesystem.linker.CInterface
 
 trait Evaluation extends Logging {
 
@@ -361,8 +359,6 @@ trait Evaluation extends Logging {
         result
     }
 
-    def parse(file: File): (AST, FeatureModel, CInterface) = MorphFrontend.parse(file.getAbsolutePath, systemProperties, includeHeader, includeDir, featureModel)
-
     def getAllRelevantIds(a: Any): List[Id] = {
         a match {
             case id: Id => if (!(id.name.startsWith("__builtin"))) List(id) else List()
@@ -460,7 +456,7 @@ trait Evaluation extends Logging {
         var fileEx: FeatureExpr = FeatureExprFactory.True
         var trueFeatures: Set[SingleFeatureExpr] = Set()
         var falseFeatures: Set[SingleFeatureExpr] = Set()
-        val assignValues = new util.IdentityHashMap[String, String]()
+        val assignValues = new IdentityHashMap[String, String]()
 
         val enabledPattern: Pattern = java.util.regex.Pattern.compile("([^=]*)=.*")
         val disabledPattern: Pattern = java.util.regex.Pattern.compile("([^=]*) is*")

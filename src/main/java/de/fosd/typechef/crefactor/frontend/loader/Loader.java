@@ -1,6 +1,6 @@
 package de.fosd.typechef.crefactor.frontend.loader;
 
-import de.fosd.typechef.crefactor.util.Configuration;
+import de.fosd.typechef.crefactor.evaluation_utils.Configuration;
 
 import javax.swing.*;
 import java.awt.*;

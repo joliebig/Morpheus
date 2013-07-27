@@ -14,7 +14,7 @@ import de.fosd.typechef.parser.c.CompoundStatement
 import de.fosd.typechef.conditional.{Choice, Conditional, Opt, One}
 import de.fosd.typechef.featureexpr.FeatureExpr
 
-trait Refactor extends CEnvCache with ASTNavigation with ConditionalNavigation {
+trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation {
 
     private val VALID_NAME_PATTERN = "[a-zA-Z_][a-zA-Z0-9_]*"
 

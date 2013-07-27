@@ -2,12 +2,12 @@ package de.fosd.typechef.crefactor.frontend.actions.refactor;
 
 
 import de.fosd.typechef.crefactor.Morpheus;
-import de.fosd.typechef.crefactor.backend.refactor.ExtractFunction;
-import de.fosd.typechef.crefactor.backend.refactor.InlineFunction;
-import de.fosd.typechef.crefactor.backend.refactor.RenameIdentifier;
+import de.fosd.typechef.crefactor.backend.refactor.CExtractFunction;
+import de.fosd.typechef.crefactor.backend.refactor.CInlineFunction;
+import de.fosd.typechef.crefactor.backend.refactor.CRenameIdentifier;
+import de.fosd.typechef.crefactor.evaluation_utils.Configuration;
 import de.fosd.typechef.crefactor.frontend.util.RefactorNameInputBox;
 import de.fosd.typechef.crefactor.frontend.util.Test2000;
-import de.fosd.typechef.crefactor.util.Configuration;
 import de.fosd.typechef.parser.c.AST;
 import de.fosd.typechef.parser.c.Id;
 import org.apache.logging.log4j.LogManager;
@@ -44,7 +44,7 @@ public class RefactorAction {
                 try {
                     final ThreadMXBean tb = ManagementFactory.getThreadMXBean();
                     final long startTime = tb.getCurrentThreadCpuTime();
-                    final AST refactored = ExtractFunction.extract(morpheus, selection, box.getInput());
+                    final AST refactored = CExtractFunction.extract(morpheus, selection, box.getInput());
                     logger.info("Duration for transforming: " + (tb.getCurrentThreadCpuTime() - startTime) / 1000000 + "ms");
                     morpheus.update(refactored);
                 } catch (final AssertionError e) {
@@ -69,7 +69,7 @@ public class RefactorAction {
 
             @Override
             public void actionPerformed(final ActionEvent actionEvent) {
-                if (InlineFunction.isFunctionCall(morpheus, id)) {
+                if (CInlineFunction.isFunctionCall(morpheus, id)) {
                     logger.info("InlineOnce");
                 }
                 final Test2000 dialog = new Test2000();
@@ -83,7 +83,7 @@ public class RefactorAction {
                 try {
                     final ThreadMXBean tb = ManagementFactory.getThreadMXBean();
                     final long startTime = tb.getCurrentThreadCpuTime();
-                    final AST refactored = InlineFunction.inline(morpheus, id, dialog.isRename(), dialog.isOnce());
+                    final AST refactored = CInlineFunction.inline(morpheus, id, dialog.isRename(), dialog.isOnce());
                     logger.info("Duration for transforming: " + ((tb.getCurrentThreadCpuTime() - startTime) / 1000000) + "ms");
                     morpheus.update(refactored);
                 } catch (final AssertionError e) {
@@ -117,7 +117,7 @@ public class RefactorAction {
                 try {
                     final ThreadMXBean tb = ManagementFactory.getThreadMXBean();
                     final long time = tb.getCurrentThreadCpuTime();
-                    final AST refactored = RenameIdentifier.rename(id, box.getInput(), morpheus);
+                    final AST refactored = CRenameIdentifier.rename(id, box.getInput(), morpheus);
                     logger.info("Duration for transforming: " + (tb.getCurrentThreadCpuTime() - time) / 1000000 + "ms");
                     morpheus.update(refactored);
                 } catch (final AssertionError e) {

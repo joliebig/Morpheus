@@ -1,8 +1,8 @@
 package de.fosd.typechef.crefactor;
 
+import de.fosd.typechef.crefactor.evaluation_utils.Configuration;
 import de.fosd.typechef.crefactor.frontend.Editor;
 import de.fosd.typechef.crefactor.frontend.loader.Loader;
-import de.fosd.typechef.crefactor.util.Configuration;
 import de.fosd.typechef.parser.c.AST;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -61,7 +61,7 @@ public final class Launch {
 
                 final ThreadMXBean tb = ManagementFactory.getThreadMXBean();
                 final long parseStart = tb.getCurrentThreadCpuTime();
-                final AST ast = MorphFrontend.parse(typeChefConfig)._1();
+                final AST ast = CRefactorFrontend.parse(typeChefConfig)._1();
                 logger.info("Parsing duration: " + (tb.getCurrentThreadCpuTime() - parseStart) / 1000000 + "ms");
 
                 if (ast == null) {

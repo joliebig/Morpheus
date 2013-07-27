@@ -1,7 +1,7 @@
 package de.fosd.typechef.crefactor.frontend;
 
 import de.fosd.typechef.crefactor.Morpheus;
-import de.fosd.typechef.crefactor.util.Configuration;
+import de.fosd.typechef.crefactor.evaluation_utils.Configuration;
 import de.fosd.typechef.parser.c.PrettyPrinter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

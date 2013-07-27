@@ -1,17 +1,17 @@
-package de.fosd.typechef.crefactor.BusyBoxEvaluation.refactors
+package de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.refactor
 
 import java.io.File
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureModel, FeatureExpr}
-import de.fosd.typechef.crefactor.util.TimeMeasurement
 import de.fosd.typechef.crefactor.Morpheus
-import de.fosd.typechef.crefactor.backend.refactor.RenameIdentifier
+import de.fosd.typechef.crefactor.backend.refactor.CRenameIdentifier
 import de.fosd.typechef.parser.c.Id
 import de.fosd.typechef.parser.c.FunctionDef
 import de.fosd.typechef.parser.c.Declaration
-import de.fosd.typechef.crefactor.BusyBoxEvaluation.{BusyBoxVerification, PrepareASTforVerification, BusyBoxRefactor}
+import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.{BusyBoxVerification, PrepareASTforVerification, BusyBoxRefactor}
+import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 
-class Rename extends BusyBoxRefactor {
+object Rename extends BusyBoxRefactor {
 
     private val REFACTOR_NAME = "refactoredID"
 
@@ -54,17 +54,17 @@ class Rename extends BusyBoxRefactor {
             val ids = morpheus.getUseDeclMap.values().toArray(Array[List[Id]]()).par.foldLeft(List[Id]())((list, entry) => list ::: entry)
 
             val writeAbleIds = ids.filter(id =>
-                RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).par.forall(i =>
+                CRenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).par.forall(i =>
                     new File(i.getFile.get.replaceFirst("file ", "")).canWrite && isValidId(i, morpheus)))
 
             val variableIds = writeAbleIds.par.filter(id => {
-                val associatedIds = RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap)
+                val associatedIds = CRenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap)
                 val features = associatedIds.map(x => morpheus.getASTEnv.featureExpr(x))
                 !(features.distinct.length == 1 && features.distinct.contains(FeatureExprFactory.True))
             })
 
             val id = if (!variableIds.isEmpty) variableIds.apply((math.random * variableIds.size).toInt) else writeAbleIds.apply((math.random * writeAbleIds.size).toInt)
-            val associatedIds = RenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap)
+            val associatedIds = CRenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap)
             (id, associatedIds.length, associatedIds.map(morpheus.getASTEnv.featureExpr(_)).distinct)
         }
 
@@ -73,7 +73,7 @@ class Rename extends BusyBoxRefactor {
         val features = toRename._3
 
         val startRenaming = new TimeMeasurement
-        val refactored = RenameIdentifier.rename(id, REFACTOR_NAME, morpheus)
+        val refactored = CRenameIdentifier.rename(id, REFACTOR_NAME, morpheus)
         val renamingTime = startRenaming.getTime
         var stats = stat.::(renamingTime)
         stats = stats.::(id)

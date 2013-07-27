@@ -1,12 +1,12 @@
 package de.fosd.typechef.crefactor.frontend;
 
 import de.fosd.typechef.crefactor.Morpheus;
-import de.fosd.typechef.crefactor.backend.refactor.ExtractFunction;
-import de.fosd.typechef.crefactor.backend.refactor.InlineFunction;
-import de.fosd.typechef.crefactor.backend.refactor.RenameIdentifier;
+import de.fosd.typechef.crefactor.backend.refactor.CExtractFunction;
+import de.fosd.typechef.crefactor.backend.refactor.CInlineFunction;
+import de.fosd.typechef.crefactor.backend.refactor.CRenameIdentifier;
+import de.fosd.typechef.crefactor.evaluation_utils.Configuration;
 import de.fosd.typechef.crefactor.frontend.actions.refactor.RefactorAction;
 import de.fosd.typechef.crefactor.frontend.util.Selection;
-import de.fosd.typechef.crefactor.util.Configuration;
 import de.fosd.typechef.parser.c.AST;
 import de.fosd.typechef.parser.c.Id;
 import scala.collection.Iterator;
@@ -55,15 +55,15 @@ public class RefactorMenu implements MenuListener {
         /**
          * Refactor Renaming
          */
-        final List<Id> availableIds = RenameIdentifier.getAvailableIdentifiers(morpheus, selection);
+        final List<Id> availableIds = CRenameIdentifier.getAvailableIdentifiers(morpheus, selection);
         if (!availableIds.isEmpty()) {
             final JMenu rename = new JMenu(Configuration.getInstance().getConfig("refactor.rename.name"));
             this.menu.add(rename);
             addRenamingsToMenu(availableIds, rename);
 
 
-            if (ExtractFunction.isAvailable(morpheus, selection)) {
-                final List<AST> extractSelection = ExtractFunction.getSelectedElements(morpheus, selection);
+            if (CExtractFunction.isAvailable(morpheus, selection)) {
+                final List<AST> extractSelection = CExtractFunction.getSelectedElements(morpheus, selection);
                 final JMenuItem extract = new JMenuItem(RefactorAction.getExtractFunction(morpheus, extractSelection));
                 this.menu.add(extract);
             }
@@ -71,7 +71,7 @@ public class RefactorMenu implements MenuListener {
             /**
              * Inline Function
              */
-            final List<Id> availableFuncIDs = InlineFunction.getAvailableIdentifiers(morpheus, selection);
+            final List<Id> availableFuncIDs = CInlineFunction.getAvailableIdentifiers(morpheus, selection);
             if (!availableFuncIDs.isEmpty()) {
                 final JMenu inline = new JMenu(Configuration.getInstance().getConfig("refactor.inline.name"));
                 this.menu.add(inline);

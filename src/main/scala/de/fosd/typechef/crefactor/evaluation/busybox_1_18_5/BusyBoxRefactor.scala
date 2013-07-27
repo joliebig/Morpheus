@@ -1,15 +1,14 @@
-package de.fosd.typechef.crefactor.BusyBoxEvaluation
+package de.fosd.typechef.crefactor.evaluation.busybox_1_18_5
 
-import de.fosd.typechef.crefactor.util.{TimeMeasurement, Refactor}
-import org.junit.Test
 import java.io.File
-import de.fosd.typechef.crefactor.Morpheus
+import de.fosd.typechef.crefactor.evaluation.Refactor
+import de.fosd.typechef.parser.c.AST
+import de.fosd.typechef.featureexpr.FeatureModel
+import de.fosd.typechef.typesystem.CTypeSystemFrontend
 
 trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
 
-    @Test
-    def evaluate() = {
-
+    /*def evaluate(): Unit = {
 
         getBusyBoxFiles.reverse.foreach(file => println(file))
         getBusyBoxFiles.reverse.foreach(file => {
@@ -26,9 +25,18 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
                 }
             }
         })
+    } */
+
+    def evaluate(ast: AST, model: FeatureModel, ts: CTypeSystemFrontend, file: String, parsingTime: Long): Unit = {
+        println(file)
+        println(allFeaturesFile)
+        println(busyBoxPath)
+        println(new File(busyBoxPathUntouched).getCanonicalPath)
+        println(new File(allFeaturesFile).exists())
     }
 
 
+    /*
     private def runEval(bb_file: File): Boolean = {
         var ref_result: Boolean = false
         try {
@@ -51,5 +59,5 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
             }
         }
         ref_result
-    }
+    }    */
 }

@@ -5,12 +5,12 @@ import de.fosd.typechef.parser.c.{Id, AST}
 import de.fosd.typechef.crefactor.frontend.util.Selection
 import de.fosd.typechef.crefactor.Morpheus
 import java.io.File
-import de.fosd.typechef.crefactor.util.Configuration
+import de.fosd.typechef.crefactor.evaluation_utils.Configuration
 
 /**
  * Implements the technique of correctly renaming an identifier.
  */
-object RenameIdentifier extends ASTSelection with Refactor {
+object CRenameIdentifier extends ASTSelection with CRefactor {
 
     def getSelectedElements(morpheus: Morpheus, selection: Selection): List[AST] = getAvailableIdentifiers(morpheus, selection)
 
