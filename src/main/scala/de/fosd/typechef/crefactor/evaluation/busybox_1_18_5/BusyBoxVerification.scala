@@ -70,7 +70,7 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
     }
 
     def runTest: String = {
-        val result = runScript("./runtest", busyBoxPath + "testsuite/")
+        val result = runScript("./runtestwithtimeout.sh", busyBoxPath + "testsuite/")
         val stream = streamsToString(result)
         stream._1
     }
