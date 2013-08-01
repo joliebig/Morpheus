@@ -4,6 +4,8 @@ import de.fosd.typechef.crefactor.backend.ASTSelection
 import de.fosd.typechef.parser.c.{Id, AST}
 import de.fosd.typechef.crefactor.frontend.util.Selection
 import de.fosd.typechef.crefactor.Morpheus
+import de.fosd.typechef.crefactor.evaluation_utils.Configuration
+import java.io.File
 
 /**
  * Implements the technique of correctly renaming an identifier.
@@ -19,12 +21,12 @@ object CRenameIdentifier extends ASTSelection with CRefactor {
 
     def rename(id: Id, newName: String, morpheus: Morpheus): AST = {
         morpheus.getAST
-        /*assert(isValidName(newName), Configuration.getInstance().getConfig("default.error.invalidName"))
+        assert(isValidName(newName), Configuration.getInstance().getConfig("default.error.invalidName"))
         // TODO Optimize Performance by avoiding traversing the ast for each element
         getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).foldLeft(morpheus.getAST)((ast, id) => {
             assert(new File(id.getFile.get.replaceFirst("file ", "")).canWrite, "Not writeable: " + id.getPositionFrom.getFile)
             assert(!isShadowed(newName, id, morpheus), Configuration.getInstance().getConfig("refactor.rename.failed.shadowing"))
             replaceInAST(ast, id, id.copy(name = newName))
-        }) */
+        })
     }
 }
