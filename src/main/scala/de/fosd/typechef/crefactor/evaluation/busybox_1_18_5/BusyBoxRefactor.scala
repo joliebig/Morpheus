@@ -15,7 +15,6 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
         val bb_file = new File(file)
         val stats = List[Any](parsingTime)
         val morpheus = new Morpheus(ast, fm)
-
         try {
             runRefactor(morpheus, stats, bb_file, fm, 0, MAX)
         } catch {

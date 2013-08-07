@@ -20,7 +20,7 @@ object CRenameIdentifier extends ASTSelection with CRefactor {
     def isAvailable(morpheus: Morpheus, selection: Selection): Boolean = !getAvailableIdentifiers(morpheus, selection).isEmpty
 
     def rename(id: Id, newName: String, morpheus: Morpheus): AST = {
-        morpheus.getAST
+        // morpheus.getAST
         assert(isValidName(newName), Configuration.getInstance().getConfig("default.error.invalidName"))
         // TODO Optimize Performance by avoiding traversing the ast for each element
         getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).foldLeft(morpheus.getAST)((ast, id) => {
