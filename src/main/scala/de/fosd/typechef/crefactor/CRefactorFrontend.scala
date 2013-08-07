@@ -6,7 +6,7 @@ import de.fosd.typechef.options.{RefactorType, FrontendOptions, OptionException,
 import de.fosd.typechef.{lexer, ErrorXML}
 import java.io.{ObjectStreamClass, FileInputStream, ObjectInputStream, File}
 import de.fosd.typechef.typesystem.CTypeSystemFrontend
-import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.refactor.Rename
+import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.refactor.{Inline, Extract, Rename}
 import de.fosd.typechef.parser.TokenReader
 import de.fosd.typechef.parser.c.TranslationUnit
 import de.fosd.typechef.parser.c.CTypeContext
@@ -74,8 +74,8 @@ object CRefactorFrontend extends App {
 
             if (opt.refEval) opt.getRefactorType match {
                 case RefactorType.RENAME => Rename.evaluate(ast, featureModel, ts, opt.getFile, duration)
-                case RefactorType.EXTRACT =>
-                case RefactorType.INLINE =>
+                case RefactorType.EXTRACT => Extract.evaluate(ast, featureModel, ts, opt.getFile, duration)
+                case RefactorType.INLINE => Inline.evaluate(ast, featureModel, ts, opt.getFile, duration)
                 case RefactorType.NONE => println("No refactor type defined")
             }
         }

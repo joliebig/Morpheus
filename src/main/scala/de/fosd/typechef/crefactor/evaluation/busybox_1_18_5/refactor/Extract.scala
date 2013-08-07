@@ -6,6 +6,7 @@ import de.fosd.typechef.featureexpr.FeatureModel
 import de.fosd.typechef.parser.c.{AST, CompoundStatement}
 import de.fosd.typechef.crefactor.backend.refactor.CExtractFunction
 import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.BusyBoxRefactor
+import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 
 
 object Extract extends BusyBoxRefactor {
@@ -14,9 +15,9 @@ object Extract extends BusyBoxRefactor {
 
     private val NAME = "refactored_func"
 
-    def runRefactor(morpheus: Morpheus, stats: List[Any], bb_file: File, fm: FeatureModel, run: Int, max: Int, lastResult: Boolean = true): Boolean = {
+    def runRefactor(morpheus: Morpheus, stat: List[Any], bb_file: File, fm: FeatureModel, run: Int, max: Int, lastResult: Boolean = true): Boolean = {
         val compStmts = filterAllASTElems[CompoundStatement](morpheus.getAST)
-
+        var stats = stat
         def getRandomStatements(depth: Int = 0): List[AST] = {
             val compStmt = compStmts.apply(util.Random.nextInt(compStmts.length))
             val rand1 = util.Random.nextInt(compStmt.innerStatements.length)
@@ -35,10 +36,20 @@ object Extract extends BusyBoxRefactor {
         }
 
         val statements = getRandomVariableStatements()
+        val features = filterAllOptElems(statements).map(morpheus.getASTEnv.featureExpr(_)).distinct
+        val startExtraction = new TimeMeasurement
+        val refactored = CExtractFunction.extract(morpheus, statements, NAME)
+        // TODO add better stats
 
-        if (run >= max) return lastResult
+        stats = stats.::(startExtraction.getTime)
+        stats = stats.::(statements)
+        stats = stats.::(statements.length)
+        stats = stats.::(features)
 
+        val result = evalRefactoredAST((refactored, true, features, stats), bb_file, run, morpheus, fm)
 
-        lastResult
+        if (run >= max) return result && lastResult
+
+        lastResult && runRefactor(morpheus, stats, bb_file, fm, run + 1, max, result)
     }
 }

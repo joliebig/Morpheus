@@ -8,7 +8,7 @@ import de.fosd.typechef.crefactor.backend.refactor.CRenameIdentifier
 import de.fosd.typechef.parser.c.Id
 import de.fosd.typechef.parser.c.FunctionDef
 import de.fosd.typechef.parser.c.Declaration
-import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.{BusyBoxVerification, PrepareASTforVerification, BusyBoxRefactor}
+import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.BusyBoxRefactor
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 
 object Rename extends BusyBoxRefactor {
@@ -19,20 +19,10 @@ object Rename extends BusyBoxRefactor {
         if (run >= max) return lastResult
         val result = applyRefactor(morpheus, stats)
         if (result._1 == null) println("AST IS NULL!")
-        if (result._2) {
-            val dir = getResultDir(bb_file.getCanonicalPath, run)
-            val path = dir.getCanonicalPath + File.separatorChar + getFileName(bb_file.getCanonicalPath)
-            writeAST(result._1, path)
-            writePlainAST(result._1, path + ".ast")
-            PrepareASTforVerification.makeConfigs(result._1, morpheus.getFeatureModel, bb_file.getCanonicalPath, result._3, run)
-        }
-
-        val verify = BusyBoxVerification.verify(bb_file, run, fm)
-        var stat2 = result._4
-        stat2 = stat2.::(result._2 + "\n" + verify)
-        writeStats(stat2, bb_file.getCanonicalPath, run)
+        val verify: Boolean = evalRefactoredAST(result, bb_file, run, morpheus, fm)
         verify && runRefactor(morpheus, stats, bb_file, fm, run + 1, MAX)
     }
+
 
     private def applyRefactor(morpheus: Morpheus, stat: List[Any]): (AST, Boolean, List[FeatureExpr], List[Any]) = {
         def getVariableIdToRename: (Id, Int, List[FeatureExpr]) = {
