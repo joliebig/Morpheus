@@ -13,6 +13,7 @@ trait BusyBoxEvaluation extends Evaluation with ASTNavigation with ConditionalNa
     val busyBoxPath = completeBusyBoxPath + "/busybox-1.18.5/"
     val busyBoxPathUntouched = completeBusyBoxPath + "/busybox-1.18.5_untouched/"
     val result = "/result/"
+    val featureModelPath = completeBusyBoxPath + "/featureModel"
 
     val filterFeatures = List("def(CONFIG_SELINUX)", "CONFIG_SELINUX", "def(CONFIG_TCPSVD)", "CONFIG_TCPSVD", "def(CONFIG_UDPSVD)", "CONFIG_UDPSVD", "def(CONFIG_MKFS_EXT2)", "CONFIG_MKFS_EXT2")
     val allFeaturesFile = getClass.getResource("/BusyBoxAllFeatures.config").getFile
@@ -24,6 +25,7 @@ trait BusyBoxEvaluation extends Evaluation with ASTNavigation with ConditionalNa
     val includeDir: String = completeBusyBoxPath + "/busybox-1.18.5/include"
     val featureModel: String = completeBusyBoxPath + "/featureModel"
     val featureModel_DIMACS: String = completeBusyBoxPath + "/BB_fm.dimacs"
+    val featuresFile: String = completeBusyBoxPath + "/features"
 
 
     val FORCE_VARIABILITY = true

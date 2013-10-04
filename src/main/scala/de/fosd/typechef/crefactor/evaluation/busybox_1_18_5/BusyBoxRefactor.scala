@@ -6,11 +6,16 @@ import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
 import de.fosd.typechef.typesystem.CTypeSystemFrontend
 import de.fosd.typechef.crefactor.Morpheus
 import java.io.File
+import de.fosd.typechef.typesystem.linker.CInterface
 
 trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
 
-    def evaluate(ast: AST, fm: FeatureModel, ts: CTypeSystemFrontend, file: String, parsingTime: Long): Unit = {
+    def evaluate(ast: AST, fm: FeatureModel, ts: CTypeSystemFrontend, file: String, parsingTime: Long, interface: CInterface): Unit = {
         println("+++ Current File: " + file + " +++")
+        println("IMPORT")
+        interface.imports.foreach(sig => println(sig.name + "\n" + sig.ctype + "\n" + sig.pos))
+        println("EXPORT")
+        interface.exports.foreach(sig => println(sig.name + "\n" + sig.ctype + "\n" + sig.pos))
         if (ast == null) println("+++ AST is null! +++")
         val bb_file = new File(file)
         val stats = List[Any](parsingTime)

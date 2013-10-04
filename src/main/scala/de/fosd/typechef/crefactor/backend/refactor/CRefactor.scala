@@ -7,12 +7,17 @@ import de.fosd.typechef.crefactor.Morpheus
 import org.kiama.rewriting.Rewriter._
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.crefactor.frontend.util.Selection
-import de.fosd.typechef.parser.c.Id
-import scala.Some
-import de.fosd.typechef.parser.c.TranslationUnit
-import de.fosd.typechef.parser.c.CompoundStatement
-import de.fosd.typechef.conditional.{Choice, Conditional, Opt, One}
+import de.fosd.typechef.conditional.Conditional
 import de.fosd.typechef.featureexpr.FeatureExpr
+import de.fosd.typechef.parser.c.CompoundStatementExpr
+import scala.Some
+import de.fosd.typechef.conditional.Choice
+import de.fosd.typechef.parser.c.TranslationUnit
+import de.fosd.typechef.conditional.One
+import de.fosd.typechef.parser.c.Id
+import de.fosd.typechef.parser.c.FunctionDef
+import de.fosd.typechef.parser.c.CompoundStatement
+import de.fosd.typechef.conditional.Opt
 
 trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation {
 
@@ -103,6 +108,17 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
     def isDeclaredTypeDefInEnv(name: String, env: Env) = env.typedefEnv(name) match {
         case One(x) => !x.isUnknown
         case _ => true
+    }
+
+    /**
+     * Replace a list of ids in AST with copied instance with new names.
+     */
+    def renameIDsInAST[T <: Product](t: T, ids: List[Id], newName: String): T = {
+        val r = manybu(rule {
+            case id: Id => if (ids.exists(isPartOf(id, _))) id.copy(name = newName) else id
+            case x => x
+        })
+        r(t).get.asInstanceOf[T]
     }
 
     // TODO Clean up ast rewrite strategies
