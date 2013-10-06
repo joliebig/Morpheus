@@ -13,6 +13,7 @@ import de.fosd.typechef.parser.c.Id;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import scala.collection.immutable.List;
+import scala.util.Either;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -117,9 +118,14 @@ public class RefactorAction {
                 try {
                     final ThreadMXBean tb = ManagementFactory.getThreadMXBean();
                     final long time = tb.getCurrentThreadCpuTime();
-                    final AST refactored = CRenameIdentifier.rename(id, box.getInput(), morpheus);
+                    final Either<String, AST> refactored = CRenameIdentifier.rename(id, box.getInput(), morpheus);
                     logger.info("Duration for transforming: " + (tb.getCurrentThreadCpuTime() - time) / 1000000 + "ms");
-                    morpheus.update(refactored);
+                    if (refactored.isLeft()) {
+                        JOptionPane.showMessageDialog(null, Configuration.getInstance().getConfig("refactor.rename.failed"), Configuration.getInstance().getConfig("default.error"), JOptionPane.ERROR_MESSAGE);
+                    } else {
+                        morpheus.update(refactored.right().get());
+                    }
+
                 } catch (final AssertionError e) {
                     JOptionPane.showMessageDialog(null, Configuration.getInstance().getConfig("refactor.rename.failed") + " "
                             + e.getMessage(), Configuration.getInstance().getConfig("default.error"), JOptionPane.ERROR_MESSAGE);
