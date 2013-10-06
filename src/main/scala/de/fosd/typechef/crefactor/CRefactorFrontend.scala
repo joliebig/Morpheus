@@ -74,7 +74,7 @@ object CRefactorFrontend extends App with InterfaceWriter {
             val duration = parseTypeCheckMs.getTime
 
             if (opt.canBuild) {
-                Builder.canBuild(ast, opt.getFile)
+                println("+++ Can build: " + Builder.canBuild(ast, opt.getFile) + " +++")
             }
 
             if (opt.refEval) {
