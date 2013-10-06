@@ -48,7 +48,7 @@ object Builder extends BusyBoxEvaluation {
         // Restore old original file again
         copyFile(orgFile, new File(workingPath))
 
-        orgTest._1 == refTest._1
+        (orgTest._1 && refTest._1)
     }
 
     private def runTest: String = {
