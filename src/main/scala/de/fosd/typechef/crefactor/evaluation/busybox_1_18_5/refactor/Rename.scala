@@ -70,11 +70,20 @@ object Rename extends BusyBoxRefactor {
         stats = stats.::(toRename._2)
         stats = stats.::(features)
 
-        val morpheus_ref = new Morpheus(refactored, morpheus.getFeatureModel)
+        // TODO ERROR HANDLING
+        refactored match {
+            case a: AST => {
+                val morpheus_ref = new Morpheus(a, morpheus.getFeatureModel)
 
-        val originAmount = analsyeDeclUse(morpheus.getDeclUseMap).sorted
-        val newAmount = analsyeDeclUse(morpheus_ref.getDeclUseMap).sorted
+                val originAmount = analsyeDeclUse(morpheus.getDeclUseMap).sorted
+                val newAmount = analsyeDeclUse(morpheus_ref.getDeclUseMap).sorted
 
-        (refactored, originAmount == newAmount, features, stats)
+                (a, originAmount == newAmount, features, stats)
+            }
+            case s: String => {
+                (null, false, features, stats)
+            }
+        }
+
     }
 }
