@@ -12,6 +12,7 @@ import de.fosd.typechef.parser.c.TranslationUnit
 import de.fosd.typechef.parser.c.CTypeContext
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.typesystem.linker.InterfaceWriter
+import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.setup.building.Builder
 
 object CRefactorFrontend extends App with InterfaceWriter {
 
@@ -71,6 +72,10 @@ object CRefactorFrontend extends App with InterfaceWriter {
             }
 
             val duration = parseTypeCheckMs.getTime
+
+            if (opt.canBuild) {
+                Builder.canBuild(ast, opt.getFile)
+            }
 
             if (opt.refEval) {
                 val interface = ts.getInferredInterface().and(opt.getFilePresenceCondition)
