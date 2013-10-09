@@ -13,6 +13,7 @@ import de.fosd.typechef.parser.c.CTypeContext
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.typesystem.linker.InterfaceWriter
 import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.setup.building.Builder
+import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking.CLinking
 
 object CRefactorFrontend extends App with InterfaceWriter {
 
@@ -49,6 +50,8 @@ object CRefactorFrontend extends App with InterfaceWriter {
         var ast: AST = null
         var featureModel: FeatureModel = null
         var ts: CTypeSystemFrontend = null
+        var linkInf: CLinking = null
+
         if (opt.reuseAST && opt.parse && new File(opt.getSerializedASTFilename).exists()) {
             ast = loadSerializedAST(opt.getSerializedASTFilename)
             if (ast == null) println("... failed reading AST\n")
@@ -71,16 +74,19 @@ object CRefactorFrontend extends App with InterfaceWriter {
                 ts.checkAST()
             }
 
-            val duration = parseTypeCheckMs.getTime
+            val parsingDuration = parseTypeCheckMs.getTime
 
             if (opt.canBuild) {
-                println("+++ Can build: " + Builder.canBuild(ast, opt.getFile) + " +++")
+                println("+++ Can build " + new File(opt.getFile).getName + " : " + Builder.canBuild(ast, opt.getFile) + " +++")
+            }
+
+            if (opt.refLink) {
+                linkInf = new CLinking(opt.getLinkingInterfaceFile)
             }
 
             if (opt.refEval) {
-                val interface = ts.getInferredInterface().and(opt.getFilePresenceCondition)
                 opt.getRefactorType match {
-                    case RefactorType.RENAME => Rename.evaluate(ast, featureModel, ts, opt.getFile, duration, interface)
+                    case RefactorType.RENAME => Rename.evaluate(ast, featureModel, ts, opt.getFile, parsingDuration, linkInf)
                     case RefactorType.EXTRACT => //Extract.evaluate(ast, featureModel, ts, opt.getFile, duration)
                     case RefactorType.INLINE => //Inline.evaluate(ast, featureModel, ts, opt.getFile, duration)
                     case RefactorType.NONE => println("No refactor type defined")

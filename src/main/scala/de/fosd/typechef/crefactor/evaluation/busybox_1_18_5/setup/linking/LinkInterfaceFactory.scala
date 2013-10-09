@@ -6,21 +6,25 @@ import de.fosd.typechef.typesystem.linker.{EmptyInterface, CInterface, Interface
 import de.fosd.typechef.featureexpr.{FeatureExprParser, FeatureExpr, FeatureExprFactory}
 import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking.CLinking
 
-object Linking extends BusyBoxEvaluation with App {
+/**
+ * Singleton instance for generating linking informations of a whole given project. This is one is for BusyBox.
+ */
+object LinkInterfaceFactory extends BusyBoxEvaluation with App {
 
     val fileList = io.Source.fromFile(busyBoxFiles).getLines().toList
     val featureList = io.Source.fromFile(featuresFile).getLines().toList
 
     def getBusyboxVMConstraints: Iterator[FeatureExpr] =
-        for (l: String <- io.Source.fromFile(featureModel).getLines(); if (l != ""))
+        for (l: String <- io.Source.fromFile(featureModel).getLines(); if l != "")
         yield new FeatureExprParser().parse(l)
 
     val vm = getBusyboxVMConstraints.fold(FeatureExprFactory.True)(_ and _)
     val fm = FeatureExprFactory.default.featureModelFactory.create(vm)
     val reader = new InterfaceWriter() {}
-    println(fileList.size + " files")
 
-    val interfaces = fileList.map(f => reader.readInterface(new File(busyBoxPath + f + ".interface"))).map(SystemLinker.linkStdLib(_))
+    println(fileList.size + " files to analyse for linking informations.")
+
+    val interfaces = fileList.map(f => reader.readInterface(new File(busyBoxPath + f + ".interface"))).map(SystemLinker.linkStdLib)
 
     def linkTreewise(l: List[CInterface]): CInterface = {
         if (l.size > 2) {
@@ -54,6 +58,7 @@ object Linking extends BusyBoxEvaluation with App {
     })
 
     val finalInterface = linkTreewise(interfaces).andFM(vm).pack
+
     reader.writeInterface(finalInterface, new File("bboxLink.interface"))
     reader.debugInterface(finalInterface, new File("bboxLink.dbginterface"))
 
