@@ -6,7 +6,7 @@ import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr, SingleFeat
 import java.util.regex.Pattern
 import scala.io.Source
 import de.fosd.typechef.crefactor.Logging
-import java.util.IdentityHashMap
+import java.util.{TimerTask, Timer, IdentityHashMap}
 import de.fosd.typechef.parser.c.GnuAsmExpr
 import de.fosd.typechef.parser.c.Id
 import scala.collection.immutable.HashMap
@@ -271,6 +271,12 @@ trait Evaluation extends Logging {
         val pb = new ProcessBuilder(script)
         pb.directory(new File(dir))
         val p = pb.start()
+        val t = new Timer(true)
+        t.schedule(new TimerTask() {
+            def run() {
+                p.destroy();
+            }
+        }, 3 * 60 * 1000)
         p.waitFor()
         (p.getInputStream, p.getErrorStream)
     }

@@ -12,9 +12,9 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
 
     def evaluate(ast: AST, fm: FeatureModel, ts: CTypeSystemFrontend, file: String, parsingTime: Long, interface: CLinking = null): Unit = {
         println("+++ Current File: " + file + " +++")
-        println(interface)
         if (ast == null) println("+++ AST is null! +++")
         val bb_file = new File(file)
+        // TODO Stats Object
         val stats = List[Any](parsingTime)
         val morpheus = new Morpheus(ast, fm)
         try {
