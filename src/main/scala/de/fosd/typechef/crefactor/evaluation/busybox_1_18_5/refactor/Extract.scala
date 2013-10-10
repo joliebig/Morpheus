@@ -7,6 +7,7 @@ import de.fosd.typechef.parser.c.{AST, CompoundStatement}
 import de.fosd.typechef.crefactor.backend.refactor.CExtractFunction
 import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.BusyBoxRefactor
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
+import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking.CLinking
 
 
 object Extract extends BusyBoxRefactor {
@@ -52,4 +53,5 @@ object Extract extends BusyBoxRefactor {
 
         lastResult && runRefactor(morpheus, stats, bb_file, fm, run + 1, max, result)
     }
+    def refactor(morpheus: Morpheus, linkInterface: CLinking): Boolean = ???
 }

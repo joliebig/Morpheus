@@ -2,18 +2,17 @@ package de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking
 
 import java.io.File
 import de.fosd.typechef.typesystem.linker.{CSignature, InterfaceWriter}
-import org.apache.logging.log4j.LogManager
 import java.util
 import de.fosd.typechef.error.Position
+import scala.collection.parallel.mutable
 
 class CLinking(linkFile: String) {
 
-    private lazy val logger = LogManager.getLogger(this.getClass.getName)
-
     val reader = new InterfaceWriter {}
     val interface = reader.interfaceFromXML(xml.XML.loadFile(new File(linkFile)))
-    var blackList = Set[String]()
+    var blackList = new mutable.ParHashSet[String]()
 
+    // TODO Optimize Data Structure -> Scala Mutable Maps
     val idLinkExpMap: util.IdentityHashMap[String, List[CSignature]] = new util.IdentityHashMap()
     val idLinkPosMap: util.IdentityHashMap[String, List[Position]] = new util.IdentityHashMap()
 

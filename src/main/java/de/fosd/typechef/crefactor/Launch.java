@@ -77,7 +77,7 @@ public final class Launch {
                  }  */
 
                 // show editor window
-                final Editor editor = new Editor(new Morpheus(ast, loadingWindow.getFileToAnalyse()));
+                final Editor editor = new Editor(new Morpheus(ast, loadingWindow.getFileToAnalyse().getAbsolutePath()));
                 editor.loadFileInEditor(loadingWindow.getFileToAnalyse());
                 editor.pack();
                 editor.setVisible(true);
