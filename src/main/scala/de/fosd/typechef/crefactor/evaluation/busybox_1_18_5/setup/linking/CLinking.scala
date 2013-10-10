@@ -35,11 +35,15 @@ class CLinking(linkFile: String) {
         if (idLinkPosMap.containsKey(key)) idLinkPosMap.put(key, value ::: idLinkPosMap.get(key))
         else idLinkPosMap.put(key, value)
 
-    def isListed(id: String) = (idLinkExpMap.containsKey(id) || idLinkPosMap.containsKey(id))
+    def isListed(id: String) = idLinkExpMap.containsKey(id) || idLinkPosMap.containsKey(id)
 
     def isBlackListed(id: String) = blackList.contains(id)
 
     def getSignatures(id: String) = idLinkExpMap.get(id)
 
-    def getPositions(id: String) = idLinkPosMap.get(id)
+    def getPositions(id: String) = {
+        val result = idLinkPosMap.get(id)
+        if (result != null) result
+        else List[Position]()
+    }
 }

@@ -19,10 +19,14 @@ import de.fosd.typechef.crefactor.evaluation.StatsJar
 
 object CRefactorFrontend extends App with InterfaceWriter {
 
+
+    var command: Array[String] = Array[String]()
+
     override def main(args: Array[String]): Unit = parse(args)
 
     def parse(args: Array[String]): (AST, FeatureModel, CTypeSystemFrontend) = {
         // Parsing MorphFrontend is adapted by the original typechef frontend
+        command = args
         val opt = new FrontendOptionsWithConfigFiles()
 
         try {
