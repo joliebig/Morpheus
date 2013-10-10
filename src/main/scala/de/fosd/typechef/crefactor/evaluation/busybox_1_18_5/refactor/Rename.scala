@@ -49,7 +49,7 @@ object Rename extends BusyBoxRefactor {
 
             val writeAbleIds = ids.filter(id =>
                 CRenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).par.forall(i =>
-                    new File(i.getFile.get.replaceFirst("file ", "")).canWrite && isValidId(i, morpheus)))
+                    new File(i.getFile.get.replaceFirst("file ", "")).canWrite && isValidId(i, morpheus) && i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile)))
 
             val variableIds = writeAbleIds.par.filter(id => {
                 val associatedIds = CRenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap)
