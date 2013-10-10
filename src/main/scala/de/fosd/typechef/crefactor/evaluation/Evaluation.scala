@@ -32,6 +32,8 @@ trait Evaluation extends Logging {
     val featureModel: String
     val featureModel_DIMACS: String
 
+    val runTimeout: Int
+
 
     /**
      * The following class it not part of the default TypeChef Branch. In order to read in csv - configurations correctly
@@ -276,7 +278,7 @@ trait Evaluation extends Logging {
             def run() {
                 p.destroy();
             }
-        }, 3 * 60 * 1000)
+        }, runTimeout)
         p.waitFor()
         (p.getInputStream, p.getErrorStream)
     }
