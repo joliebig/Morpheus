@@ -123,13 +123,7 @@ object Rename extends BusyBoxRefactor {
         val linked = linkInterface.getPositions(id.name)
         val affectedFiles = linked.foldLeft(new mutable.HashMap[String, Position])((map, pos) => map += (pos.getFile -> pos))
         val refactorChain = affectedFiles.foldLeft(List[(Morpheus, Position)]())((list, entry) => {
-            // TODO Better solution than manipulating args
-            val args: Array[String] = CRefactorFrontend.command.foldLeft(Array[String]())((args, arg) => {
-                if (arg.equalsIgnoreCase(morpheus.getFile)) args :+ entry._1
-                else if (arg.equalsIgnoreCase("--refEval") || arg.equalsIgnoreCase("rename") || arg.equalsIgnoreCase("extract") || arg.equalsIgnoreCase("inline")) args
-                else args :+ arg
-            })
-            val ast = CRefactorFrontend.parse(args)
+            val ast = CRefactorFrontend.parse(entry._1)
             list :+(new Morpheus(ast._1, ast._2, entry._1), entry._2)
         })
 
@@ -138,6 +132,7 @@ object Rename extends BusyBoxRefactor {
         val startRenaming = new TimeMeasurement
         val refactored = CRenameIdentifier.rename(id, REFACTOR_NAME, morpheus)
         StatsJar.addStat(morpheus.getFile, RefactorTime, startRenaming.getTime)
+
         val linkedRefactored = refactorChain.map(x => {
             val linkedId = findIdInAST(x._2, id, x._1.getAST)
             val time = new TimeMeasurement
@@ -146,6 +141,7 @@ object Rename extends BusyBoxRefactor {
             StatsJar.addStat(x._1.getFile, RefactorTime, time.getTime)
             ref
         })
+
         false
     }
 }

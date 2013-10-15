@@ -14,7 +14,7 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
         if (ast == null) println("+++ AST is null! +++")
         val morpheus = new Morpheus(ast, fm, file)
         try {
-            refactor(morpheus, linkInterface)
+            (morpheus, linkInterface)
         } catch {
             case e: Exception => {
                 println(e.getCause.toString)

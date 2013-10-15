@@ -19,14 +19,14 @@ import de.fosd.typechef.crefactor.evaluation.StatsJar
 
 object CRefactorFrontend extends App with InterfaceWriter {
 
+    var command: Array[String] = Array()
 
-    var command: Array[String] = Array[String]()
+    override def main(args: Array[String]): Unit = parse(args, true)
 
-    override def main(args: Array[String]): Unit = parse(args)
+    def parse(file: String): (AST, FeatureModel, CTypeSystemFrontend) = parse(file +: command)
 
-    def parse(args: Array[String]): (AST, FeatureModel, CTypeSystemFrontend) = {
+    private def parse(args: Array[String], saveArg: Boolean = false): (AST, FeatureModel, CTypeSystemFrontend) = {
         // Parsing MorphFrontend is adapted by the original typechef frontend
-        command = args
         val opt = new FrontendOptionsWithConfigFiles()
 
         try {
@@ -37,6 +37,13 @@ object CRefactorFrontend extends App with InterfaceWriter {
                 println("use parameter --help for more information.")
                 throw o
         }
+
+        // Current re-run hack - storing the initial arguments for parsing further files then the initial with the same arguments
+        if (saveArg) command = args.foldLeft(List[String]())((args, arg) => {
+            if (arg.equalsIgnoreCase(opt.getFile)) args
+            else if (arg.equalsIgnoreCase("--refEval") || arg.equalsIgnoreCase("rename") || arg.equalsIgnoreCase("extract") || arg.equalsIgnoreCase("inline")) args
+            else args :+ arg
+        }).toArray
 
         processFile(opt)
     }
