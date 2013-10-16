@@ -1,6 +1,7 @@
 package de.fosd.typechef.crefactor.evaluation
 
 import scala.collection.mutable
+import java.io.FileWriter
 
 object StatsJar {
 
@@ -13,10 +14,22 @@ object StatsJar {
         }
     }
 
-    def write(filePath: String) =
-     
-    {
-
+    def write(filePath: String) = {
+        val writer = new FileWriter(filePath)
+        statsJar.keySet.foreach(key => {
+            writer.write("+++ " + key + " +++")
+            writer.write("\n")
+            statsJar.get(key) match {
+                case Some(x) => x.keySet.foreach(stat => x.get(stat) match {
+                    case Some(y) => writer.write(stat.toString + "\t" + y.toString + "\n")
+                    case _ =>
+                })
+                case _ =>
+            }
+            writer.write("===\n")
+        })
+        writer.flush()
+        writer.close()
     }
 
 }

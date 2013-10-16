@@ -1,6 +1,6 @@
 package de.fosd.typechef.crefactor.evaluation.busybox_1_18_5
 
-import de.fosd.typechef.crefactor.evaluation.Refactor
+import de.fosd.typechef.crefactor.evaluation.{StatsJar, Refactor}
 import de.fosd.typechef.parser.c.AST
 import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
 import de.fosd.typechef.crefactor.Morpheus
@@ -11,6 +11,8 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
 
     def evaluate(ast: AST, fm: FeatureModel, file: String, linkInterface: CLinking): Unit = {
         println("+++ Current File: " + file + " +++")
+        val resultDir = getResultDir(file)
+        val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(file)
         if (ast == null) println("+++ AST is null! +++")
         val morpheus = new Morpheus(ast, fm, file)
         try {
@@ -22,11 +24,13 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
             runScript("./cleanAndReset.sh", busyBoxPath)
             BusyBoxVerification.verify(file, fm, "_org")
             runScript("./cleanAndReset.sh", busyBoxPath)
-            // TODO Diff Test And write statsJar
+            // TODO Diff Test
+
+            StatsJar.write(path + ".stats")
         } catch {
             case e: Exception => {
                 println(e.getStackTrace.mkString("\n"))
-                writeException(e.getCause.toString + "\n" + e.getMessage + "\n" + e.getStackTrace.mkString("\n"), new File(file).getCanonicalPath, -1)
+                writeException(e.getCause.toString + "\n" + e.getMessage + "\n" + e.getStackTrace.mkString("\n"), new File(path).getCanonicalPath)
             }
         }
     }

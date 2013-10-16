@@ -331,6 +331,16 @@ trait Evaluation extends Logging {
         out.close()
     }
 
+    def writeException(exception: String, originalFilePath: String) = {
+        val dir = getResultDir(originalFilePath)
+        val out = new java.io.FileWriter(dir.getCanonicalPath + File.separatorChar + getFileName(originalFilePath) + ".exception")
+        out.write(exception)
+        out.write("\n")
+
+        out.flush()
+        out.close()
+    }
+
     def writeException(exception: String, originalFilePath: String, run: Int) = {
         val dir = getResultDir(originalFilePath, run)
         val out = new java.io.FileWriter(dir.getCanonicalPath + File.separatorChar + getFileName(originalFilePath) + ".exception")
