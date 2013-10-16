@@ -16,6 +16,7 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
         try {
             // reset test environment
             runScript("./cleanAndReset.sh", busyBoxPath)
+            println(linkInterface == null)
             val features = refactor(morpheus, linkInterface)
             // run refactored first
             BusyBoxVerification.verify(file, fm, "_ref")
