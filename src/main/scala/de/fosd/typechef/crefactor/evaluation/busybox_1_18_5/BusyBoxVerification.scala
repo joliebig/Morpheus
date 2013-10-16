@@ -51,16 +51,16 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
             configBuild.delete()
 
             if (!orgTest._1) {
-                writeError("Invalid Config.\n", resultDir.getCanonicalPath + "/" + config.getName, run)
+                writeError("Invalid Config.\n", resultDir.getCanonicalPath + "/" + config.getName)
                 writeResult("Invalid Config", resultDir.getCanonicalPath + "/" + config.getName + ".result")
                 true
             } else if (refTest._1) {
                 writeResult(orgTest.equals(refTest).toString, resultDir.getCanonicalPath + "/" + config.getName + ".result")
                 val succ = orgTest.equals(refTest)
-                if (!succ) writeError("Test failed!\n", resultDir.getCanonicalPath + "/" + config.getName, run)
+                if (!succ) writeError("Test failed!\n", resultDir.getCanonicalPath + "/" + config.getName)
                 succ
             } else {
-                writeError("Refactor build failed!\n", resultDir.getCanonicalPath + "/" + config.getName, run)
+                writeError("Refactor build failed!\n", resultDir.getCanonicalPath + "/" + config.getName)
                 writeResult("Refactor build failed!", resultDir.getCanonicalPath + "/" + config.getName + ".result")
                 false
             }
