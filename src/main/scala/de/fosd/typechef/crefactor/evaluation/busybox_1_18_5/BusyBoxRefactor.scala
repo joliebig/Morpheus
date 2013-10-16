@@ -16,6 +16,7 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
         try {
             // reset test environment
             runScript("./cleanAndReset.sh", busyBoxPath)
+            println(linkInterface == null)
             val features = refactor(morpheus, linkInterface)
             // run refactored first
             BusyBoxVerification.verify(file, fm, "_ref")
@@ -25,8 +26,6 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
             // TODO Diff Test And write statsJar
         } catch {
             case e: Exception => {
-                println(e.getCause.toString)
-                println(e.getMessage)
                 println(e.getStackTrace.mkString("\n"))
                 writeException(e.getCause.toString + "\n" + e.getMessage + "\n" + e.getStackTrace.mkString("\n"), new File(file).getCanonicalPath, -1)
             }
