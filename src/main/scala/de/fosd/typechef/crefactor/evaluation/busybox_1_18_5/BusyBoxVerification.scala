@@ -82,15 +82,10 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
         (stream._1.contains("Success_Build"), stream._1, stream._2)
     }
     def verify(evalFile: String, fm: FeatureModel, mode: String): Unit = {
-        val resultDir = new File(evalFile.replaceAll("busybox-1.18.5", "result") + File.pathSeparatorChar)
-        println(resultDir.getCanonicalPath)
+        val resultDir = new File(evalFile.replaceAll("busybox-1.18.5", "result"))
         val configs = resultDir.listFiles(new FilenameFilter {
             def accept(input: File, file: String): Boolean = file.endsWith(".config")
         })
-
-        println(resultDir.listFiles)
-
-        println(configs.size)
 
         configs.map(config => {
             def buildAndTest(busyBoxFile: File, ext: String): (Boolean, String) = {
@@ -104,7 +99,7 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
             }
 
             val configBuild = new File(busyBoxPath + ".config")
-            println("filecopy")
+
             copyFile(config, configBuild)
 
             val buildTest = buildAndTest(new File(evalFile), mode)

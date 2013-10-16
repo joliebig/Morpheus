@@ -13,6 +13,12 @@ object StatsJar {
         }
     }
 
+    def write(filePath: String) =
+     
+    {
+
+    }
+
 }
 
 object Stats extends Enumeration {

@@ -143,10 +143,9 @@ object Rename extends BusyBoxRefactor {
             case Left(s) => // TODO Write error
         }
 
-        val linkedRefactored = refactorChain.map(x => {
+        val linkedRefactored = refactorChain.par.map(x => {
             val linkedId = findIdInAST(x._2, id, x._1.getAST)
             val time = new TimeMeasurement
-            // TODO log error case
             val ref = CRenameIdentifier.rename(linkedId.get, REFACTOR_NAME, x._1)
             StatsJar.addStat(x._1.getFile, RefactorTime, time.getTime)
             ref match {
@@ -155,8 +154,6 @@ object Rename extends BusyBoxRefactor {
             }
             ref
         })
-
-        // TODO Write files
 
         features
     }
