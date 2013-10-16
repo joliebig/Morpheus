@@ -287,6 +287,15 @@ trait Evaluation extends Logging {
     }
 
 
+    def write(ast: AST, filePath: String, orgFile: String = null) = {
+        val refFile = if (orgFile != null) orgFile else filePath
+        writeAST(ast, filePath)
+        val resultDir = getResultDir(refFile)
+        val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(filePath)
+        writeAST(ast, path)
+        writePlainAST(ast, path + ".ast")
+    }
+
     def writeResult(result: String, file: String) = {
         var out: FileWriter = null
         if (file.startsWith(".")) out = new java.io.FileWriter(file.replaceFirst(".", ""))
@@ -298,8 +307,10 @@ trait Evaluation extends Logging {
     }
 
     def writeAST(ast: AST, filePath: String) {
-        val writer = new FileWriter(filePath)
+        val file = new File(filePath)
+        if (file.exists) file.delete
         val prettyPrinted = PrettyPrinter.print(ast)
+        val writer = new FileWriter(file)
         writer.write(prettyPrinted.replaceAll("definedEx", "defined"))
         writer.flush()
         writer.close()
@@ -312,7 +323,7 @@ trait Evaluation extends Logging {
         writer.close()
     }
 
-    def writeError(error: String, originalFilePath: String, run: Int) = {
+    def writeError(error: String, originalFilePath: String) = {
         val out = new java.io.FileWriter(originalFilePath + ".error")
         out.write(error)
         out.write("\n")
@@ -366,6 +377,13 @@ trait Evaluation extends Logging {
     def getResultDir(originalFilePath: String, run: Int): File = {
         val outputFilePath = originalFilePath.replace("busybox-1.18.5", "result")
         val result = new File(outputFilePath + File.separatorChar + run + File.separatorChar)
+        if (!result.exists()) result.mkdirs()
+        result
+    }
+
+    def getResultDir(originalFilePath: String): File = {
+        val outputFilePath = originalFilePath.replace("busybox-1.18.5", "result")
+        val result = new File(outputFilePath + File.separatorChar)
         if (!result.exists()) result.mkdirs()
         result
     }

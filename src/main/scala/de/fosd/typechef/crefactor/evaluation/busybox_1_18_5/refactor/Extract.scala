@@ -53,5 +53,5 @@ object Extract extends BusyBoxRefactor {
 
         lastResult && runRefactor(morpheus, stats, bb_file, fm, run + 1, max, result)
     }
-    def refactor(morpheus: Morpheus, linkInterface: CLinking): Boolean = ???
+    def refactor(morpheus: Morpheus, linkInterface: CLinking) = ???
 }

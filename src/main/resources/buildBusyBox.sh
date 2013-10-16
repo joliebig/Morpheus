@@ -1,6 +1,6 @@
 #!/bin/bash
 make clean
-timeout 600 make -j 8
+timeout 200 make -j 4
 
 RETVAL=$?
 [ $RETVAL -eq 0 ] && echo "Success_Build"

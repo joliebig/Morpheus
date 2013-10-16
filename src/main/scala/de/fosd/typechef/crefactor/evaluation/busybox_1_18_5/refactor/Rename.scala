@@ -8,7 +8,7 @@ import de.fosd.typechef.crefactor.backend.refactor.CRenameIdentifier
 import de.fosd.typechef.parser.c.Id
 import de.fosd.typechef.parser.c.FunctionDef
 import de.fosd.typechef.parser.c.Declaration
-import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.BusyBoxRefactor
+import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.{PrepareASTforVerification, BusyBoxRefactor}
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking.CLinking
 import de.fosd.typechef.crefactor.evaluation.StatsJar
@@ -91,7 +91,7 @@ object Rename extends BusyBoxRefactor {
 
     }
 
-    def refactor(morpheus: Morpheus, linkInterface: CLinking): Boolean = {
+    def refactor(morpheus: Morpheus, linkInterface: CLinking): List[FeatureExpr] = {
         def findIdInAST(position: Position, id: Id, ast: AST) = filterASTElems[Id](ast).par.find(aId => (position.equals(aId.getPositionFrom) || position.equals(aId.getPositionTo)) && aId.name.equalsIgnoreCase(id.name))
 
         def getVariableIdToRename: (Id, Int, List[FeatureExpr]) = {
@@ -128,10 +128,20 @@ object Rename extends BusyBoxRefactor {
         })
 
         val features = toRename._3
+        StatsJar.addStat(morpheus.getFile, AffectedFeatures, features)
 
         val startRenaming = new TimeMeasurement
         val refactored = CRenameIdentifier.rename(id, REFACTOR_NAME, morpheus)
+
         StatsJar.addStat(morpheus.getFile, RefactorTime, startRenaming.getTime)
+
+        refactored match {
+            case Right(a) => {
+                write(a, morpheus.getFile)
+                PrepareASTforVerification.makeConfigs(a, morpheus.getFeatureModel, morpheus.getFile, features)
+            }
+            case Left(s) => // TODO Write error
+        }
 
         val linkedRefactored = refactorChain.map(x => {
             val linkedId = findIdInAST(x._2, id, x._1.getAST)
@@ -139,9 +149,15 @@ object Rename extends BusyBoxRefactor {
             // TODO log error case
             val ref = CRenameIdentifier.rename(linkedId.get, REFACTOR_NAME, x._1)
             StatsJar.addStat(x._1.getFile, RefactorTime, time.getTime)
+            ref match {
+                case Right(a) => write(a, x._1.getFile, morpheus.getFile) // TODO generate Configs?
+                case Left(s) => // TODO Write error
+            }
             ref
         })
 
-        false
+        // TODO Write files
+
+        features
     }
 }

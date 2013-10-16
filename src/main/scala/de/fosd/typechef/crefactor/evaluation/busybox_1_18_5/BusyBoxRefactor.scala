@@ -16,8 +16,13 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
         try {
             // reset test environment
             runScript("./cleanAndReset.sh", busyBoxPath)
-            refactor(morpheus, linkInterface)
-            //
+            val features = refactor(morpheus, linkInterface)
+            // run refactored first
+            BusyBoxVerification.verify(file, fm, "_ref")
+            runScript("./cleanAndReset.sh", busyBoxPath)
+            BusyBoxVerification.verify(file, fm, "_org")
+            runScript("./cleanAndReset.sh", busyBoxPath)
+            // TODO Diff Test And write statsJar
         } catch {
             case e: Exception => {
                 println(e.getCause.toString)
@@ -28,6 +33,7 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
         }
     }
 
+    // TODO toRemove
     def evalRefactoredAST(result: (AST, Boolean, List[FeatureExpr], List[Any]), bb_file: File, run: Int, morpheus: Morpheus, fm: FeatureModel): Boolean = {
         if (result._2) {
             val dir = getResultDir(bb_file.getCanonicalPath, run)

@@ -72,6 +72,7 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
     def runTest: String = {
         val result = runScript("./runtest", busyBoxPath + "testsuite/")
         val stream = streamsToString(result)
+        runScript("./cleanTests.sh", busyBoxPath)
         stream._1
     }
 
@@ -80,7 +81,44 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
         val stream = streamsToString(result)
         (stream._1.contains("Success_Build"), stream._1, stream._2)
     }
+    def verify(evalFile: String, fm: FeatureModel, mode: String): Unit = {
+        val resultDir = new File(evalFile.replaceAll("busybox-1.18.5", "result") + File.pathSeparatorChar)
+        val configs = resultDir.listFiles(new FilenameFilter {
+            def accept(input: File, file: String): Boolean = file.endsWith(".config")
+        })
 
+        configs.map(config => {
+            def buildAndTest(busyBoxFile: File, ext: String): (Boolean, String) = {
+                val buildResult = build
+                val testResult = runTest
+                writeResult(buildResult._2, resultDir.getCanonicalPath + "/" + config.getName + ext + ".build")
+                if (!buildResult._1) writeResult(buildResult._3, resultDir.getCanonicalPath + "/" + config.getName + ext + ".buildErr")
+                writeResult(testResult, resultDir.getCanonicalPath + "/" + config.getName + ext + ".test")
+                busyBoxFile.delete()
+                (buildResult._1, testResult)
+            }
+
+            val configBuild = new File(busyBoxPath + ".config")
+            copyFile(config, configBuild)
+
+            val buildTest = buildAndTest(new File(evalFile), mode)
+
+            configBuild.delete()
+
+            if (!buildTest._1) {
+                writeError("Invalid Config.\n", resultDir.getCanonicalPath + "/" + config.getName)
+                writeResult("Invalid Config", resultDir.getCanonicalPath + "/" + config.getName + ".result")
+                true
+            } else if (buildTest._1) {
+                writeResult("true", resultDir.getCanonicalPath + "/" + config.getName + ".result")
+            } else {
+                writeError("Refactor build failed!\n", resultDir.getCanonicalPath + "/" + config.getName)
+                writeResult("Refactor build failed!", resultDir.getCanonicalPath + "/" + config.getName + ".result")
+                false
+            }
+
+        })
+    }
 }
 
 object PrepareASTforVerification extends BusyBoxEvaluation {
@@ -112,8 +150,42 @@ object PrepareASTforVerification extends BusyBoxEvaluation {
         })
     }
 
+    // TODO to remove
     def makeConfigs(refactored: AST, fm: FeatureModel, originalFilePath: String, affectedFeatures: List[FeatureExpr], run: Int) {
         val dir = getResultDir(originalFilePath, run)
+
+        val configRes = getClass.getResource("/busybox_Configs/")
+        val configs = new File(configRes.getFile)
+
+        initializeFeatureList(refactored)
+        val pairWiseConfigs = loadConfigurationsFromCSVFile(new File(pairWiseFeaturesFile), new File(featureModel_DIMACS), features, fm, "CONFIG_")
+
+        var pairCounter = 0
+
+        pairWiseConfigs._1.foreach(pairConfig => {
+            val enabledFeatures = pairConfig.getTrueSet.filterNot(ft => filterFeatures.contains(ft.feature))
+            writeConfig(enabledFeatures, dir, pairCounter + "pairwise.config")
+            pairCounter += 1
+        })
+
+
+        val generatedConfigs = configs.listFiles().map(config => {
+            val enabledFeatures = getEnabledFeaturesFromConfigFile(fm, config)
+            (config, genAllConfigVariantsForFeatures(enabledFeatures, affectedFeatures, fm, dir))
+        })
+
+        generatedConfigs.foreach(genConfigs => {
+            var configNumber = 0
+            val name = genConfigs._1.getName
+            genConfigs._2.foreach(genConfig => {
+                writeConfig(genConfig, dir, configNumber + name)
+                configNumber += 1
+            })
+        })
+    }
+
+    def makeConfigs(refactored: AST, fm: FeatureModel, originalFilePath: String, affectedFeatures: List[FeatureExpr]) {
+        val dir = getResultDir(originalFilePath)
 
         val configRes = getClass.getResource("/busybox_Configs/")
         val configs = new File(configRes.getFile)
