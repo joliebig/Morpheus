@@ -83,9 +83,12 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
     }
     def verify(evalFile: String, fm: FeatureModel, mode: String): Unit = {
         val resultDir = new File(evalFile.replaceAll("busybox-1.18.5", "result") + File.pathSeparatorChar)
+        println(resultDir.getCanonicalPath)
         val configs = resultDir.listFiles(new FilenameFilter {
             def accept(input: File, file: String): Boolean = file.endsWith(".config")
         })
+
+        println(configs.length)
 
         println(configs.size)
 
