@@ -87,6 +87,8 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
             def accept(input: File, file: String): Boolean = file.endsWith(".config")
         })
 
+        println(configs.size)
+
         configs.map(config => {
             def buildAndTest(busyBoxFile: File, ext: String): (Boolean, String) = {
                 val buildResult = build
@@ -99,6 +101,7 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
             }
 
             val configBuild = new File(busyBoxPath + ".config")
+            println("filecopy")
             copyFile(config, configBuild)
 
             val buildTest = buildAndTest(new File(evalFile), mode)
