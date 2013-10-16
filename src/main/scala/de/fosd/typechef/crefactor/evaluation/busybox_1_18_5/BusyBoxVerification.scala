@@ -88,7 +88,7 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
             def accept(input: File, file: String): Boolean = file.endsWith(".config")
         })
 
-        println(configs.length)
+        println(resultDir.listFiles)
 
         println(configs.size)
 
