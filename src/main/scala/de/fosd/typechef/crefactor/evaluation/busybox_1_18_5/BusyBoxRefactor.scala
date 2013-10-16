@@ -14,13 +14,16 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
         if (ast == null) println("+++ AST is null! +++")
         val morpheus = new Morpheus(ast, fm, file)
         try {
-            (morpheus, linkInterface)
+            // reset test environment
+            runScript("./cleanAndReset.sh", busyBoxPath)
+            refactor(morpheus, linkInterface)
+            //
         } catch {
             case e: Exception => {
                 println(e.getCause.toString)
                 println(e.getMessage)
                 println(e.getStackTrace.mkString("\n"))
-                writeExeception(e.getCause.toString + "\n" + e.getMessage + "\n" + e.getStackTrace.mkString("\n"), new File(file).getCanonicalPath, -1)
+                writeException(e.getCause.toString + "\n" + e.getMessage + "\n" + e.getStackTrace.mkString("\n"), new File(file).getCanonicalPath, -1)
             }
         }
     }

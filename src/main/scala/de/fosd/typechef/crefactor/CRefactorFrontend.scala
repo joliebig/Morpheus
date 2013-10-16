@@ -23,9 +23,9 @@ object CRefactorFrontend extends App with InterfaceWriter {
 
     override def main(args: Array[String]): Unit = parse(args, true)
 
-    def parse(file: String): (AST, FeatureModel, CTypeSystemFrontend) = parse(file +: command)
+    def parse(file: String): (AST, FeatureModel, CTypeSystemFrontend) = parse(file +: command, false)
 
-    private def parse(args: Array[String], saveArg: Boolean = false): (AST, FeatureModel, CTypeSystemFrontend) = {
+    def parse(args: Array[String], saveArg: Boolean): (AST, FeatureModel, CTypeSystemFrontend) = {
         // Parsing MorphFrontend is adapted by the original typechef frontend
         val opt = new FrontendOptionsWithConfigFiles()
 

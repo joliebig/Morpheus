@@ -269,7 +269,10 @@ trait Evaluation extends Logging {
         builder.toString()
     }
 
-    def runScript(script: String, dir: String): (InputStream, InputStream) = {
+    /**
+     * Runs a shell script with either default timeout or a custom timeout in ms
+     */
+    def runScript(script: String, dir: String, timeout: Int = runTimeout): (InputStream, InputStream) = {
         val pb = new ProcessBuilder(script)
         pb.directory(new File(dir))
         val p = pb.start()
@@ -278,7 +281,7 @@ trait Evaluation extends Logging {
             def run() {
                 p.destroy();
             }
-        }, runTimeout)
+        }, timeout)
         p.waitFor()
         (p.getInputStream, p.getErrorStream)
     }
@@ -317,7 +320,7 @@ trait Evaluation extends Logging {
         out.close()
     }
 
-    def writeExeception(exception: String, originalFilePath: String, run: Int) = {
+    def writeException(exception: String, originalFilePath: String, run: Int) = {
         val dir = getResultDir(originalFilePath, run)
         val out = new java.io.FileWriter(dir.getCanonicalPath + File.separatorChar + getFileName(originalFilePath) + ".exception")
         out.write(exception)
