@@ -7,7 +7,7 @@ import de.fosd.typechef.crefactor.evaluation.Evaluation
 
 trait BusyBoxEvaluation extends Evaluation with ASTNavigation with ConditionalNavigation {
 
-    val caseStudyPath = "../busybox/"
+    val caseStudyPath = "../cRefactor-BusyBoxEvaluation/"
     val completeBusyBoxPath = new File(caseStudyPath).getCanonicalPath
     val busyBoxFiles: String = completeBusyBoxPath + "/busybox_files"
     val busyBoxPath = completeBusyBoxPath + "/busybox-1.18.5/"
