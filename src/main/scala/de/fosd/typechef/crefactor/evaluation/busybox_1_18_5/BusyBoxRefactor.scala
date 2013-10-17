@@ -6,6 +6,9 @@ import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
 import de.fosd.typechef.crefactor.Morpheus
 import java.io.File
 import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking.CLinking
+import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
+import de.fosd.typechef.crefactor.evaluation.Stats._
+
 
 trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
 
@@ -20,11 +23,13 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
             runScript("./cleanAndReset.sh", busyBoxPath)
             val features = refactor(morpheus, linkInterface)
             // run refactored first
+            val time = new TimeMeasurement
             BusyBoxVerification.verify(file, fm, "_ref")
             runScript("./cleanAndReset.sh", busyBoxPath)
             BusyBoxVerification.verify(file, fm, "_org")
             runScript("./cleanAndReset.sh", busyBoxPath)
-            // TODO Diff Test
+            StatsJar.addStat(file, TestingTime, time.getTime)
+
 
             StatsJar.write(path + ".stats")
         } catch {

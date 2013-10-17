@@ -3,7 +3,8 @@ package de.fosd.typechef.crefactor.evaluation.busybox_1_18_5
 import java.io.{FilenameFilter, File}
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr, SingleFeatureExpr, FeatureModel}
 import de.fosd.typechef.parser.c.AST
-import de.fosd.typechef.crefactor.evaluation.Verification
+import de.fosd.typechef.crefactor.evaluation.{StatsJar, Verification}
+import de.fosd.typechef.crefactor.evaluation.Stats._
 
 object BusyBoxVerification extends BusyBoxEvaluation with Verification {
 
@@ -86,6 +87,8 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
         val configs = resultDir.listFiles(new FilenameFilter {
             def accept(input: File, file: String): Boolean = file.endsWith(".config")
         })
+
+        StatsJar.addStat(evalFile, Variants, configs.length)
 
         configs.map(config => {
             def buildAndTest(busyBoxFile: File, ext: String): (Boolean, String) = {
