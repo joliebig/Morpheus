@@ -7,18 +7,16 @@ import java.io.File
 object Builder extends BusyBoxEvaluation {
 
     def canBuild(ast: AST, file: String) = {
-        val run = 0
         val currentFile = new File(file)
 
-        // write AST
-        val dir = getResultDir(currentFile.getCanonicalPath, 0)
-        val path = dir.getCanonicalPath + File.separatorChar + getFileName(currentFile.getCanonicalPath)
-        writeAST(ast, path)
+        // clean dir first
+        runScript("./cleanAndReset.sh", busyBoxPath)
+        val refFile = new File(currentFile.getCanonicalPath.replaceAll("busybox-1.18.5", "result") + "/" + currentFile.getName)
+        val resultDir = new File(currentFile.getCanonicalPath.replaceAll("busybox-1.18.5", "result") + "/")
 
-        val workingPath = currentFile.getCanonicalPath
-        val orgFile = new File(currentFile.getCanonicalPath.replaceAll("busybox-1.18.5", "busybox-1.18.5_untouched"))
-        val refFile = new File(currentFile.getCanonicalPath.replaceAll("busybox-1.18.5", "result") + "/" + run + "/" + currentFile.getName)
-        val resultDir = new File(currentFile.getCanonicalPath.replaceAll("busybox-1.18.5", "result") + "/" + run + "/")
+        // write AST in current result dir
+        writeAST(ast, refFile.getCanonicalPath)
+        writeAST(ast, currentFile.getCanonicalPath)
 
         def buildAndTest(busyBoxFile: File, ext: String): (Boolean, String) = {
             val buildResult = build
@@ -30,23 +28,15 @@ object Builder extends BusyBoxEvaluation {
             (buildResult._1, testResult)
         }
 
-        // clean dir first
-        runScript("./buildClean.sh", busyBoxPath)
+        val refTest = buildAndTest(currentFile, "_ppp")
+
+        // clean dir
+        runScript("./cleanAndReset.sh", busyBoxPath)
 
         val orgTest = buildAndTest(currentFile, "_org")
 
-        val buildRefFile = new File(workingPath)
-
-        // clean dir first
-        runScript("./buildClean.sh", busyBoxPath)
-
-        // Replace original file with refactored file
-        copyFile(refFile, buildRefFile)
-
-        val refTest = buildAndTest(buildRefFile, "_ref")
-
-        // Restore old original file again
-        copyFile(orgFile, new File(workingPath))
+        // clean dir
+        runScript("./cleanAndReset.sh", busyBoxPath)
 
         (orgTest._1 && refTest._1)
     }
