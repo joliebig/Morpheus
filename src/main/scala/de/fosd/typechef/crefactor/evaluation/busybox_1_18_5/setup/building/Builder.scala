@@ -14,6 +14,8 @@ object Builder extends BusyBoxEvaluation {
         val refFile = new File(currentFile.getCanonicalPath.replaceAll("busybox-1.18.5", "result") + "/" + currentFile.getName)
         val resultDir = new File(currentFile.getCanonicalPath.replaceAll("busybox-1.18.5", "result") + "/")
 
+        resultDir.mkdirs()
+
         // write AST in current result dir
         writeAST(ast, refFile.getCanonicalPath)
         writeAST(ast, currentFile.getCanonicalPath)
