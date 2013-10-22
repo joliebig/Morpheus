@@ -14,6 +14,8 @@ object Builder extends BusyBoxEvaluation {
         val refFile = new File(currentFile.getCanonicalPath.replaceAll("busybox-1.18.5", "result") + "/" + currentFile.getName)
         val resultDir = new File(currentFile.getCanonicalPath.replaceAll("busybox-1.18.5", "result") + "/")
 
+        resultDir.mkdirs()
+
         // write AST in current result dir
         writeAST(ast, refFile.getCanonicalPath)
         writeAST(ast, currentFile.getCanonicalPath)
@@ -38,7 +40,11 @@ object Builder extends BusyBoxEvaluation {
         // clean dir
         runScript("./cleanAndReset.sh", busyBoxPath)
 
-        (orgTest._1 && refTest._1)
+        val canBuildAndTest = (orgTest._1 && refTest._1) && (orgTest._2.equals(refTest._2))
+        writeResult(canBuildAndTest.toString, resultDir.getCanonicalPath + "/result")
+        if (!canBuildAndTest) writeResult("Fail", resultDir.getCanonicalPath + "/test.error")
+
+        canBuildAndTest
     }
 
     private def runTest: String = {
