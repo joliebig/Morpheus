@@ -24,6 +24,7 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
             val features = refactor(morpheus, linkInterface)
             // run refactored first
             val time = new TimeMeasurement
+            StatsJar.addStat(file, AffectedFeatures, features)
             BusyBoxVerification.verify(file, fm, "_ref")
             runScript("./cleanAndReset.sh", busyBoxPath)
             BusyBoxVerification.verify(file, fm, "_org")
