@@ -36,6 +36,6 @@ object StatsJar {
 
 object Stats extends Enumeration {
 
-    val Parsing, TypeCheck, RandomRefactorDeterminationTime, PrettyPrint, RenamedId, Amount, RefactorTime, AffectedFeatures, TestingTime, Variants = Value
+    val Parsing, TypeCheck, RandomRefactorDeterminationTime, PrettyPrint, RenamedId, Amount, RefactorTime, AffectedFeatures, TestingTime, Variants, Statements, ExternalUses, ExternalDecls, Parameters, Liveness = Value
 
 }

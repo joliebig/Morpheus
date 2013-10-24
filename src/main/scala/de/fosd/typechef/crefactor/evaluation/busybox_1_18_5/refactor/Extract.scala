@@ -4,9 +4,11 @@ import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.featureexpr.FeatureExpr
 import de.fosd.typechef.parser.c.{AST, CompoundStatement}
 import de.fosd.typechef.crefactor.backend.refactor.CExtractFunction
-import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.BusyBoxRefactor
+import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.{PrepareASTforVerification, BusyBoxRefactor}
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking.CLinking
+import de.fosd.typechef.crefactor.evaluation.StatsJar
+import de.fosd.typechef.crefactor.evaluation.Stats._
 
 
 object Extract extends BusyBoxRefactor {
@@ -35,11 +37,19 @@ object Extract extends BusyBoxRefactor {
         }
 
         val statements = getRandomVariableStatements()
-        val features = filterAllOptElems(statements).map(morpheus.getASTEnv.featureExpr(_)).distinct
-        val startExtraction = new TimeMeasurement
-        val refactored = CExtractFunction.extract(morpheus, statements, NAME)
 
-        // TODO Write result and change to new verify method
+        if (statements.isEmpty) return (false, null)
+
+        val features = filterAllOptElems(statements).map(morpheus.getASTEnv.featureExpr(_)).distinct
+        val refactorTime = new TimeMeasurement
+        val refactored = CExtractFunction.extract(morpheus, statements, NAME)
+        if (morpheus.getAST.eq(refactored)) return (false, null)
+        StatsJar.addStat(morpheus.getFile, RefactorTime, refactorTime.getTime)
+        StatsJar.addStat(morpheus.getFile, Statements, statements)
+
+        writeAST(refactored, morpheus.getFile)
+        PrepareASTforVerification.makeConfigs(refactored, morpheus.getFeatureModel, morpheus.getFile, features)
+
         (true, features)
     }
 }

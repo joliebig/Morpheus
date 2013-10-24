@@ -276,15 +276,15 @@ trait Evaluation extends Logging {
     def runScript(script: String, dir: String, timeout: Int = runTimeout): (InputStream, InputStream) = {
         val pb = new ProcessBuilder(script)
         pb.directory(new File(dir))
-        val p = pb.start()
-        val t = new Timer(true)
-        t.schedule(new TimerTask() {
+        val process = pb.start()
+        val timer = new Timer(true)
+        timer.schedule(new TimerTask() {
             def run() {
-                p.destroy();
+                process.destroy();
             }
         }, timeout)
-        p.waitFor()
-        (p.getInputStream, p.getErrorStream)
+        process.waitFor()
+        (process.getInputStream, process.getErrorStream)
     }
 
 

@@ -7,7 +7,6 @@ import java.util
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.evaluation_utils.Configuration
 import util.{IdentityHashMap, Collections}
-import management.ManagementFactory
 import de.fosd.typechef.typesystem._
 import de.fosd.typechef.parser.c.PostfixExpr
 import de.fosd.typechef.parser.c.ReturnStatement
@@ -57,6 +56,10 @@ import de.fosd.typechef.parser.c.StaticSpecifier
 import de.fosd.typechef.parser.c.ConstSpecifier
 import de.fosd.typechef.parser.c.UnaryExpr
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
+import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
+import de.fosd.typechef.crefactor.evaluation.StatsJar
+import de.fosd.typechef.crefactor.evaluation.Stats._
+
 
 /**
  * Implements the strategy of extracting a function.
@@ -235,8 +238,7 @@ object CExtractFunction extends ASTSelection with CRefactor {
         /**
          * Liveness analysis
          */
-        val tb = ManagementFactory.getThreadMXBean
-        val startTime = tb.getCurrentThreadCpuTime
+        val startTime = new TimeMeasurement
 
         val externalUses = externalOccurrences(selectedIds, morpheus.getDeclUseMap)
         val externalDefs = externalOccurrences(selectedIds, morpheus.getUseDeclMap)
@@ -248,12 +250,10 @@ object CExtractFunction extends ASTSelection with CRefactor {
         if (!toDeclare.isEmpty) assert(false, "Invalid selection, a declared variable in the selection gets used outside.")
         val paramIds = getParamterIds(extRefIds, morpheus)
 
-        logger.info("Liveness Analysis: " + (tb.getCurrentThreadCpuTime() - startTime) / 1000000 + " ms")
-        logger.debug("ExternalUses: " + externalUses)
-        logger.debug("ExternalDecls: " + externalDefs)
-        logger.debug("Parameters " + extRefIds)
-
-
+        StatsJar.addStat(morpheus.getFile, Liveness, startTime.getTime)
+        StatsJar.addStat(morpheus.getFile, ExternalUses, startTime.getTime)
+        StatsJar.addStat(morpheus.getFile, ExternalDecls, startTime.getTime)
+        StatsJar.addStat(morpheus.getFile, Parameters, startTime.getTime)
 
         val specifiers = generateSpecifiers(parentFunction, morpheus)
         val parameters = getParameterDecls(extRefIds, parentFunction, morpheus)

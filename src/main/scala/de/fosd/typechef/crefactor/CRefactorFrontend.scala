@@ -7,8 +7,7 @@ import de.fosd.typechef.featureexpr.FeatureModel
 import de.fosd.typechef.options.{RefactorType, FrontendOptions, OptionException, FrontendOptionsWithConfigFiles}
 import de.fosd.typechef.{lexer, ErrorXML}
 import java.io.{ObjectStreamClass, FileInputStream, ObjectInputStream, File}
-import de.fosd.typechef.typesystem.CTypeSystemFrontend
-import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.refactor.Rename
+import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.refactor.{Inline, Extract, Rename}
 import de.fosd.typechef.parser.TokenReader
 import de.fosd.typechef.parser.c.CTypeContext
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
@@ -23,9 +22,9 @@ object CRefactorFrontend extends App with InterfaceWriter {
 
     override def main(args: Array[String]): Unit = parse(args, true)
 
-    def parse(file: String): (AST, FeatureModel, CTypeSystemFrontend) = parse(file +: command, false)
+    def parse(file: String): (AST, FeatureModel) = parse(file +: command, false)
 
-    def parse(args: Array[String], saveArg: Boolean): (AST, FeatureModel, CTypeSystemFrontend) = {
+    def parse(args: Array[String], saveArg: Boolean): (AST, FeatureModel) = {
         // Parsing MorphFrontend is adapted by the original typechef frontend
         val opt = new FrontendOptionsWithConfigFiles()
 
@@ -48,7 +47,7 @@ object CRefactorFrontend extends App with InterfaceWriter {
         processFile(opt)
     }
 
-    private def processFile(opt: FrontendOptions): (AST, FeatureModel, CTypeSystemFrontend) = {
+    private def processFile(opt: FrontendOptions): (AST, FeatureModel) = {
         val errorXML = new ErrorXML(opt.getErrorXMLFile)
         opt.setRenderParserError(errorXML.renderParserError)
 
@@ -57,12 +56,11 @@ object CRefactorFrontend extends App with InterfaceWriter {
 
         if (!opt.getFilePresenceCondition.isSatisfiable(fm)) {
             println("file has contradictory presence condition. existing.") //otherwise this can lead to strange parser errors, because True is satisfiable, but anything else isn't
-            return (null, null, null)
+            return (null, null)
         }
 
         var ast: AST = null
         var featureModel: FeatureModel = null
-        var ts: CTypeSystemFrontend = null
         var linkInf: CLinking = null
 
         if (opt.reuseAST && opt.parse && new File(opt.getSerializedASTFilename).exists()) {
@@ -87,17 +85,11 @@ object CRefactorFrontend extends App with InterfaceWriter {
             if (ast != null) featureModel = opt.getTypeSystemFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
             errorXML.write()
 
-            /**
-            if (opt.typecheck) {
-                ts = new CTypeSystemFrontend(ast.asInstanceOf[TranslationUnit], featureModel, opt)
-                ts.checkAST()
-            }  */
-
             if (opt.refEval) {
                 opt.getRefactorType match {
                     case RefactorType.RENAME => Rename.evaluate(ast, featureModel, opt.getFile, linkInf)
-                    case RefactorType.EXTRACT => //Extract.evaluate(ast, featureModel, ts, opt.getFile, duration)
-                    case RefactorType.INLINE => //Inline.evaluate(ast, featureModel, ts, opt.getFile, duration)
+                    case RefactorType.EXTRACT => Extract.evaluate(ast, featureModel, opt.getFile, linkInf)
+                    case RefactorType.INLINE => Inline.evaluate(ast, featureModel, opt.getFile, linkInf)
                     case RefactorType.NONE => println("No refactor type defined")
                 }
             }
@@ -108,7 +100,7 @@ object CRefactorFrontend extends App with InterfaceWriter {
             println("+++ Can build " + new File(opt.getFile).getName + " : " + canBuild + " +++")
         }
 
-        (ast, featureModel, ts)
+        (ast, featureModel)
     }
 
 
