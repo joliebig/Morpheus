@@ -310,12 +310,12 @@ trait Evaluation extends Logging {
     def writeAST(ast: AST, filePath: String) {
         println("PrettyPrint AST to: " + filePath)
         val file = new File(filePath)
-        if (file.exists) file.delete
         val prettyPrinted = PrettyPrinter.print(ast)
         val writer = new FileWriter(file)
         writer.write(prettyPrinted.replaceAll("definedEx", "defined"))
         writer.flush()
         writer.close()
+        println(prettyPrinted.length)
     }
 
     def writePlainAST(ast: AST, filePath: String) {
