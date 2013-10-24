@@ -17,6 +17,7 @@ trait Evaluation extends Logging {
     val caseStudyPath: String
     val completeBusyBoxPath: String
     val busyBoxFiles: String
+    val blackListFiles: List[String]
     val busyBoxPath: String
     val busyBoxPathUntouched: String
     val result: String
