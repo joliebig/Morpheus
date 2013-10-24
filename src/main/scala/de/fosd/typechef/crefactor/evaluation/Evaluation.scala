@@ -316,6 +316,7 @@ trait Evaluation extends Logging {
         writer.write(prettyPrinted.replaceAll("definedEx", "defined"))
         writer.flush()
         writer.close()
+        println(prettyPrinted.length)
     }
 
     def writePlainAST(ast: AST, filePath: String) {

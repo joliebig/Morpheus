@@ -18,26 +18,30 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
         val resultDir = getResultDir(file)
         val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(file)
         if (ast == null) println("+++ AST is null! +++")
-        val morpheus = new Morpheus(ast, fm, file)
-        try {
-            // reset test environment
-            runScript("./cleanAndReset.sh", busyBoxPath)
-            val features = refactor(morpheus, linkInterface)
-            // run refactored first
-            val time = new TimeMeasurement
-            StatsJar.addStat(file, AffectedFeatures, features)
-            BusyBoxVerification.verify(file, fm, "_ref")
-            runScript("./cleanAndReset.sh", busyBoxPath)
-            BusyBoxVerification.verify(file, fm, "_org")
-            runScript("./cleanAndReset.sh", busyBoxPath)
-            StatsJar.addStat(file, TestingTime, time.getTime)
+        else if (blackListFiles.exists(getFileName(file).equalsIgnoreCase)) println("+++ File is blacklisted and cannot be build +++")
+        else {
+
+            val morpheus = new Morpheus(ast, fm, file)
+            try {
+                // reset test environment
+                runScript("./cleanAndReset.sh", busyBoxPath)
+                val features = refactor(morpheus, linkInterface)
+                // run refactored first
+                val time = new TimeMeasurement
+                StatsJar.addStat(file, AffectedFeatures, features)
+                BusyBoxVerification.verify(file, fm, "_ref")
+                runScript("./cleanAndReset.sh", busyBoxPath)
+                BusyBoxVerification.verify(file, fm, "_org")
+                runScript("./cleanAndReset.sh", busyBoxPath)
+                StatsJar.addStat(file, TestingTime, time.getTime)
 
 
-            StatsJar.write(path + ".stats")
-        } catch {
-            case e: Exception => {
-                println(e.getStackTrace.mkString("\n"))
-                writeException(e.getCause.toString + "\n" + e.getMessage + "\n" + e.getStackTrace.mkString("\n"), new File(path).getCanonicalPath)
+                StatsJar.write(path + ".stats")
+            } catch {
+                case e: Exception => {
+                    println(e.getStackTrace.mkString("\n"))
+                    writeException(e.getCause.toString + "\n" + e.getMessage + "\n" + e.getStackTrace.mkString("\n"), new File(path).getCanonicalPath)
+                }
             }
         }
     }
