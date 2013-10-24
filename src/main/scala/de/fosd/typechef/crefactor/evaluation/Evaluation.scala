@@ -312,9 +312,10 @@ trait Evaluation extends Logging {
         val file = new File(filePath)
         val prettyPrinted = PrettyPrinter.print(ast)
         val writer = new FileWriter(file, false)
-        writer.write(prettyPrinted.replaceAll("definedEx", "defined"))
+        writer.write(prettyPrinted.replace("definedEx", "defined"))
         writer.flush()
         writer.close()
+        println(new File(filePath).exists())
         println(prettyPrinted.length)
     }
 
