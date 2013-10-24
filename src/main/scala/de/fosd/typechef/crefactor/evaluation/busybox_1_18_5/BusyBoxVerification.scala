@@ -25,7 +25,6 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
                 writeResult(buildResult._2, resultDir.getCanonicalPath + "/" + config.getName + ext + ".build")
                 if (!buildResult._1) writeResult(buildResult._3, resultDir.getCanonicalPath + "/" + config.getName + ext + ".buildErr")
                 writeResult(testResult, resultDir.getCanonicalPath + "/" + config.getName + ext + ".test")
-                busyBoxFile.delete()
                 (buildResult._1, testResult)
             }
 
@@ -97,7 +96,6 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
                 writeResult(buildResult._2, resultDir.getCanonicalPath + "/" + config.getName + ext + ".build")
                 if (!buildResult._1) writeResult(buildResult._3, resultDir.getCanonicalPath + "/" + config.getName + ext + ".buildErr")
                 writeResult(testResult, resultDir.getCanonicalPath + "/" + config.getName + ext + ".test")
-                busyBoxFile.delete()
                 (buildResult._1, testResult)
             }
 

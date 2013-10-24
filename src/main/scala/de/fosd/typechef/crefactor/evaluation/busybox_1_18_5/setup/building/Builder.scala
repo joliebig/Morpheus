@@ -26,7 +26,6 @@ object Builder extends BusyBoxEvaluation {
             writeResult(buildResult._2, resultDir.getCanonicalPath + "/" + ext + ".build")
             if (!buildResult._1) writeResult(buildResult._3, resultDir.getCanonicalPath + "/" + ext + ".buildErr")
             writeResult(testResult, resultDir.getCanonicalPath + "/" + ext + ".test")
-            busyBoxFile.delete()
             (buildResult._1, testResult)
         }
 
