@@ -28,8 +28,9 @@ object Rename extends BusyBoxRefactor {
 
             val allIds = morpheus.getUseDeclMap.values().toArray(Array[List[Id]]()).par.foldLeft(List[Id]())((list, entry) => list ::: entry)
 
-            val ids = if (FORCE_LINKING) allIds.par.filter(id => linkInterface.isListed(id.name))
-            else allIds
+            val linkedIds = if (FORCE_LINKING) allIds.par.filter(id => linkInterface.isListed(id.name)) else allIds
+
+            val ids = if (linkedIds.isEmpty) allIds else linkedIds
 
             val writeAbleIds = ids.filter(id =>
                 CRenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).par.forall(i =>
