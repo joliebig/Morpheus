@@ -32,6 +32,7 @@ trait BusyBoxEvaluation extends Evaluation with ASTNavigation with ConditionalNa
     val runTimeout = 180000
 
     val FORCE_VARIABILITY = true
+    val FORCE_LINKING = false
     val MAX_DEPTH = 27
     val amountOfRefactorings = 3
     val MAX = 1

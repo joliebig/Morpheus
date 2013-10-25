@@ -26,7 +26,10 @@ object Rename extends BusyBoxRefactor {
         def getVariableIdToRename: (Id, Int, List[FeatureExpr]) = {
             def isValidId(id: Id): Boolean = !id.name.contains("_main") && !linkInterface.isBlackListed(id.name)
 
-            val ids = morpheus.getUseDeclMap.values().toArray(Array[List[Id]]()).par.foldLeft(List[Id]())((list, entry) => list ::: entry)
+            val allIds = morpheus.getUseDeclMap.values().toArray(Array[List[Id]]()).par.foldLeft(List[Id]())((list, entry) => list ::: entry)
+
+            val ids = if (FORCE_LINKING) allIds.par.filter(id => linkInterface.isListed(id.name))
+            else allIds
 
             val writeAbleIds = ids.filter(id =>
                 CRenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).par.forall(i =>
