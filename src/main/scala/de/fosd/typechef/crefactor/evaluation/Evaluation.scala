@@ -382,7 +382,7 @@ trait Evaluation extends Logging {
         out.close()
     }
 
-    def getFileName(originalFilePath: String) = originalFilePath.substring(originalFilePath.lastIndexOf(File.separatorChar), originalFilePath.length)
+    def getFileName(originalFilePath: String) = originalFilePath.substring(originalFilePath.lastIndexOf(File.separatorChar), originalFilePath.length).replace("/", "")
 
     def getResultDir(originalFilePath: String, run: Int): File = {
         val outputFilePath = originalFilePath.replace("busybox-1.18.5", "result")
