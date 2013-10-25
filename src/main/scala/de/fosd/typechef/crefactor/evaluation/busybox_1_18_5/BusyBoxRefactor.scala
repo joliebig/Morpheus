@@ -13,7 +13,7 @@ import de.fosd.typechef.crefactor.evaluation.Stats._
 trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
 
     def evaluate(ast: AST, fm: FeatureModel, file: String, linkInterface: CLinking): Unit = {
-        println("+++ Current File: " + file + " +++")
+        println("+++ Current File: " + getFileName(file) + " +++")
         val resultDir = getResultDir(file)
         val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(file)
         if (ast == null) println("+++ AST is null! +++")
