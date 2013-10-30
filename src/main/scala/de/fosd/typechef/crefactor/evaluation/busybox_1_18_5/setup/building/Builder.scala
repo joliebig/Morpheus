@@ -55,6 +55,10 @@ object Builder extends BusyBoxEvaluation {
     private def build: (Boolean, String, String) = {
         val result = runScript("./buildBusyBox.sh", busyBoxPath)
         val stream = streamsToString(result)
+        println("+++ STDOUT")
+        println(stream._1)
+        println("+++ STDERR")
+        println(stream._2)
         (stream._1.contains("Success_Build"), stream._1, stream._2)
     }
 
