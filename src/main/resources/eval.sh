@@ -1,13 +1,29 @@
-#!/bin/bash
+#!/bin/bash -e
+#!/bin/bash -vxe
+
+path=/home/janker/FOSD/evalExtract/cRefactor-BusyBoxEvaluation
 
 filesToProcess() {
-  local listFile=busybox_files
+  local listFile=busybox/busybox_files
   cat $listFile
-  #awk -F: '$1 ~ /.c$/ {print gensub(/\.c$/, "", "", $1)}' < linux_2.6.33.3_pcs.txt
 }
 
-path=/home/janker/bb_study2/casestudies/busybox
+flags="--refEval extract --refLink $path/busyboxfinal.interface
+  -x CONFIG_ \
+  --bdd \
+  -c $path/redhat.properties \
+  --include $path/config.h \
+  -I $path/busybox-1.18.5/include \
+  --featureModelDimacs $path/BB_fm.dimacs \
+  --recordTiming --parserstatistics --lexNoStdout \
+  -U HAVE_LIBDMALLOC \
+  -DCONFIG_FIND \
+  -U CONFIG_FEATURE_WGET_LONG_OPTIONS \
+  -U ENABLE_NC_110_COMPAT \
+  -U CONFIG_EXTRA_COMPAT \
+  -D_GNU_SOURCE"
+
 
 filesToProcess|while read i; do
-    java -Xmx1024M -Xss256M -XX:PermSize=256M -XX:MaxPermSize=512M -jar sbt-launch.jar "project CRefactor" "run-main de.fosd.typechef.crefactor.CRefactorFrontend $path/busybox-1.18.5/$i.c -c $path/redhat.properties -x CONFIG_ --include $path/config.h -I $path/busybox-1.18.5/include --featureModelFExpr $path/featureModel --interface --debugInterface --recordTiming --lexNoStdout --refEval rename --parserstatistics -U HAVE_LIBDMALLOC -DCONFIG_FIND -U CONFIG_FEATURE_WGET_LONG_OPTIONS -U ENABLE_NC_110_COMPAT -U CONFIG_EXTRA_COMPAT -D_GNU_SOURCE"
-done
+         ./cRefactor.sh $path/busybox-1.18.5/$i.c $flags
+	 done
