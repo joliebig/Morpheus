@@ -10,7 +10,6 @@ filesToProcess() {
 
 flags="--refEval extract --refLink $path/busyboxfinal.interface
   -x CONFIG_ \
-  --bdd \
   -c $path/redhat.properties \
   --include $path/config.h \
   -I $path/busybox-1.18.5/include \
