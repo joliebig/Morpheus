@@ -25,5 +25,6 @@ flags="--refEval extract --refLink $path/busyboxfinal.interface
 
 
 filesToProcess|while read i; do
+         echo "Analysing $path/busybox-1.18.5/$i.c"
          ./cRefactor.sh $path/busybox-1.18.5/$i.c $flags
 	 done
