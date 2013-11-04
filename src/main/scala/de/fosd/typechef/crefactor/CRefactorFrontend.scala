@@ -73,7 +73,10 @@ object CRefactorFrontend extends App with InterfaceWriter {
 
         if (opt.refLink) {
             linkInf = new CLinking(opt.getLinkingInterfaceFile)
+            println("Linked")
         }
+
+        println(opt)
 
         if (opt.parse) {
 
