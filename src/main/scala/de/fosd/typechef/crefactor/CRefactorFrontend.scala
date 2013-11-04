@@ -61,6 +61,8 @@ object CRefactorFrontend extends App with InterfaceWriter {
             return (null, null)
         }
 
+        println("Feature Model check finished.")
+
         var ast: AST = null
         var linkInf: CLinking = null
 
