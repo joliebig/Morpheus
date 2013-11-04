@@ -78,6 +78,7 @@ object CRefactorFrontend extends App with InterfaceWriter {
             if (ast == null) {
                 //no parsing and serialization if read serialized ast
                 val parsingTime = new TimeMeasurement
+                println("Start parsing.")
                 val parserMain = new ParserMain(new CParser(fm))
                 ast = parserMain.parserMain(lex(opt), opt)
                 println("Parsing finished")
