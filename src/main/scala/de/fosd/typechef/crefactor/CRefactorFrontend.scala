@@ -60,7 +60,6 @@ object CRefactorFrontend extends App with InterfaceWriter {
         }
 
         var ast: AST = null
-        var featureModel: FeatureModel = null
         var linkInf: CLinking = null
 
         if (opt.reuseAST && opt.parse && new File(opt.getSerializedASTFilename).exists()) {
@@ -79,17 +78,17 @@ object CRefactorFrontend extends App with InterfaceWriter {
                 val parsingTime = new TimeMeasurement
                 val parserMain = new ParserMain(new CParser(fm))
                 ast = parserMain.parserMain(lex(opt), opt)
+                println("Parsing finished")
                 StatsJar.addStat(opt.getFile, Parsing, parsingTime.getTime)
             }
 
-            if (ast != null) featureModel = opt.getTypeSystemFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
-            errorXML.write()
+            if (ast == null) errorXML.write()
 
             if (opt.refEval) {
                 opt.getRefactorType match {
-                    case RefactorType.RENAME => Rename.evaluate(ast, featureModel, opt.getFile, linkInf)
-                    case RefactorType.EXTRACT => Extract.evaluate(ast, featureModel, opt.getFile, linkInf)
-                    case RefactorType.INLINE => Inline.evaluate(ast, featureModel, opt.getFile, linkInf)
+                    case RefactorType.RENAME => Rename.evaluate(ast, fm, opt.getFile, linkInf)
+                    case RefactorType.EXTRACT => Extract.evaluate(ast, fm, opt.getFile, linkInf)
+                    case RefactorType.INLINE => Inline.evaluate(ast, fm, opt.getFile, linkInf)
                     case RefactorType.NONE => println("No refactor type defined")
                 }
             }
@@ -100,7 +99,7 @@ object CRefactorFrontend extends App with InterfaceWriter {
             println("+++ Can build " + new File(opt.getFile).getName + " : " + canBuild + " +++")
         }
 
-        (ast, featureModel)
+        (ast, fm)
     }
 
 
