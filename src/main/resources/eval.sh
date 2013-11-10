@@ -8,7 +8,8 @@ filesToProcess() {
   cat $listFile
 }
 
-flags="--refEval extract --refLink $path/busyboxfinal.interface
+flags=" --bdd \
+  --refEval extract --refLink $path/busyboxfinal.interface
   -x CONFIG_ \
   -c $path/redhat.properties \
   --include $path/config.h \
@@ -25,5 +26,6 @@ flags="--refEval extract --refLink $path/busyboxfinal.interface
 
 filesToProcess|while read i; do
          echo "Analysing $path/busybox-1.18.5/$i.c"
+         echo "With settings: $flags"
          ./cRefactor.sh $path/busybox-1.18.5/$i.c $flags
 	 done
