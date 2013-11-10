@@ -165,6 +165,7 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
     }
 
     def replaceInAST[T <: Product](t: T, e: T, n: T)(implicit m: Manifest[T]): T = {
+        println("start replace")
         val r = manybu(rule {
             case i: T => if (isPartOf(i, e)) n else i
         })
@@ -226,3 +227,6 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         }
     }
 }
+
+case class RefactorException(error: String) extends Exception
+

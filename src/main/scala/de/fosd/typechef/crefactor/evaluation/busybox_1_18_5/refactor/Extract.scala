@@ -42,14 +42,21 @@ object Extract extends BusyBoxRefactor {
 
         val features = filterAllOptElems(statements).map(morpheus.getASTEnv.featureExpr(_)).distinct
         val refactorTime = new TimeMeasurement
+        statements.foreach(stmt => println(stmt + " " + stmt.getPositionFrom))
         val refactored = CExtractFunction.extract(morpheus, statements, NAME)
-        if (morpheus.getAST.eq(refactored)) return (false, null)
-        StatsJar.addStat(morpheus.getFile, RefactorTime, refactorTime.getTime)
-        StatsJar.addStat(morpheus.getFile, Statements, statements)
+        refactored match {
+            case Right(a) => {
+                write(a, morpheus.getFile)
+                PrepareASTforVerification.makeConfigs(a, morpheus.getFeatureModel, morpheus.getFile, features)
+                StatsJar.addStat(morpheus.getFile, RefactorTime, refactorTime.getTime)
+                StatsJar.addStat(morpheus.getFile, Statements, statements)
+                (true, features)
+            }
+            case Left(s) => {
+                // TODO Error handling
+                (false, null)
+            }
 
-        writeAST(refactored, morpheus.getFile)
-        PrepareASTforVerification.makeConfigs(refactored, morpheus.getFeatureModel, morpheus.getFile, features)
-
-        (true, features)
+        }
     }
 }

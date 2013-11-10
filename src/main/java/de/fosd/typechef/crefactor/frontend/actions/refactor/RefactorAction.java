@@ -45,9 +45,14 @@ public class RefactorAction {
                 try {
                     final ThreadMXBean tb = ManagementFactory.getThreadMXBean();
                     final long startTime = tb.getCurrentThreadCpuTime();
-                    final AST refactored = CExtractFunction.extract(morpheus, selection, box.getInput());
+                    final Either<String, AST> refactored = CExtractFunction.extract(morpheus, selection, box.getInput());
+                    if (refactored.isLeft()) {
+                        JOptionPane.showMessageDialog(null, Configuration.getInstance().getConfig("refactor.extractFunction.failed") + " "
+                                + refactored.left().get(), Configuration.getInstance().getConfig("default.error"), JOptionPane.ERROR_MESSAGE);
+                    } else {
+                        morpheus.update(refactored.right().get());
+                    }
                     logger.info("Duration for transforming: " + (tb.getCurrentThreadCpuTime() - startTime) / 1000000 + "ms");
-                    morpheus.update(refactored);
                 } catch (final AssertionError e) {
                     JOptionPane.showMessageDialog(null, Configuration.getInstance().getConfig("refactor.extractFunction.failed") + " "
                             + e.getMessage(), Configuration.getInstance().getConfig("default.error"), JOptionPane.ERROR_MESSAGE);
