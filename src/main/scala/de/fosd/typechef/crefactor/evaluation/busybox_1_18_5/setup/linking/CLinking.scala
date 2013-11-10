@@ -9,7 +9,7 @@ import scala.collection.parallel.mutable
 class CLinking(linkFile: String) {
 
     val reader = new InterfaceWriter {}
-    val interface = reader.interfaceFromXML(xml.XML.loadFile(new File(linkFile)))
+    val interface = reader.loadInterfaceFromXML(xml.XML.loadFile(new File(linkFile)))
     var blackList = new mutable.ParHashSet[String]()
 
     // TODO Optimize Data Structure -> Scala Mutable Maps

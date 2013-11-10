@@ -51,17 +51,14 @@ object CRefactorFrontend extends App with InterfaceWriter {
         val errorXML = new ErrorXML(opt.getErrorXMLFile)
         opt.setRenderParserError(errorXML.renderParserError)
 
-        println("Start load feature model")
         val fm = opt.getLexerFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
         opt.setFeatureModel(fm) //otherwise the lexer does not get the updated feature model with file presence conditions
-        println("Finished loading feature model")
 
         if (!opt.getFilePresenceCondition.isSatisfiable(fm)) {
             println("file has contradictory presence condition. existing.") //otherwise this can lead to strange parser errors, because True is satisfiable, but anything else isn't
             return (null, null)
         }
 
-        println("Feature Model check finished.")
 
         var ast: AST = null
         var linkInf: CLinking = null
@@ -73,20 +70,15 @@ object CRefactorFrontend extends App with InterfaceWriter {
 
         if (opt.refLink) {
             linkInf = new CLinking(opt.getLinkingInterfaceFile)
-            println("Linked")
         }
-
-        println(opt)
 
         if (opt.parse) {
 
             if (ast == null) {
                 //no parsing and serialization if read serialized ast
                 val parsingTime = new TimeMeasurement
-                println("Start parsing.")
                 val parserMain = new ParserMain(new CParser(fm))
                 ast = parserMain.parserMain(lex(opt), opt)
-                println("Parsing finished")
                 StatsJar.addStat(opt.getFile, Parsing, parsingTime.getTime)
             }
 
