@@ -312,7 +312,7 @@ trait Evaluation extends Logging with BuildCondition {
         val file = new File(filePath)
         val prettyPrinted = PrettyPrinter.print(ast).replace("definedEx", "defined")
         val writer = new FileWriter(file, false)
-        writer.write(appendBuildCondition(filePath, prettyPrinted))
+        writer.write(addBuildCondition(filePath, prettyPrinted))
         writer.flush()
         writer.close()
     }

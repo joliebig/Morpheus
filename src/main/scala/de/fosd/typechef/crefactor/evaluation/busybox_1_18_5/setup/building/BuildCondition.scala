@@ -17,7 +17,7 @@ trait BuildCondition {
         }
     }
 
-    def bcFile(file: String, print: String = ""): String = {
+    def addBuildCondition(file: String, print: String = ""): String = {
         val bcFile = new File(file.replace(".c", ".bc"))
         if (bcFile.exists) scala.io.Source.fromFile(bcFile).mkString + "\n" + print
         else print
