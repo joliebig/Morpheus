@@ -68,7 +68,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
             if (ast == null) println("... failed reading AST\n")
         }
 
-        if (opt.writeBuildCondtion) writeBuildCondition(opt.getFile)
+        if (opt.writeBuildCondition) writeBuildCondition(opt.getFile)
 
         if (opt.refLink) {
             linkInf = new CLinking(opt.getLinkingInterfaceFile)
