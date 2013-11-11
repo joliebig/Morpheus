@@ -12,11 +12,11 @@ import de.fosd.typechef.parser.TokenReader
 import de.fosd.typechef.parser.c.CTypeContext
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.typesystem.linker.InterfaceWriter
-import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.setup.building.Builder
+import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.setup.building.{BuildCondition, Builder}
 import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking.CLinking
 import de.fosd.typechef.crefactor.evaluation.StatsJar
 
-object CRefactorFrontend extends App with InterfaceWriter {
+object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
 
     var command: Array[String] = Array()
 
@@ -67,6 +67,8 @@ object CRefactorFrontend extends App with InterfaceWriter {
             ast = loadSerializedAST(opt.getSerializedASTFilename)
             if (ast == null) println("... failed reading AST\n")
         }
+
+        if (opt.writeBuildCondtion) writeBuildCondition(opt.getFile)
 
         if (opt.refLink) {
             linkInf = new CLinking(opt.getLinkingInterfaceFile)

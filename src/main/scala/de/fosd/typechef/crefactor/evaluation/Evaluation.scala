@@ -11,8 +11,9 @@ import de.fosd.typechef.parser.c.GnuAsmExpr
 import de.fosd.typechef.parser.c.Id
 import scala.collection.immutable.HashMap
 import de.fosd.typechef.conditional.{Opt, Choice}
+import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.setup.building.BuildCondition
 
-trait Evaluation extends Logging {
+trait Evaluation extends Logging with BuildCondition {
 
     val caseStudyPath: String
     val completeBusyBoxPath: String
@@ -309,9 +310,9 @@ trait Evaluation extends Logging {
 
     def writeAST(ast: AST, filePath: String) {
         val file = new File(filePath)
-        val prettyPrinted = PrettyPrinter.print(ast)
+        val prettyPrinted = PrettyPrinter.print(ast).replace("definedEx", "defined")
         val writer = new FileWriter(file, false)
-        writer.write(prettyPrinted.replace("definedEx", "defined"))
+        writer.write(appendBuildCondition(filePath, prettyPrinted))
         writer.flush()
         writer.close()
     }

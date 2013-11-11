@@ -53,7 +53,8 @@ object Extract extends BusyBoxRefactor {
                 (true, features)
             }
             case Left(s) => {
-                // TODO Error handling
+                // TODO Correct Error Handling
+                println(s)
                 (false, null)
             }
 
