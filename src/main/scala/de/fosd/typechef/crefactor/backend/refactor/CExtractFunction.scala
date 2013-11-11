@@ -573,13 +573,11 @@ object CExtractFunction extends ASTSelection with CRefactor {
         val gotoS = filterAllASTElems[GotoStatement](element)
         gotoS.isEmpty match {
             case true =>
-            case _ => return !gotoS.exists(goto => morpheus.getUseDeclMap.get(goto).exists(labels => filter[Id](gotoS)))
+            case _ => return !gotoS.exists(goto => morpheus.getUseDeclMap.get(goto.target).exists(labels => filter[Id](gotoS)))
         }
         val labels = filterAllASTElems[LabelStatement](element)
         labels.isEmpty match {
-            case true =>
-            // TODO Check decl use because of null pointers
-            case _ => return !labels.exists(label => morpheus.getDeclUseMap.get(label).exists(goto => filter[Id](labels)))
+            case _ => return !labels.exists(label => morpheus.getDeclUseMap.get(label.id).exists(goto => filter[Id](labels)))
         }
         false
     }
