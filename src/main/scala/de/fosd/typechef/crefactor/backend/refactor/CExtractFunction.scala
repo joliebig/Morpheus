@@ -165,12 +165,10 @@ object CExtractFunction extends ASTSelection with CRefactor {
             val parent = findParent(id)
             parent match {
                 case null =>
-                case _ =>
-                    if (parent.get.isInstanceOf[Statement]) {
-                        uniqueSelectedStatements.add(parent.get.asInstanceOf[Statement])
-                        uniqueSelectedStatements.add(lookupControlStatements(parent.get.asInstanceOf[Statement]))
-
-                    } else if (parent.get.isInstanceOf[Expr]) uniqueSelectedExpressions.add(parent.get.asInstanceOf[Expr])
+                case s: Some[Statement] =>
+                    uniqueSelectedStatements.add(s.get)
+                    uniqueSelectedStatements.add(lookupControlStatements(s.get))
+                case e: Some[Expr] => uniqueSelectedExpressions.add(e.get)
             }
         })
 
@@ -580,17 +578,10 @@ object CExtractFunction extends ASTSelection with CRefactor {
         val labels = filterAllASTElems[LabelStatement](element)
         labels.isEmpty match {
             case true =>
+            // TODO Check decl use because of null pointers
             case _ => return !labels.exists(label => morpheus.getDeclUseMap.get(label).exists(goto => filter[Id](labels)))
         }
         false
-
-        /** element match {
-    case c: ContinueStatement => true
-    case b: BreakStatement => true
-    case c: CaseStatement => true
-    case g: GotoStatement => true // TODO Target Find
-    case _ => false
-  } */
     }
 
     private def getParentFunction(selection: List[AST], morpheus: Morpheus): FunctionDef = {
