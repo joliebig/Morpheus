@@ -250,14 +250,6 @@ object CExtractFunction extends ASTSelection with CRefactor {
 
             val specifiers = generateSpecifiers(parentFunction, morpheus)
             val parameters = getParameterDecls(extRefIds, parentFunction, morpheus)
-            // For not expected behaviour of pretty printer...
-            /** val funcOpts = parameters.foldLeft(List[Opt[FunctionDef]]())((fDefs, funcParams) => {
-      val declarator = generateDeclarator(funcName, List(funcParams))
-      val compundStatement = generateCompoundStatement(selectedOptStatements, allExtRefIds, paramIds, morpheus)
-      val newFunc = generateFuncDef(specifiers, declarator, compundStatement)
-      val funcOpt = generateFuncOpt(parentFunction, newFunc, morpheus, funcParams.feature)
-      fDefs ::: List(funcOpt)
-    }) */
             val declarator = generateDeclarator(funcName, parameters)
             val compundStatement = generateCompoundStatement(selectedOptStatements, allExtRefIds, paramIds, morpheus)
             val newFunc = generateFuncDef(specifiers, declarator, compundStatement)
