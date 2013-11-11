@@ -37,7 +37,7 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
                 StatsJar.write(path + ".stats")
             } catch {
                 case e: Exception => {
-                    println(e.getStackTrace.mkString("\n"))
+                    e.printStackTrace
                     writeException(e.getCause.toString + "\n" + e.getMessage + "\n" + e.getStackTrace.mkString("\n"), new File(path).getCanonicalPath)
                 }
             }

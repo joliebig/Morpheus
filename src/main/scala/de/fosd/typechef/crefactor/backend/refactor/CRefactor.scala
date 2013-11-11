@@ -10,7 +10,7 @@ import de.fosd.typechef.crefactor.frontend.util.Selection
 import de.fosd.typechef.conditional.Conditional
 import de.fosd.typechef.featureexpr.FeatureExpr
 import de.fosd.typechef.parser.c.CompoundStatementExpr
-import scala.Some
+import scala.{Product, Some}
 import de.fosd.typechef.conditional.Choice
 import de.fosd.typechef.parser.c.TranslationUnit
 import de.fosd.typechef.conditional.One
@@ -121,6 +121,17 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         r(t).get.asInstanceOf[T]
     }
 
+    /**
+     * Replaces the innerstatements of compoundstatements of a translation unit.
+     */
+    def replaceCompoundStmtInAST[T <: Product](t: T, cStmt: CompoundStatement, newInnerStmt: List[Opt[Statement]]): T = {
+        val r = manybu(rule {
+            case cc: CompoundStatement => if (isPartOf(cStmt, cc)) cc.copy(innerStatements = newInnerStmt) else cc
+            case x => x
+        })
+        r(t).get.asInstanceOf[T]
+    }
+
     // TODO Clean up ast rewrite strategies
     def insertInAstBefore[T <: Product](t: T, mark: Opt[_], insert: Opt[_])(implicit m: Manifest[T]): T = {
         val r = oncetd(rule {
@@ -164,6 +175,7 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         r(t).get.asInstanceOf[T]
     }
 
+    // TODO toRemove
     def replaceInAST[T <: Product](t: T, e: T, n: T)(implicit m: Manifest[T]): T = {
         println("start replace")
         val r = manybu(rule {

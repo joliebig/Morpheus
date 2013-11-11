@@ -275,7 +275,8 @@ object CExtractFunction extends ASTSelection with CRefactor {
             // val astWFunc = funcOpts.foldLeft(morpheus.getAST)((ast, func) => insertInAstBefore(ast, parentFunctionOpt, func))
             val astWFunc = insertInAstBefore(morpheus.getAST, parentFunctionOpt, funcOpt)
 
-            val refAST = replaceInAST(astWFunc, compStmt, compStmt.copy(innerStatements = ccStmtWithRemovedStmts))
+            //val refAST = replaceInAST(astWFunc, compStmt, compStmt.copy(innerStatements = ccStmtWithRemovedStmts))
+            val refAST = replaceCompoundStmtInAST(astWFunc, compStmt, ccStmtWithRemovedStmts)
             Right(refAST)
         } catch {
             case r: RefactorException => Left(r.error)
