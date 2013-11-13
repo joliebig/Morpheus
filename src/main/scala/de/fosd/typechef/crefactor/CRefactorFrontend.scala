@@ -12,9 +12,9 @@ import de.fosd.typechef.parser.TokenReader
 import de.fosd.typechef.parser.c.CTypeContext
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.typesystem.linker.InterfaceWriter
-import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.setup.building.{BuildCondition, Builder}
 import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking.CLinking
 import de.fosd.typechef.crefactor.evaluation.StatsJar
+import de.fosd.typechef.crefactor.evaluation.setup.{Building, BuildCondition}
 
 object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
 
@@ -59,6 +59,13 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
             return (null, null)
         }
 
+        val builder: Building = {
+            if (opt.getRefStudy.equalsIgnoreCase("busybox")) de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.setup.building.Builder
+            else if (opt.getRefStudy.equalsIgnoreCase("openssl")) de.fosd.typechef.crefactor.evaluation.openSSL.setup.Builder
+            else null
+        }
+
+        // TODO Implement studies for refactorings
 
         var ast: AST = null
         var linkInf: CLinking = null
@@ -97,7 +104,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
         }
 
         if (opt.canBuild) {
-            val canBuild = Builder.canBuild(ast, opt.getFile)
+            val canBuild = builder.canBuild(ast, opt.getFile)
             println("+++ Can build " + new File(opt.getFile).getName + " : " + canBuild + " +++")
         }
 

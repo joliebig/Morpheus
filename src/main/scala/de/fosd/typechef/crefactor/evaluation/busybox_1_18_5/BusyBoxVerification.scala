@@ -28,7 +28,7 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
                 (buildResult._1, testResult)
             }
 
-            val configBuild = new File(busyBoxPath + ".config")
+            val configBuild = new File(sourcePath + ".config")
 
             copyFile(config, configBuild)
 
@@ -52,14 +52,14 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
     }
 
     def runTest: String = {
-        val result = runScript("./runtest", busyBoxPath + "testsuite/")
+        val result = runScript("./runtest", sourcePath + "testsuite/")
         val stream = streamsToString(result)
-        runScript("./cleanTests.sh", busyBoxPath)
+        runScript("./cleanTests.sh", sourcePath)
         stream._1
     }
 
     def build: (Boolean, String, String) = {
-        val result = runScript("./buildBusyBox.sh", busyBoxPath)
+        val result = runScript("./buildBusyBox.sh", sourcePath)
         val stream = streamsToString(result)
         println("+++ STDOUT")
         println(stream._1)

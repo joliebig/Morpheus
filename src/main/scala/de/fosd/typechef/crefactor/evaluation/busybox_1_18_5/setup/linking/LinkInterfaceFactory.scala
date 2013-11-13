@@ -11,7 +11,7 @@ import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking.CLinking
  */
 object LinkInterfaceFactory extends BusyBoxEvaluation with App {
 
-    val fileList = io.Source.fromFile(busyBoxFiles).getLines().toList
+    val fileList = io.Source.fromFile(filesToEval).getLines().toList
     val featureList = io.Source.fromFile(featuresFile).getLines().toList
 
     def getBusyboxVMConstraints: Iterator[FeatureExpr] =
@@ -24,7 +24,7 @@ object LinkInterfaceFactory extends BusyBoxEvaluation with App {
 
     println(fileList.size + " files to analyse for linking informations.")
 
-    val interfaces = fileList.map(f => reader.readInterface(new File(busyBoxPath + f + ".interface"))).map(SystemLinker.linkStdLib)
+    val interfaces = fileList.map(f => reader.readInterface(new File(sourcePath + f + ".interface"))).map(SystemLinker.linkStdLib)
 
     def linkTreewise(l: List[CInterface]): CInterface = {
         if (l.size > 2) {

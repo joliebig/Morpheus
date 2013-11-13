@@ -3,16 +3,17 @@ package de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.setup.building
 import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.BusyBoxEvaluation
 import de.fosd.typechef.parser.c.AST
 import java.io.File
+import de.fosd.typechef.crefactor.evaluation.setup.Building
 
-object Builder extends BusyBoxEvaluation {
+object Builder extends BusyBoxEvaluation with Building {
 
-    def canBuild(ast: AST, file: String) = {
+    def canBuild(ast: AST, file: String): Boolean = {
         val currentFile = new File(file)
 
         // clean dir first
-        runScript("./cleanAndReset.sh", busyBoxPath)
-        val refFile = new File(currentFile.getCanonicalPath.replaceAll("busybox-1.18.5", "result") + "/" + currentFile.getName)
-        val resultDir = new File(currentFile.getCanonicalPath.replaceAll("busybox-1.18.5", "result") + "/")
+        runScript("./cleanAndReset.sh", sourcePath)
+        val refFile = new File(currentFile.getCanonicalPath.replaceAll(evalName, "result") + "/" + currentFile.getName)
+        val resultDir = new File(currentFile.getCanonicalPath.replaceAll(evalName, "result") + "/")
 
         resultDir.mkdirs()
 
@@ -32,12 +33,12 @@ object Builder extends BusyBoxEvaluation {
         val refTest = buildAndTest(currentFile, "_ppp")
 
         // clean dir
-        runScript("./cleanAndReset.sh", busyBoxPath)
+        runScript("./cleanAndReset.sh", sourcePath)
 
         val orgTest = buildAndTest(currentFile, "_org")
 
         // clean dir
-        runScript("./cleanAndReset.sh", busyBoxPath)
+        runScript("./cleanAndReset.sh", sourcePath)
 
         val canBuildAndTest = (orgTest._1 && refTest._1) && (orgTest._2.equals(refTest._2))
         writeResult(canBuildAndTest.toString, resultDir.getCanonicalPath + "/result")
@@ -47,13 +48,13 @@ object Builder extends BusyBoxEvaluation {
     }
 
     private def runTest: String = {
-        val result = runScript("./runtest", busyBoxPath + "testsuite/")
+        val result = runScript("./runtest", sourcePath + "testsuite/")
         val stream = streamsToString(result)
         stream._1
     }
 
     private def build: (Boolean, String, String) = {
-        val result = runScript("./buildBusyBox.sh", busyBoxPath)
+        val result = runScript("./buildBusyBox.sh", sourcePath)
         val stream = streamsToString(result)
         println("+++ STDOUT")
         println(stream._1)
