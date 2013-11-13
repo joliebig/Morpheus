@@ -13,7 +13,7 @@ trait BusyBoxEvaluation extends Evaluation with ASTNavigation with ConditionalNa
     val completePath = new File(caseStudyPath).getCanonicalPath
     val filesToEval: String = completePath + "/busybox_files"
     val blackListFiles: List[String] = Source.fromFile(getClass.getResource("/busybox_blacklist").getFile).getLines().toList
-    val sourcePath = completePath + "/evalName/"
+    val sourcePath = completePath + "/" + evalName + "/"
     val result = "/result/"
 
     val filterFeatures = List("def(CONFIG_SELINUX)", "CONFIG_SELINUX", "def(CONFIG_TCPSVD)", "CONFIG_TCPSVD", "def(CONFIG_UDPSVD)", "CONFIG_UDPSVD", "def(CONFIG_MKFS_EXT2)", "CONFIG_MKFS_EXT2")
