@@ -291,10 +291,10 @@ trait Evaluation extends Logging with BuildCondition {
 
     def write(ast: AST, filePath: String, orgFile: String = null) = {
         val refFile = if (orgFile != null) orgFile else filePath
-        writeAST(ast, filePath)
+        printAndWriteAST(ast, filePath)
         val resultDir = getResultDir(refFile)
         val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(filePath)
-        writeAST(ast, path)
+        printAndWriteAST(ast, path)
         writePlainAST(ast, path + ".ast")
     }
 
@@ -308,7 +308,7 @@ trait Evaluation extends Logging with BuildCondition {
         out.close()
     }
 
-    def writeAST(ast: AST, filePath: String) {
+    def printAndWriteAST(ast: AST, filePath: String) {
         val file = new File(filePath)
         val prettyPrinted = PrettyPrinter.print(ast).replace("definedEx", "defined")
         val writer = new FileWriter(file, false)

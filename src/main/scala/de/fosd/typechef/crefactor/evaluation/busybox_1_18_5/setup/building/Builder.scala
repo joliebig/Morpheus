@@ -12,14 +12,14 @@ object Builder extends BusyBoxEvaluation with Building {
 
         // clean dir first
         runScript("./cleanAndReset.sh", sourcePath)
-        val refFile = new File(currentFile.getCanonicalPath.replaceAll(evalName, "result") + "/" + currentFile.getName)
-        val resultDir = new File(currentFile.getCanonicalPath.replaceAll(evalName, "result") + "/")
+        val refFile = new File(currentFile.getCanonicalPath.replace(evalName, "result") + "/" + currentFile.getName)
+        val resultDir = new File(currentFile.getCanonicalPath.replace(evalName, "result") + "/")
 
         resultDir.mkdirs()
 
         // write AST in current result dir
-        writeAST(ast, refFile.getCanonicalPath)
-        writeAST(ast, currentFile.getCanonicalPath)
+        printAndWriteAST(ast, refFile.getCanonicalPath.replace(".pi", ".c"))
+        printAndWriteAST(ast, currentFile.getCanonicalPath)
 
         def buildAndTest(busyBoxFile: File, ext: String): (Boolean, String) = {
             val buildResult = build
