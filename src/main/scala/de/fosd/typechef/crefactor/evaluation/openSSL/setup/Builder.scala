@@ -14,12 +14,12 @@ object Builder extends OpenSSLEvaluation with Building {
         runScript("./clean.sh", sourcePath)
         val refFile = new File(currentFile.getCanonicalPath.replaceAll(evalName, "result") + "/" + currentFile.getName)
         val resultDir = new File(currentFile.getCanonicalPath.replaceAll(evalName, "result") + "/")
+        resultDir.mkdirs()
 
         // write AST in current result dir
         printAndWriteAST(ast, refFile.getCanonicalPath.replace(".pi", ".c"))
         printAndWriteAST(ast, currentFile.getCanonicalPath)
 
-        resultDir.mkdirs()
 
         def buildAndTest(busyBoxFile: File, ext: String): Boolean = {
             val buildResult = build
