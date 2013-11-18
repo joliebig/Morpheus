@@ -17,7 +17,7 @@ object Builder extends OpenSSLEvaluation with Building {
         resultDir.mkdirs()
 
         // write AST in current result dir
-        printAndWriteAST(ast, refFile.getCanonicalPath.replace(".pi", ".c"))
+        printAndWriteAST(ast, refFile.getCanonicalPath)
         printAndWriteAST(ast, currentFile.getCanonicalPath.replace(".pi", ".c"))
 
 
