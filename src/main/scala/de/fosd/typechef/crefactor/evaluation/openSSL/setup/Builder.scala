@@ -18,7 +18,7 @@ object Builder extends OpenSSLEvaluation with Building {
 
         // write AST in current result dir
         printAndWriteAST(ast, refFile.getCanonicalPath.replace(".pi", ".c"))
-        printAndWriteAST(ast, currentFile.getCanonicalPath)
+        printAndWriteAST(ast, currentFile.getCanonicalPath.replace(".pi", ".c"))
 
 
         def buildAndTest(busyBoxFile: File, ext: String): Boolean = {
