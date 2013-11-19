@@ -83,7 +83,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
 
             if (ast != null && opt.serializeAST) serializeAST(ast, opt.getSerializedASTFilename)
 
-            if (opt.writeInterface) writeInterface(ast, fm, opt)
+            if (opt.writeInterface) writeInterface(ast, fm, opt, errorXML)
 
             if (opt.refEval) refactorEval(opt, ast, fm, linkInf)
         }
@@ -94,9 +94,12 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
     }
 
 
-    private def writeInterface(ast: AST, fm: FeatureModel, opt: FrontendOptions) {
+    private def writeInterface(ast: AST, fm: FeatureModel, opt: FrontendOptions, errorXML: ErrorXML) {
         val ts = new CTypeSystemFrontend(ast.asInstanceOf[TranslationUnit], fm, opt) with CTypeCache with CDeclUse
         val interface = ts.getInferredInterface().and(opt.getFilePresenceCondition)
+
+        val typeCheckStatus = ts.checkAST()
+        ts.errors.map(errorXML.renderTypeError)
 
         ts.writeInterface(interface, new File(opt.getInterfaceFilename))
         if (opt.writeDebugInterface)
