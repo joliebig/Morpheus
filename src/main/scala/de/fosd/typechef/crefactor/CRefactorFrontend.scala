@@ -6,15 +6,17 @@ import de.fosd.typechef.parser.c._
 import de.fosd.typechef.featureexpr.FeatureModel
 import de.fosd.typechef.options.{RefactorType, FrontendOptions, OptionException, FrontendOptionsWithConfigFiles}
 import de.fosd.typechef.{lexer, ErrorXML}
-import java.io.{ObjectStreamClass, FileInputStream, ObjectInputStream, File}
+import java.io._
 import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.refactor.{Inline, Extract, Rename}
 import de.fosd.typechef.parser.TokenReader
-import de.fosd.typechef.parser.c.CTypeContext
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.typesystem.linker.InterfaceWriter
 import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking.CLinking
 import de.fosd.typechef.crefactor.evaluation.StatsJar
 import de.fosd.typechef.crefactor.evaluation.setup.{Building, BuildCondition}
+import java.util.zip.{GZIPOutputStream, GZIPInputStream}
+import de.fosd.typechef.parser.c.CTypeContext
+import de.fosd.typechef.typesystem.{CDeclUse, CTypeCache, CTypeSystemFrontend}
 
 object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
 
@@ -59,63 +61,83 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
             return (null, null)
         }
 
-        val builder: Building = {
-            if (opt.getRefStudy.equalsIgnoreCase("busybox")) de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.setup.building.Builder
-            else if (opt.getRefStudy.equalsIgnoreCase("openssl")) de.fosd.typechef.crefactor.evaluation.openSSL.setup.Builder
-            else null
-        }
-
         // TODO Implement studies for refactorings
 
         var ast: AST = null
         var linkInf: CLinking = null
+
+        if (opt.writeBuildCondition) writeBuildCondition(opt.getFile)
+
+        if (opt.refLink) linkInf = new CLinking(opt.getLinkingInterfaceFile)
 
         if (opt.reuseAST && opt.parse && new File(opt.getSerializedASTFilename).exists()) {
             ast = loadSerializedAST(opt.getSerializedASTFilename)
             if (ast == null) println("... failed reading AST\n")
         }
 
-        if (opt.writeBuildCondition) writeBuildCondition(opt.getFile)
-
-        if (opt.refLink) {
-            linkInf = new CLinking(opt.getLinkingInterfaceFile)
-        }
-
         if (opt.parse) {
 
-            if (ast == null) {
-                //no parsing and serialization if read serialized ast
-                val parsingTime = new TimeMeasurement
-                val parserMain = new ParserMain(new CParser(fm))
-                ast = parserMain.parserMain(lex(opt), opt)
-                StatsJar.addStat(opt.getFile, Parsing, parsingTime.getTime)
-            }
+            if (ast == null) ast = parseAST(fm, opt)
 
             if (ast == null) errorXML.write()
 
-            if (opt.refEval) {
-                opt.getRefactorType match {
-                    case RefactorType.RENAME => Rename.evaluate(ast, fm, opt.getFile, linkInf)
-                    case RefactorType.EXTRACT => Extract.evaluate(ast, fm, opt.getFile, linkInf)
-                    case RefactorType.INLINE => Inline.evaluate(ast, fm, opt.getFile, linkInf)
-                    case RefactorType.NONE => println("No refactor type defined")
-                }
-            }
+            if (ast != null && opt.serializeAST) serializeAST(ast, opt.getSerializedASTFilename)
+
+            if (opt.writeInterface) writeInterface(ast, fm, opt)
+
+            if (opt.refEval) refactorEval(opt, ast, fm, linkInf)
         }
 
-        if (opt.canBuild) {
-            val canBuild = builder.canBuild(ast, opt.getFile)
-            println("+++ Can build " + new File(opt.getFile).getName + " : " + canBuild + " +++")
-        }
+        if (opt.canBuild) canBuildAndTest(ast, opt)
 
         (ast, fm)
     }
 
 
+    private def writeInterface(ast: AST, fm: FeatureModel, opt: FrontendOptions) {
+        val ts = new CTypeSystemFrontend(ast.asInstanceOf[TranslationUnit], fm, opt) with CTypeCache with CDeclUse
+        val interface = ts.getInferredInterface().and(opt.getFilePresenceCondition)
+
+        ts.writeInterface(interface, new File(opt.getInterfaceFilename))
+        if (opt.writeDebugInterface)
+            ts.debugInterface(interface, new File(opt.getDebugInterfaceFilename))
+    }
+    private def parseAST(fm: FeatureModel, opt: FrontendOptions): AST = {
+        val parsingTime = new TimeMeasurement
+        val parserMain = new ParserMain(new CParser(fm))
+        val ast = parserMain.parserMain(lex(opt), opt)
+        StatsJar.addStat(opt.getFile, Parsing, parsingTime.getTime)
+
+        ast
+    }
+    private def canBuildAndTest(ast: AST, opt: FrontendOptions) {
+        val builder: Building = {
+            if (opt.getRefStudy.equalsIgnoreCase("busybox")) de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.setup.building.Builder
+            else if (opt.getRefStudy.equalsIgnoreCase("openssl")) de.fosd.typechef.crefactor.evaluation.openSSL.setup.Builder
+            else null
+        }
+
+        val canBuild = builder.canBuild(ast, opt.getFile)
+        println("+++ Can build " + new File(opt.getFile).getName + " : " + canBuild + " +++")
+    }
+    private def refactorEval(opt: FrontendOptions, ast: AST, fm: FeatureModel, linkInf: CLinking) {
+        opt.getRefactorType match {
+            case RefactorType.RENAME => Rename.evaluate(ast, fm, opt.getFile, linkInf)
+            case RefactorType.EXTRACT => Extract.evaluate(ast, fm, opt.getFile, linkInf)
+            case RefactorType.INLINE => Inline.evaluate(ast, fm, opt.getFile, linkInf)
+            case RefactorType.NONE => println("No refactor type defined")
+        }
+    }
     private def lex(opt: FrontendOptions): TokenReader[CToken, CTypeContext] = CLexer.prepareTokens(new lexer.Main().run(opt, opt.parse))
 
+    private def serializeAST(ast: AST, filename: String) {
+        val fw = new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(filename)))
+        fw.writeObject(ast)
+        fw.close()
+    }
+
     private def loadSerializedAST(filename: String): AST = {
-        val fr = new ObjectInputStream(new FileInputStream(filename)) {
+        val fr = new ObjectInputStream(new GZIPInputStream(new FileInputStream(filename))) {
             override protected def resolveClass(desc: ObjectStreamClass) = { /*println(desc);*/ super.resolveClass(desc) }
         }
         val ast = fr.readObject().asInstanceOf[AST]
