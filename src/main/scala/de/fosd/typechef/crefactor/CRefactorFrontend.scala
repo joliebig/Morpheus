@@ -52,6 +52,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
     private def prettyPrint(ast: AST, options: FrontendOptions) = {
         val filePath = options.getFile ++ ".pp"
         val file = new File(filePath)
+        println("+++ Pretty printing to: " + file.getCanonicalPath)
         val prettyPrinted = PrettyPrinter.print(ast).replace("definedEx", "defined")
         val writer = new FileWriter(file, false)
         writer.write(addBuildCondition(filePath, prettyPrinted))
