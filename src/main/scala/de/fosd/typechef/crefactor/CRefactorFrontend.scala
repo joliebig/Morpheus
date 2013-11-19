@@ -49,6 +49,16 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
         processFile(opt)
     }
 
+    private def prettyPrint(ast: AST, options: FrontendOptions) = {
+        val filePath = options.getFile ++ ".pp"
+        val file = new File(filePath)
+        val prettyPrinted = PrettyPrinter.print(ast).replace("definedEx", "defined")
+        val writer = new FileWriter(file, false)
+        writer.write(addBuildCondition(filePath, prettyPrinted))
+        writer.flush()
+        writer.close()
+    }
+
     private def processFile(opt: FrontendOptions): (AST, FeatureModel) = {
         val errorXML = new ErrorXML(opt.getErrorXMLFile)
         opt.setRenderParserError(errorXML.renderParserError)
@@ -86,6 +96,8 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
             if (opt.writeInterface) writeInterface(ast, fm, opt, errorXML)
 
             if (opt.refEval) refactorEval(opt, ast, fm, linkInf)
+
+            if (opt.prettyPrint) prettyPrint(ast, opt)
         }
 
         if (opt.canBuild) canBuildAndTest(ast, opt)
