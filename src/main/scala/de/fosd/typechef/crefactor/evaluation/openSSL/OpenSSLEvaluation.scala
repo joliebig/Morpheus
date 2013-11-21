@@ -24,7 +24,7 @@ trait OpenSSLEvaluation extends Evaluation with ASTNavigation with ConditionalNa
     val featureModel: String = completePath + "/fm.txt"
     val featureModel_DIMACS: String = completePath + "/OpenSSL.dimacs"
 
-    val runTimeout = 180000
+    val runTimeout = 300000
 
     val FORCE_VARIABILITY = true
     val FORCE_LINKING = false
