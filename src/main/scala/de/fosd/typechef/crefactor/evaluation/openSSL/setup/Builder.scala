@@ -9,19 +9,12 @@ import java.io.File
 object Builder extends OpenSSLEvaluation with Building {
     def canBuild(ast: AST, file: String): Boolean = {
         val currentFile = new File(file)
-
         // clean dir first
         runScript("./clean.sh", sourcePath)
+
         val refFile = new File(currentFile.getCanonicalPath.replace(evalName, "result") + "/" + currentFile.getName)
         val resultDir = new File(currentFile.getCanonicalPath.replace(evalName, "result") + "/")
         resultDir.mkdirs()
-
-        // write AST in current result dir
-        printAndWriteAST(ast, refFile.getCanonicalPath)
-        println("+++ Saving result to: " + refFile.getPath)
-        println("+++ Updating file: " + currentFile.getCanonicalPath.replace(".pi", ".c"))
-        printAndWriteAST(ast, currentFile.getCanonicalPath.replace(".pi", ".c"))
-
 
         def buildAndTest(busyBoxFile: File, ext: String): Boolean = {
             val buildResult = build
@@ -32,12 +25,18 @@ object Builder extends OpenSSLEvaluation with Building {
             buildResult._1 && testResult._1
         }
 
-        val ppp = buildAndTest(currentFile, "_ppp")
+        val org = buildAndTest(currentFile, "_org")
 
         // clean dir
         runScript("./clean.sh", sourcePath)
 
-        val org = buildAndTest(currentFile, "_org")
+        // write AST in current result dir
+        printAndWriteAST(ast, refFile.getCanonicalPath)
+        println("+++ Saving result to: " + refFile.getPath)
+        println("+++ Updating file: " + currentFile.getCanonicalPath.replace(".pi", ".c"))
+        printAndWriteAST(ast, currentFile.getCanonicalPath.replace(".pi", ".c"))
+
+        val ppp = buildAndTest(currentFile, "_ppp")
 
         // clean dir
         runScript("./clean.sh", sourcePath)
