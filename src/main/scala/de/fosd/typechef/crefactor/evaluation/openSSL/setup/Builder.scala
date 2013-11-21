@@ -12,12 +12,13 @@ object Builder extends OpenSSLEvaluation with Building {
 
         // clean dir first
         runScript("./clean.sh", sourcePath)
-        val refFile = new File(currentFile.getCanonicalPath.replaceAll(evalName, "result") + "/" + currentFile.getName)
-        val resultDir = new File(currentFile.getCanonicalPath.replaceAll(evalName, "result") + "/")
+        val refFile = new File(currentFile.getCanonicalPath.replace(evalName, "result") + "/" + currentFile.getName)
+        val resultDir = new File(currentFile.getCanonicalPath.replace(evalName, "result") + "/")
         resultDir.mkdirs()
 
         // write AST in current result dir
         printAndWriteAST(ast, refFile.getCanonicalPath)
+        println("+++ Saving result to: " + refFile.getPath)
         println("+++ Updating file: " + currentFile.getCanonicalPath.replace(".pi", ".c"))
         printAndWriteAST(ast, currentFile.getCanonicalPath.replace(".pi", ".c"))
 
