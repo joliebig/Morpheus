@@ -99,9 +99,11 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
             if (opt.refEval) refactorEval(opt, ast, fm, linkInf)
 
             if (opt.prettyPrint) prettyPrint(ast, opt)
+
+            if (opt.canBuild) canBuildAndTest(ast, opt)
         }
 
-        if (opt.canBuild) canBuildAndTest(ast, opt)
+
 
         (ast, fm)
     }

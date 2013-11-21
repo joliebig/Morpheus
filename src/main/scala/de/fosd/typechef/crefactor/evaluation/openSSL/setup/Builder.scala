@@ -45,6 +45,7 @@ object Builder extends OpenSSLEvaluation with Building {
 
 
     private def build: (Boolean, String, String) = {
+        println("+++ Building")
         val result = runScript("./build.sh", sourcePath)
         val stream = streamsToString(result)
         println("+++ STDOUT")
@@ -55,9 +56,9 @@ object Builder extends OpenSSLEvaluation with Building {
     }
 
     private def test: (Boolean, String, String) = {
+        println("+++ Testing")
         val result = runScript("./runtest.sh", sourcePath)
         val stream = streamsToString(result)
-        println("+++ Testing")
         println("+++ STDOUT")
         println(stream._1)
         println("+++ STDERR")
