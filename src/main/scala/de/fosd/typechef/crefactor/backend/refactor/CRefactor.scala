@@ -2,7 +2,7 @@ package de.fosd.typechef.crefactor.backend.refactor
 
 import java.util
 import util.Collections
-import de.fosd.typechef.typesystem.CEnvCache
+import de.fosd.typechef.typesystem.{IdentityIdHashMap, CEnvCache}
 import de.fosd.typechef.crefactor.Morpheus
 import org.kiama.rewriting.Rewriter._
 import de.fosd.typechef.parser.c._
@@ -64,7 +64,7 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         CompoundStatementExpr(CompoundStatement(innerstmts))
     }
 
-    def getAllConnectedIdentifier(lookup: Id, declUse: util.IdentityHashMap[Id, List[Id]], useDecl: util.IdentityHashMap[Id, List[Id]]) = {
+    def getAllConnectedIdentifier(lookup: Id, declUse: IdentityIdHashMap, useDecl: IdentityIdHashMap) = {
         val occurrences = Collections.newSetFromMap[Id](new util.IdentityHashMap())
 
         // find all uses of an callId

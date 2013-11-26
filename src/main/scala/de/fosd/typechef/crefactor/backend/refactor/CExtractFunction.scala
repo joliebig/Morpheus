@@ -457,7 +457,7 @@ object CExtractFunction extends ASTSelection with CRefactor {
     }
 
 
-    private def externalOccurrences(ids: List[Id], map: util.IdentityHashMap[Id, List[Id]]) =
+    private def externalOccurrences(ids: List[Id], map: IdentityIdHashMap) =
         ids.par.flatMap(id => {
             if (map.containsKey(id)) {
                 val external = map.get(id).par.flatMap(aId => {
@@ -565,7 +565,12 @@ object CExtractFunction extends ASTSelection with CRefactor {
         val gotoS = filterAllASTElems[GotoStatement](element)
         gotoS.isEmpty match {
             case true =>
-            case _ => return !gotoS.exists(goto => morpheus.getUseDeclMap.get(goto.target).exists(labels => filter[Id](gotoS)))
+            case _ => return !gotoS.exists(goto => {
+                goto.target match {
+                    case i: Id => morpheus.getUseDeclMap.get(i).exists(labels => filter[Id](gotoS))
+                    case _ => true
+                }
+            })
         }
         val labels = filterAllASTElems[LabelStatement](element)
         labels.isEmpty match {
