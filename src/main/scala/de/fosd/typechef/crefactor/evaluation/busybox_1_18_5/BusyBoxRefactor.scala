@@ -13,7 +13,7 @@ import de.fosd.typechef.crefactor.evaluation.Stats._
 trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
 
     def evaluate(ast: AST, fm: FeatureModel, file: String, linkInterface: CLinking): Unit = {
-        println("+++ Current File: " + getFileName(file) + " +++")
+        println("+++ File to refactor: " + getFileName(file) + " +++")
         val resultDir = getResultDir(file)
         val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(file)
         if (ast == null) println("+++ AST is null! +++")
@@ -33,7 +33,7 @@ trait BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
                     BusyBoxVerification.verify(file, fm, "_org")
                     runScript("./cleanAndReset.sh", sourcePath)
                     StatsJar.addStat(file, TestingTime, time.getTime)
-                } else writeError("Could not refactor, cause possible bad linking.", path)
+                } else writeError("Could not refactor file.", path)
                 StatsJar.write(path + ".stats")
             } catch {
                 case e: Exception => {

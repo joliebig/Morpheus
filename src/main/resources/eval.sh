@@ -1,7 +1,7 @@
-#!/bin/bash -e
-#!/bin/bash -vxe
+#!/bin/bash -vx
 
-path=/home/janker/FOSD/evalExtract/cRefactor-BusyBoxEvaluation
+path=$(cd "$(dirname "$0")"; pwd)
+
 
 filesToProcess() {
   local listFile=busybox/busybox_files
@@ -9,7 +9,7 @@ filesToProcess() {
 }
 
 flags=" --bdd \
-  --refEval extract --refLink $path/busyboxfinal.interface
+  --refEval extract --study busybox --refLink $path/busyboxfinal.interface
   -x CONFIG_ \
   -c $path/redhat.properties \
   --include $path/config.h \
@@ -27,5 +27,5 @@ flags=" --bdd \
 filesToProcess|while read i; do
          echo "Analysing $path/busybox-1.18.5/$i.c"
          echo "With settings: $flags"
-         ./cRefactor.sh $path/busybox-1.18.5/$i.c $flags
+         ../TypeChef/cRefactor.sh $path/busybox-1.18.5/$i.c $flags
 	 done
