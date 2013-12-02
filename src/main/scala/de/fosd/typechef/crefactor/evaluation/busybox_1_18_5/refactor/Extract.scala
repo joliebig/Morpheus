@@ -13,7 +13,7 @@ import de.fosd.typechef.crefactor.evaluation.Stats._
 
 object Extract extends BusyBoxRefactor {
 
-    private val MAX_REC_DEPTH: Int = 25
+    private val MAX_REC_DEPTH: Int = 250
 
     private val RETRIES: Int = 3
 
