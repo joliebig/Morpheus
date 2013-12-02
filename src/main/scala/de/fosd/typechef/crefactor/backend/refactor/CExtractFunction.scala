@@ -281,7 +281,13 @@ object CExtractFunction extends ASTSelection with CRefactor {
     private def hasVarsToDefinedExternal(selection: List[AST], morpheus: Morpheus): Boolean = {
         val selectedIds = filterAllASTElems[Id](selection)
         val externalUses = externalOccurrences(selectedIds, morpheus.getDeclUseMap, morpheus)
-        !getIdsToDeclare(externalUses).isEmpty
+        val idsToDeclare = getIdsToDeclare(externalUses)
+        if (!idsToDeclare.isEmpty) {
+            println("+++ Invalid selection")
+            println(selection)
+            println(idsToDeclare)
+        }
+        !idsToDeclare.isEmpty
     }
 
     private def getParamterIds(liveParamIds: List[Id], morpheus: Morpheus) = retrieveParameters(liveParamIds, morpheus).flatMap(entry => Some(entry._3))
