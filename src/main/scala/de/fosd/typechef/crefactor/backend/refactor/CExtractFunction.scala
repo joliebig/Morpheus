@@ -200,7 +200,7 @@ object CExtractFunction extends ASTSelection with CRefactor {
         else if (!isPartOfSameCompStmt(selectedElements, morpheus)) false
         else if (!filterAllASTElems[ReturnStatement](selectedElements).isEmpty) false
         else if (!selectedElements.par.forall(element => !isBadExtractStatement(element, selectedElements, morpheus))) false
-        else if (!hasVarsToDefinedExternal(selectedElements, morpheus)) false
+        else if (hasVarsToDefinedExternal(selectedElements, morpheus)) false
         // else if (!isConditionalComplete(selectedElements, getParentFunction(selectedElements, morpheus), morpheus)) false // Not Relevant?
         else true
     }
