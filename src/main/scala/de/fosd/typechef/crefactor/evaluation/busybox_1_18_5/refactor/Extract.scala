@@ -13,7 +13,7 @@ import de.fosd.typechef.crefactor.evaluation.Stats._
 
 object Extract extends BusyBoxRefactor {
 
-    private val MAX_REC_DEPTH: Int = 250
+    private val MAX_REC_DEPTH: Int = 1000
 
     private val RETRIES: Int = 3
 
@@ -38,7 +38,7 @@ object Extract extends BusyBoxRefactor {
 
             def getRandomVariableStatements(depth: Int = 0): List[AST] = {
                 val statements = getRandomStatements()
-                if ((statements.isEmpty || !statements.par.exists(isVariable(_))) && (depth < MAX_REC_DEPTH)) getRandomVariableStatements(depth + 1)
+                if ((statements.isEmpty /*|| !statements.par.exists(isVariable(_)) */) && (depth < MAX_REC_DEPTH)) getRandomVariableStatements(depth + 1)
                 else statements
             }
 
