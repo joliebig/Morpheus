@@ -245,9 +245,9 @@ object CExtractFunction extends ASTSelection with CRefactor {
             val paramIds = getParamterIds(extRefIds, morpheus)
 
             StatsJar.addStat(morpheus.getFile, Liveness, startTime.getTime)
-            StatsJar.addStat(morpheus.getFile, ExternalUses, startTime.getTime)
-            StatsJar.addStat(morpheus.getFile, ExternalDecls, startTime.getTime)
-            StatsJar.addStat(morpheus.getFile, Parameters, startTime.getTime)
+            StatsJar.addStat(morpheus.getFile, ExternalUses, externalUses)
+            StatsJar.addStat(morpheus.getFile, ExternalDecls, externalDefs)
+            StatsJar.addStat(morpheus.getFile, Parameters, paramIds)
 
             val specifiers = generateSpecifiers(parentFunction, morpheus)
             val parameters = getParameterDecls(extRefIds, parentFunction, morpheus)
