@@ -18,11 +18,9 @@ object Builder extends OpenSSLEvaluation with Building {
 
         def buildAndTest(busyBoxFile: File, ext: String): Boolean = {
             val buildResult = build
-            val testResult = test
             writeResult(buildResult._2, resultDir.getCanonicalPath + "/" + ext + ".build")
             if (!buildResult._1) writeResult(buildResult._3, resultDir.getCanonicalPath + "/" + ext + ".buildErr")
-            writeResult(testResult._2 + "\n" + testResult._3, resultDir.getCanonicalPath + "/" + ext + ".test")
-            buildResult._1 && testResult._1
+            buildResult._1
         }
 
         val org = buildAndTest(currentFile, "_org")
@@ -56,14 +54,4 @@ object Builder extends OpenSSLEvaluation with Building {
         (stream._1.contains("Success_Build"), stream._1, stream._2)
     }
 
-    private def test: (Boolean, String, String) = {
-        println("+++ Testing")
-        val result = runScript("./runtest.sh", sourcePath)
-        val stream = streamsToString(result)
-        println("+++ STDOUT")
-        println(stream._1)
-        println("+++ STDERR")
-        println(stream._2)
-        (stream._1.contains("Success_Test"), stream._1, stream._2)
-    }
 }
