@@ -1,12 +1,12 @@
 package de.fosd.typechef.crefactor.evaluation.sqlite.setup
 
-import de.fosd.typechef.crefactor.evaluation.openSSL.OpenSSLEvaluation
 import de.fosd.typechef.crefactor.evaluation.setup.Building
 import de.fosd.typechef.parser.c.AST
 import java.io.File
+import de.fosd.typechef.crefactor.evaluation.sqlite.SQLiteEvaluation
 
 
-object Builder extends OpenSSLEvaluation with Building {
+object Builder extends SQLiteEvaluation with Building {
     def canBuild(ast: AST, file: String): Boolean = {
         val currentFile = new File(file)
         // clean dir first
