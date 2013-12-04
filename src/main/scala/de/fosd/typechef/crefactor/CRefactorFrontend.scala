@@ -132,6 +132,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
         val builder: Building = {
             if (opt.getRefStudy.equalsIgnoreCase("busybox")) de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.setup.building.Builder
             else if (opt.getRefStudy.equalsIgnoreCase("openssl")) de.fosd.typechef.crefactor.evaluation.openSSL.setup.Builder
+            else if (opt.getRefStudy.equalsIgnoreCase("sqlite")) de.fosd.typechef.crefactor.evaluation.sqlite.setup.Builder
             else null
         }
 
