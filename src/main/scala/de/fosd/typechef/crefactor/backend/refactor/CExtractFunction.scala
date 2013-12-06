@@ -263,7 +263,6 @@ object CExtractFunction extends ASTSelection with CRefactor {
             //val insertCall2 = funcOpts.foldLeft()
             val insertedCall = insertBefore(compStmt.innerStatements, selectedOptStatements.head, functionCall)
             val ccStmtWithRemovedStmts = eqRemove(insertedCall, selectedOptStatements)
-            // val astWFunc = funcOpts.foldLeft(morpheus.getAST)((ast, func) => insertInAstBefore(ast, parentFunctionOpt, func))
             val astWFunc = insertInAstBefore(morpheus.getAST, parentFunctionOpt, funcOpt)
 
             //val refAST = replaceInAST(astWFunc, compStmt, compStmt.copy(innerStatements = ccStmtWithRemovedStmts))
@@ -463,7 +462,7 @@ object CExtractFunction extends ASTSelection with CRefactor {
 
     private def isPartOfFuncCall(id: Id, morpheus: Morpheus): Boolean = {
         morpheus.getASTEnv.parent(id) match {
-            case PostfixExpr(_, FunctionCall(_)) => true
+            case PostfixExpr(`id`, FunctionCall(_)) => true
             case _ => false
         }
     }
