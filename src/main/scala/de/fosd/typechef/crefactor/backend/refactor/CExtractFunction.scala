@@ -431,6 +431,7 @@ object CExtractFunction extends ASTSelection with CRefactor {
 
 
     private def uniqueExtRefIds(defs: List[(Id, List[Id])], uses: List[(Id, List[Id])]) = {
+        // TODO Refactor
         val parameterIds = Collections.newSetFromMap[Id](new util.IdentityHashMap())
         defs.foreach(x => x._2.foreach(entry => parameterIds.add(entry)))
         uses.foreach(x => parameterIds.add(x._1))

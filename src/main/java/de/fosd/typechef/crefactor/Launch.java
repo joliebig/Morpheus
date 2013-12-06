@@ -19,6 +19,7 @@ import java.util.LinkedList;
  *
  * @author Andreas Janker
  */
+@Deprecated
 public final class Launch {
 
 
@@ -94,9 +95,14 @@ public final class Launch {
      * @param featureModel  feature model to include
      * @return arguments to run typechef :)
      */
-    private final static String[] generateTypeChefArguments(
+    private static String[] generateTypeChefArguments(
             final File toLoad, final File toInclude, final File includeHeader, final File featureModel) {
         final LinkedList<String> args = new LinkedList<String>();
+
+        if (toLoad.getAbsolutePath().endsWith(".ast")) {
+            args.add("-reuseAST");
+        }
+
         args.add(toLoad.getAbsolutePath());
         args.add("-xCONFIG_");
         args.add("-c".concat(Configuration.getInstance().getTypeChefConfigFilePath()));

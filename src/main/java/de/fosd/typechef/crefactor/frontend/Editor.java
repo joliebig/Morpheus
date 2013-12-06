@@ -75,6 +75,15 @@ public class Editor extends JFrame implements Observer {
     /**
      * Loads a file into the editor window.
      *
+     * @param file the string file to load into the editor window
+     */
+    public final void loadFileInEditor(final String file) {
+        loadFileInEditor(new File(file));
+    }
+
+    /**
+     * Loads a file into the editor window.
+     *
      * @param file the file to load into the editor window
      */
     public final void loadFileInEditor(final File file) {

@@ -17,6 +17,8 @@ import de.fosd.typechef.crefactor.evaluation.setup.{Building, BuildCondition}
 import java.util.zip.{GZIPOutputStream, GZIPInputStream}
 import de.fosd.typechef.parser.c.CTypeContext
 import de.fosd.typechef.typesystem.{CDeclUse, CTypeCache, CTypeSystemFrontend}
+import de.fosd.typechef.crefactor.frontend.Editor
+import javax.swing.SwingUtilities
 
 object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
 
@@ -60,6 +62,18 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
         writer.close()
     }
 
+    private def createAndShowGui(ast: AST, fm: FeatureModel, opts: FrontendOptions) = {
+        val morpheus = new Morpheus(ast, fm, opts.getFile)
+        SwingUtilities.invokeLater(new Runnable {
+            def run() {
+                val editor = new Editor(morpheus)
+                editor.loadFileInEditor(opts.getFile)
+                editor.pack
+                editor.setVisible(true)
+            }
+        })
+    }
+
     private def processFile(opt: FrontendOptions): (AST, FeatureModel) = {
         val errorXML = new ErrorXML(opt.getErrorXMLFile)
         opt.setRenderParserError(errorXML.renderParserError)
@@ -101,6 +115,8 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
             if (opt.prettyPrint) prettyPrint(ast, opt)
 
             if (opt.canBuild) canBuildAndTest(ast, opt)
+
+            if (opt.showGui) createAndShowGui(ast, fm, opt)
         }
 
 
