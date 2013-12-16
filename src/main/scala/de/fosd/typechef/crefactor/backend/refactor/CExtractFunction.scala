@@ -411,7 +411,14 @@ object CExtractFunction extends ASTSelection with CRefactor {
                     case _ => logger.debug("Specs " + spec)
                 }
             })
-            val pD = Opt(feature, ParameterDeclarationD(decl.declSpecs, declDeclPointerMap.get(decl), List()))
+
+            // remove extern specifier in function argument.
+            val filteredDeclSpecs = decl.declSpecs.filter(_.entry match {
+                case e: ExternSpecifier => false
+                case _ => true
+            })
+
+            val pD = Opt(feature, ParameterDeclarationD(filteredDeclSpecs, declDeclPointerMap.get(decl), List()))
             val expr = Opt(feature, PointerCreationExpr(Id(declDeclPointerMap.get(decl).getName)))
             val id = declIdMap.get(decl)
             Some((pD, expr, id))
