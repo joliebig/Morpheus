@@ -49,7 +49,7 @@ object Extract extends BusyBoxRefactor {
             // Test all available combinations for extraction
             def getAvailableInnerStatments(opts: List[Opt[Statement]], i: Int, length: Int): List[List[AST]] = {
                 (i to length).par.foldLeft(List[List[AST]]())((l, x) => {
-                    val selectedElements = constantSlice(opts, x, length).map(_.entry)
+                    val selectedElements = constantSlice(opts, i, x).map(_.entry)
                     if (CExtractFunction.isAvailable(morpheus, selectedElements)) selectedElements :: l
                     else l
                 })
