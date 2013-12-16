@@ -2,13 +2,14 @@ package de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.refactor
 
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.featureexpr.FeatureExpr
-import de.fosd.typechef.parser.c.{AST, CompoundStatement}
+import de.fosd.typechef.parser.c.{Statement, AST, CompoundStatement}
 import de.fosd.typechef.crefactor.backend.refactor.CExtractFunction
 import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.{PrepareASTforVerification, BusyBoxRefactor}
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking.CLinking
 import de.fosd.typechef.crefactor.evaluation.StatsJar
 import de.fosd.typechef.crefactor.evaluation.Stats._
+import de.fosd.typechef.conditional.Opt
 
 
 object Extract extends BusyBoxRefactor {
@@ -19,10 +20,12 @@ object Extract extends BusyBoxRefactor {
 
     private val NAME = "refactored_func"
 
+
     def refactor(morpheus: Morpheus, linkInterface: CLinking): (Boolean, List[FeatureExpr]) = {
         def refactor(morpheus: Morpheus, linkInterface: CLinking, depth: Int): (Boolean, List[FeatureExpr]) = {
             val compStmts = filterAllASTElems[CompoundStatement](morpheus.getAST)
 
+            // Real random approach
             def getRandomStatements(depth: Int = 0): List[AST] = {
                 val compStmt = compStmts.apply(util.Random.nextInt(compStmts.length))
                 // Ignore empty compound statements
@@ -41,8 +44,38 @@ object Extract extends BusyBoxRefactor {
                 if ((statements.isEmpty /*|| !statements.par.exists(isVariable(_)) */) && (depth < MAX_REC_DEPTH)) getRandomVariableStatements(depth + 1)
                 else statements
             }
+            // End real random approach
 
-            val statements = getRandomVariableStatements()
+            // Test all available combinations for extraction
+            def getAvailableInnerStatments(opts: List[Opt[Statement]], i: Int, length: Int): List[List[AST]] = {
+                (i to length).par.foldLeft(List[List[AST]]())((l, x) => {
+                    val selectedElements = constantSlice(opts, x, length).map(_.entry)
+                    if (CExtractFunction.isAvailable(morpheus, selectedElements)) selectedElements :: l
+                    else l
+                })
+            }
+
+            def getAvailableExtractStatements(compStmt: CompoundStatement): List[List[AST]] = {
+                val length = compStmt.innerStatements.length - 1
+                if (compStmt.innerStatements.isEmpty) List()
+                else (0 to length).foldLeft(List[List[AST]]())((l, i) => l ::: getAvailableInnerStatments(compStmt.innerStatements, i, length))
+            }
+
+            def getExtractStatements: List[AST] = {
+                val startTime = new TimeMeasurement
+                val availableStmtsToExtract = compStmts.par.flatMap(compSmt => getAvailableExtractStatements(compSmt)).filterNot(x => x.isEmpty)
+                println("+++ Time to determine statements: " + startTime.getTime + " +++")
+                // Pick a random available element from the resulting array
+                if (!availableStmtsToExtract.isEmpty) availableStmtsToExtract.apply(util.Random.nextInt(availableStmtsToExtract.length))
+                else List()
+            }
+            // End all combinations
+
+            val statements = {
+                val varStats = getRandomVariableStatements()
+                if (!varStats.isEmpty) varStats
+                else getExtractStatements
+            }
 
             if (statements.isEmpty) {
                 println("no valid statement found")
@@ -71,6 +104,7 @@ object Extract extends BusyBoxRefactor {
 
             }
         }
+
         refactor(morpheus, linkInterface, 0)
     }
 }
