@@ -18,8 +18,8 @@ import de.fosd.typechef.parser.c.CTypeContext
 import de.fosd.typechef.typesystem.{CDeclUse, CTypeCache, CTypeSystemFrontend}
 import de.fosd.typechef.crefactor.frontend.Editor
 import javax.swing.SwingUtilities
-import de.fosd.typechef.crefactor.evaluation.casestudies.sqlite.SQLiteRefactor
-import de.fosd.typechef.crefactor.evaluation.casestudies.busybox_1_18_5.BusyBoxRefactor
+import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.SQLiteRefactor
+import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.BusyBoxRefactor
 
 object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
 
