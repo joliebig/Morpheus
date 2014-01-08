@@ -58,9 +58,19 @@ object CInlineFunction extends ASTSelection with CRefactor {
 
     def isAvailable(morpheus: Morpheus, selection: Selection): Boolean = !getAvailableIdentifiers(morpheus, selection).isEmpty
 
+    def isAvailable(morpheus: Morpheus, call: Id): Boolean = {
+        if (!isFunctionCall(morpheus, call)) return false
+        // Check for def
+        val defs = divideCallDeclDef(call, morpheus)._3
+        if (defs.isEmpty) return false
+        // Bad return or recursive
+        if (defs.exists(func => hasBadReturns(func.entry, morpheus) || isRecursive(func.entry))) return false
+        true
+    }
+
     def isFunctionCall(morpheus: Morpheus, id: Id): Boolean = {
         parentAST(id, morpheus.getASTEnv) match {
-            case p: PostfixExpr => true
+            case PostfixExpr(`id`, FunctionCall(_)) => true
             case _ => false
         }
     }
@@ -73,7 +83,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
      * @param rename indicates if variables should be renamed
      * @return the refactored ast
      */
-    def inline(morpheus: Morpheus, id: Id, rename: Boolean, once: Boolean = false): AST = {
+    def inline(morpheus: Morpheus, id: Id, rename: Boolean, evalMode: Boolean, once: Boolean = false): AST = {
         val divided = divideCallDeclDef(id, morpheus)
         val calls = divided._1
         val decl = divided._2
@@ -87,12 +97,18 @@ object CInlineFunction extends ASTSelection with CRefactor {
         refactoredAST = callExpr.foldLeft(refactoredAST)((workingAST, expr) => inlineFuncCallExpr(workingAST, new Morpheus(workingAST), expr, defs, rename))
 
         // Remove inlined function stmt's declaration and definitions
-        refactoredAST = decl.foldLeft(refactoredAST)((workingAST, x) => removeFromAST(workingAST, x))
-        refactoredAST = defs.foldLeft(refactoredAST)((workingAST, x) => removeFromAST(workingAST, x))
+        if (!evalMode) refactoredAST = removeFuncDeclDefsFromAST(refactoredAST, decl, defs)
         refactoredAST
     }
 
-    private def divideCallDeclDef(callId: Id, morpheus: Morpheus): (List[Opt[Statement]], List[Opt[AST]], List[Opt[FunctionDef]], List[Opt[AST]]) = {
+
+    private def removeFuncDeclDefsFromAST(ast: AST, decl: List[Opt[AST]], defs: List[Opt[FunctionDef]]): AST = {
+        val astWoDecl = decl.foldLeft(ast)((workingAST, x) => removeFromAST(workingAST, x))
+        val astWoDeclDef = defs.foldLeft(astWoDecl)((workingAST, x) => removeFromAST(workingAST, x))
+        astWoDeclDef
+    }
+
+    def divideCallDeclDef(callId: Id, morpheus: Morpheus): (List[Opt[Statement]], List[Opt[AST]], List[Opt[FunctionDef]], List[Opt[AST]]) = {
         var callStmt = List[Opt[Statement]]()
         var decl = List[Opt[AST]]()
         var defs = List[Opt[FunctionDef]]()
@@ -171,9 +187,9 @@ object CInlineFunction extends ASTSelection with CRefactor {
         def getStatementOpts(opt: Opt[_], statement: Product, statements: List[Opt[_]] = List[Opt[_]]()): List[Opt[_]] = {
             var result = statements
             val filtered = filterAllOptElems(statement)
-            if (filtered.length > 1) filtered.foreach((stmt =>
+            if (filtered.length > 1) filtered.foreach(stmt =>
                 if (filterAllOptElems(stmt).exists(x =>
-                    opt.eq(x))) result :::= stmt :: getStatementOpts(opt, stmt.entry.asInstanceOf[Product], result)))
+                    opt.eq(x))) result :::= stmt :: getStatementOpts(opt, stmt.entry.asInstanceOf[Product], result))
             result
         }
 
@@ -507,7 +523,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
 
     }
 
-    private def isValidFuncDef(fDef: Opt[FunctionDef], call: Opt[_], ccStatement: CompoundStatement, morpheus: Morpheus): Boolean = {
+    def isValidFuncDef(fDef: Opt[FunctionDef], call: Opt[_], ccStatement: CompoundStatement, morpheus: Morpheus): Boolean = {
         if (!(fDef.feature.equivalentTo(FeatureExprFactory.True) || fDef.feature.implies(call.feature).isTautology())) return false
         // stmt's feature does not imply funcDef's feature -> no need to inline this def at this position
         assert(!isRecursive(fDef.entry), "Can not inline - method is recursive.")

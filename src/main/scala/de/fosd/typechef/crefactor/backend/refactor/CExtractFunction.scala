@@ -463,6 +463,7 @@ object CExtractFunction extends ASTSelection with CRefactor {
             case _ => None
         }).toList
         // Make Pointer
+        // TODO Filter Enums
         val idsAsPointer = variables.foldLeft(statements)((stmts, id) => replaceInAST(stmts, id, PointerDerefExpr(id)))
         CompoundStatement(idsAsPointer)
     }

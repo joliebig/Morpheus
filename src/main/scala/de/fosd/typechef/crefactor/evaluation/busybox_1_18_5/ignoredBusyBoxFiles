@@ -1,4 +1,0 @@
-BBUnzip -> Test won't start again. (and all referenced files)
-Decompress_Unzip: Double Free -> not caused by packed
-Tar.c -> linking error because of applet.
-unzip.c packed order must be changed.

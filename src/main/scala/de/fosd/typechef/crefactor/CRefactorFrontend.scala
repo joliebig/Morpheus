@@ -7,12 +7,11 @@ import de.fosd.typechef.featureexpr.FeatureModel
 import de.fosd.typechef.options.{RefactorType, FrontendOptions, OptionException, FrontendOptionsWithConfigFiles}
 import de.fosd.typechef.{lexer, ErrorXML}
 import java.io._
-import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.refactor.{Inline, Extract, Rename}
 import de.fosd.typechef.parser.TokenReader
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.typesystem.linker.InterfaceWriter
 import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking.CLinking
-import de.fosd.typechef.crefactor.evaluation.StatsJar
+import de.fosd.typechef.crefactor.evaluation.{Refactor, StatsJar}
 import de.fosd.typechef.crefactor.evaluation.setup.{Building, BuildCondition}
 import java.util.zip.{GZIPOutputStream, GZIPInputStream}
 import de.fosd.typechef.parser.c.CTypeContext
@@ -133,10 +132,17 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
         println("+++ Can build " + new File(opt.getFile).getName + " : " + canBuild + " +++")
     }
     private def refactorEval(opt: FrontendOptions, ast: AST, fm: FeatureModel, linkInf: CLinking) {
+        val caseStudy: Refactor = {
+            if (opt.getRefStudy.equalsIgnoreCase("busybox")) de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.BusyBoxRefactor
+            // else if (opt.getRefStudy.equalsIgnoreCase("openssl")) de.fosd.typechef.crefactor.evaluation.openSSL.setup.Builder
+            // else if (opt.getRefStudy.equalsIgnoreCase("sqlite")) de.fosd.typechef.crefactor.evaluation.sqlite.setup.Builder
+            else null
+        }
+
         opt.getRefactorType match {
-            case RefactorType.RENAME => Rename.evaluate(ast, fm, opt.getFile, linkInf)
-            case RefactorType.EXTRACT => Extract.evaluate(ast, fm, opt.getFile, linkInf)
-            case RefactorType.INLINE => Inline.evaluate(ast, fm, opt.getFile, linkInf)
+            case RefactorType.RENAME => caseStudy.rename(ast, fm, opt.getFile, linkInf)
+            case RefactorType.EXTRACT => caseStudy.extract(ast, fm, opt.getFile, linkInf)
+            case RefactorType.INLINE => caseStudy.inline(ast, fm, opt.getFile, linkInf)
             case RefactorType.NONE => println("No refactor type defined")
         }
     }
