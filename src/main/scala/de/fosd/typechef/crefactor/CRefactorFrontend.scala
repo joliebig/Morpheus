@@ -18,6 +18,8 @@ import de.fosd.typechef.parser.c.CTypeContext
 import de.fosd.typechef.typesystem.{CDeclUse, CTypeCache, CTypeSystemFrontend}
 import de.fosd.typechef.crefactor.frontend.Editor
 import javax.swing.SwingUtilities
+import de.fosd.typechef.crefactor.evaluation.casestudies.sqlite.SQLiteRefactor
+import de.fosd.typechef.crefactor.evaluation.casestudies.busybox_1_18_5.BusyBoxRefactor
 
 object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
 
@@ -133,9 +135,9 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
     }
     private def refactorEval(opt: FrontendOptions, ast: AST, fm: FeatureModel, linkInf: CLinking) {
         val caseStudy: Refactor = {
-            if (opt.getRefStudy.equalsIgnoreCase("busybox")) de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.BusyBoxRefactor
+            if (opt.getRefStudy.equalsIgnoreCase("busybox")) BusyBoxRefactor
             // else if (opt.getRefStudy.equalsIgnoreCase("openssl")) de.fosd.typechef.crefactor.evaluation.openSSL.setup.Builder
-            // else if (opt.getRefStudy.equalsIgnoreCase("sqlite")) de.fosd.typechef.crefactor.evaluation.sqlite.setup.Builder
+            else if (opt.getRefStudy.equalsIgnoreCase("sqlite")) SQLiteRefactor
             else null
         }
 

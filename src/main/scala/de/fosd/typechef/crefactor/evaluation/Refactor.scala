@@ -7,7 +7,7 @@ import de.fosd.typechef.crefactor.Morpheus
 
 trait Refactoring {
 
-    def refactor(morpheus: Morpheus, linkInterface: CLinking): (Boolean, List[FeatureExpr])
+    def refactor(morpheus: Morpheus, linkInterface: CLinking): (Boolean, AST, List[FeatureExpr], List[(String, AST)])
 
 }
 
