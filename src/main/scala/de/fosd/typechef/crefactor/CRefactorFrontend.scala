@@ -67,11 +67,11 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
         // TODO Implement studies for refactorings
 
         var ast: AST = null
-        var linkInf: CLinking = null
 
         if (opt.writeBuildCondition) writeBuildCondition(opt.getFile)
 
-        if (opt.refLink) linkInf = new CLinking(opt.getLinkingInterfaceFile)
+        val linkInf = if (opt.refLink) new CLinking(opt.getLinkingInterfaceFile)
+        else null
 
         if (opt.reuseAST && opt.parse && new File(opt.getSerializedASTFilename).exists()) {
             ast = loadSerializedAST(opt.getSerializedASTFilename)

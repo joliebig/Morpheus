@@ -5,13 +5,13 @@ import de.fosd.typechef.crefactor.{CRefactorFrontend, Morpheus}
 import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking.CLinking
 import de.fosd.typechef.parser.c.AST
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
-import de.fosd.typechef.error.Position
 import de.fosd.typechef.crefactor.backend.refactor.CRenameIdentifier
 import java.io.File
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.parser.c.Id
 import scala.collection.mutable
+import de.fosd.typechef.error.Position
 
 
 trait DefaultRename extends Refactoring with Evaluation {
@@ -49,16 +49,9 @@ trait DefaultRename extends Refactoring with Evaluation {
         val id = toRename._1
         StatsJar.addStat(morpheus.getFile, RenamedId, id.name)
 
-        val linked = linkInterface.getPositions(id.name)
-        val affectedFiles = linked.foldLeft(new mutable.HashMap[String, Position])((map, pos) => map += (pos.getFile -> pos))
-        val refactorChain = affectedFiles.foldLeft(List[(Morpheus, Position)]())((list, entry) => {
-            if (blackListFiles.exists(getFileName(entry._1).equalsIgnoreCase)) {
-                println("+++ File is blacklisted and cannot be build +++")
-                return (false, null, List(), List())
-            }
-            val ast = CRefactorFrontend.parse(entry._1)
-            list :+(new Morpheus(ast._1, ast._2, entry._1), entry._2)
-        })
+        val refactorChain = if (linkInterface != null) refactorLinkedFiles(linkInterface, id)
+        else List()
+
 
         val features = toRename._3
         StatsJar.addStat(morpheus.getFile, AffectedFeatures, features)
@@ -86,4 +79,18 @@ trait DefaultRename extends Refactoring with Evaluation {
         }
     }
 
+
+    def refactorLinkedFiles(linkInterface: CLinking, id: Id): List[(Morpheus, Position)] = {
+        val linked = linkInterface.getPositions(id.name)
+        val affectedFiles = linked.foldLeft(new mutable.HashMap[String, Position])((map, pos) => map += (pos.getFile -> pos))
+        val refactorChain = affectedFiles.foldLeft(List[(Morpheus, Position)]())((list, entry) => {
+            if (blackListFiles.exists(getFileName(entry._1).equalsIgnoreCase)) {
+                println("+++ File is blacklisted and cannot be build +++")
+                return null
+            }
+            val ast = CRefactorFrontend.parse(entry._1)
+            list :+(new Morpheus(ast._1, ast._2, entry._1), entry._2)
+        })
+        refactorChain
+    }
 }

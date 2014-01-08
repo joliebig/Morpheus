@@ -7,17 +7,17 @@ import de.fosd.typechef.crefactor.Morpheus
 
 trait Refactoring {
 
-    def refactor(morpheus: Morpheus, linkInterface: CLinking): (Boolean, AST, List[FeatureExpr], List[(String, AST)])
+    def refactor(morpheus: Morpheus, linkInterface: CLinking = null): (Boolean, AST, List[FeatureExpr], List[(String, AST)])
 
 }
 
 trait Refactor {
 
-    def rename(ast: AST, fm: FeatureModel, file: String, linkInterface: CLinking)
+    def rename(ast: AST, fm: FeatureModel, file: String, linkInterface: CLinking = null)
 
-    def extract(ast: AST, fm: FeatureModel, file: String, linkInterface: CLinking)
+    def extract(ast: AST, fm: FeatureModel, file: String, linkInterface: CLinking = null)
 
-    def inline(ast: AST, fm: FeatureModel, file: String, linkInterface: CLinking)
+    def inline(ast: AST, fm: FeatureModel, file: String, linkInterface: CLinking = null)
 }
 
 
