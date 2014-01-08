@@ -1,12 +1,11 @@
 package de.fosd.typechef.crefactor.evaluation.busybox_1_18_5
 
 import java.io._
-import de.fosd.typechef.parser.c.{ConditionalNavigation, ASTNavigation}
 import de.fosd.typechef.crefactor.evaluation.Evaluation
 import scala.io.Source
 
 
-trait BusyBoxEvaluation extends Evaluation with ASTNavigation with ConditionalNavigation {
+trait BusyBoxEvaluation extends Evaluation {
 
     val evalName = "busybox-1.18.5"
     val caseStudyPath = "../cRefactor-BusyBoxEvaluation/"

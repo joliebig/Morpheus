@@ -1,19 +1,20 @@
 package de.fosd.typechef.crefactor.evaluation
 
 import java.io._
-import de.fosd.typechef.parser.c.{PrettyPrinter, AST}
+import de.fosd.typechef.parser.c._
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr, SingleFeatureExpr, FeatureModel}
 import java.util.regex.Pattern
 import scala.io.Source
 import de.fosd.typechef.crefactor.Logging
 import java.util.{TimerTask, Timer, IdentityHashMap}
-import de.fosd.typechef.parser.c.GnuAsmExpr
-import de.fosd.typechef.parser.c.Id
 import scala.collection.immutable.HashMap
-import de.fosd.typechef.conditional.{Opt, Choice}
 import de.fosd.typechef.crefactor.evaluation.setup.BuildCondition
+import de.fosd.typechef.parser.c.GnuAsmExpr
+import de.fosd.typechef.conditional.Choice
+import de.fosd.typechef.parser.c.Id
+import de.fosd.typechef.conditional.Opt
 
-trait Evaluation extends Logging with BuildCondition {
+trait Evaluation extends Logging with BuildCondition with ASTNavigation with ConditionalNavigation {
 
     val evalName: String
     val caseStudyPath: String
