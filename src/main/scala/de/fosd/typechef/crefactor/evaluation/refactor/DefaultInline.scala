@@ -49,7 +49,7 @@ trait DefaultInline extends Refactoring with Evaluation {
 
             val features = (callFeatures ::: declFeatures ::: defFeatures).distinct
 
-            StatsJar.addStat(morpheus.getFile, AffectedFeatures, features)
+            StatsJar.addStat(morpheus.getFile, Amount, callDeclDef._1.size)
             StatsJar.addStat(morpheus.getFile, InlinedFunction, callIdToInline)
 
             println("+++ Affected features: " + features)
