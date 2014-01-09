@@ -1,12 +1,14 @@
 package de.fosd.typechef.crefactor.evaluation.refactor
 
-import de.fosd.typechef.crefactor.evaluation.{Evaluation, Refactoring}
+import de.fosd.typechef.crefactor.evaluation.{StatsJar, Evaluation, Refactoring}
 import de.fosd.typechef.parser.c.{AST, FunctionCall, Id, PostfixExpr}
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking.CLinking
 import de.fosd.typechef.featureexpr.FeatureExpr
 import de.fosd.typechef.crefactor.backend.refactor.CInlineFunction
 import scala.util.Random
+import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
+import de.fosd.typechef.crefactor.evaluation.Stats._
 
 trait DefaultInline extends Refactoring with Evaluation {
 
@@ -36,7 +38,9 @@ trait DefaultInline extends Refactoring with Evaluation {
         println("+++ Trying to inline call: " + callIdToInline)
 
         try {
+            val refTime = new TimeMeasurement
             val refAST = CInlineFunction.inline(morpheus, callIdToInline, true, true)
+            StatsJar.addStat(morpheus.getFile, RefactorTime, refTime.getTime)
             val callDeclDef = CInlineFunction.divideCallDeclDef(callIdToInline, morpheus)
 
             val callFeatures = callDeclDef._1.map(_.feature)
@@ -44,6 +48,9 @@ trait DefaultInline extends Refactoring with Evaluation {
             val defFeatures = callDeclDef._3.flatMap(filterAllFeatureExpr(_))
 
             val features = (callFeatures ::: declFeatures ::: defFeatures).distinct
+
+            StatsJar.addStat(morpheus.getFile, AffectedFeatures, features)
+            StatsJar.addStat(morpheus.getFile, InlinedFunction, callIdToInline)
 
             println("+++ Affected features: " + features)
 
