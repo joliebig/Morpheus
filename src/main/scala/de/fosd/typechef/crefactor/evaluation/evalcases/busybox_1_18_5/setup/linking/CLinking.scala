@@ -6,21 +6,29 @@ import java.util
 import de.fosd.typechef.error.Position
 import scala.collection.parallel.mutable
 
-class CLinking(linkFile: String) {
+class CLinking(linkPath: String) {
 
     val reader = new InterfaceWriter {}
-    val interface = reader.loadInterfaceFromXML(xml.XML.loadFile(new File(linkFile)))
+    val linkFile = new File(linkPath)
+    val interface = {
+        if (linkFile.exists()) reader.loadInterfaceFromXML(xml.XML.loadFile(linkFile))
+        else null
+    }
     var blackList = new mutable.ParHashSet[String]()
 
-    // TODO Optimize Data Structure -> Scala Mutable Maps
     val idLinkExpMap: util.IdentityHashMap[String, List[CSignature]] = new util.IdentityHashMap()
     val idLinkPosMap: util.IdentityHashMap[String, List[Position]] = new util.IdentityHashMap()
 
-    interface.exports.foreach(addToMaps)
-    interface.imports.foreach(expr =>
-        if (isListed(expr.name)) addToMaps(expr)
-        else blackList += expr.name
-    )
+    if (interface != null) {
+        interface.exports.foreach(addToMaps)
+        interface.imports.foreach(expr =>
+            if (isListed(expr.name)) addToMaps(expr)
+            else blackList += expr.name
+        )
+    }
+
+
+    println("+++ Warning: No interface used! +++")
 
     def addToMaps(exp: CSignature): List[Position] = {
         addToExpMap(exp.name, exp)

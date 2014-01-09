@@ -28,6 +28,8 @@ trait DefaultRename extends Refactoring with Evaluation {
             val linkedIds = if (FORCE_LINKING) allIds.par.filter(id => linkInterface.isListed(id.name)) else allIds
             val ids = if (linkedIds.isEmpty) allIds else linkedIds
 
+            println("+++ IDs found: " + ids.size)
+
             val writeAbleIds = ids.filter(id =>
                 CRenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).par.forall(i =>
                     isValidId(i) && i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) && new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
