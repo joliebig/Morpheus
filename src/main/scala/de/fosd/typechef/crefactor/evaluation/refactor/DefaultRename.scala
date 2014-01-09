@@ -32,8 +32,8 @@ trait DefaultRename extends Refactoring with Evaluation {
 
             println("+++ IDs found: " + ids.size)
 
-            val writeAbleIds = ids.filter(id =>
-                CRenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).par.forall(i =>
+            val writeAbleIds = ids.par.filter(id =>
+                CRenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).forall(i =>
                     isValidId(i) && i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) /* && new File(i.getFile.get.replaceFirst("file ", "")).canWrite */))
 
             println("+++ Writeable IDs found: " + writeAbleIds.size)
