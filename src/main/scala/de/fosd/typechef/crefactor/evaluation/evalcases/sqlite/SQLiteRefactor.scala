@@ -27,14 +27,14 @@ object SQLiteRefactor extends SQLiteEvaluation with Refactor {
             try {
                 val morpheus = new Morpheus(ast, fm, file)
                 // reset test environment
-                runScript("./reset.sh", sourcePath)
+                runScript("./clean.sh", sourcePath)
                 val result = r.refactor(morpheus)
                 if (result._1) {
                     write(result._2, morpheus.getFile)
                     val time = new TimeMeasurement
                     StatsJar.addStat(file, AffectedFeatures, result._2)
                     SQLiteVerification.verify(morpheus.getFile, morpheus.getFeatureModel, "first")
-                    runScript("./reset.sh", sourcePath)
+                    runScript("./clean.sh", sourcePath)
                     StatsJar.addStat(file, TestingTime, time.getTime)
                 } else writeError("Could not refactor file.", path)
                 StatsJar.write(path + ".stats")
