@@ -57,12 +57,14 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
         val errorXML = new ErrorXML(opt.getErrorXMLFile)
         opt.setRenderParserError(errorXML.renderParserError)
 
-        val fm = if (opt.getUseDefaultPC) opt.getLexerFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
-        else opt.getLexerFeatureModel.and(opt.getLocalFeatureModel)
+        val fm = {
+            if (opt.getUseDefaultPC) opt.getLexerFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
+            else opt.getLexerFeatureModel.and(opt.getLocalFeatureModel)
+        }
 
         opt.setFeatureModel(fm) //otherwise the lexer does not get the updated feature model with file presence conditions
 
-        if (!opt.getFilePresenceCondition.isSatisfiable(fm)) {
+        if (opt.getUseDefaultPC && !opt.getFilePresenceCondition.isSatisfiable(fm)) {
             println("file has contradictory presence condition. existing.") //otherwise this can lead to strange parser errors, because True is satisfiable, but anything else isn't
             return (null, null)
         }
