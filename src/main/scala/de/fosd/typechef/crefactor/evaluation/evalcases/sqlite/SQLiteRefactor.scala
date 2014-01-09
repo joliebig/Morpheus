@@ -21,6 +21,8 @@ object SQLiteRefactor extends SQLiteEvaluation with Refactor {
         println("+++ File to refactor: " + getFileName(file) + " +++")
         val resultDir = getResultDir(file)
         val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(file)
+        val resDir = new File(path)
+        resDir.mkdirs()
         if (ast == null) println("+++ AST is null! +++")
         else if (blackListFiles.exists(getFileName(file).equalsIgnoreCase)) println("+++ File is blacklisted and cannot be build +++")
         else {
@@ -41,7 +43,7 @@ object SQLiteRefactor extends SQLiteEvaluation with Refactor {
             } catch {
                 case e: Exception => {
                     e.printStackTrace
-                    writeException(e.getCause.toString + "\n" + e.getMessage + "\n" + e.getStackTrace.mkString("\n"), new File(path).getCanonicalPath)
+                    writeException(e.getCause.toString + "\n" + e.getMessage + "\n" + e.getStackTrace.mkString("\n"), resDir.getCanonicalPath)
                 }
             }
         }
