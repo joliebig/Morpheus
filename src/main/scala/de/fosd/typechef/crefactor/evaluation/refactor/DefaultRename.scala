@@ -5,7 +5,6 @@ import de.fosd.typechef.crefactor.{CRefactorFrontend, Morpheus}
 import de.fosd.typechef.parser.c.AST
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 import de.fosd.typechef.crefactor.backend.refactor.CRenameIdentifier
-import java.io.File
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.parser.c.Id
@@ -35,7 +34,7 @@ trait DefaultRename extends Refactoring with Evaluation {
 
             val writeAbleIds = ids.filter(id =>
                 CRenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).par.forall(i =>
-                    isValidId(i) && i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) && new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
+                    isValidId(i) && i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) /* && new File(i.getFile.get.replaceFirst("file ", "")).canWrite */))
 
             println("+++ Writeable IDs found: " + writeAbleIds.size)
 
