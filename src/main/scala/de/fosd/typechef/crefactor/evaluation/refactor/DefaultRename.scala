@@ -37,14 +37,20 @@ trait DefaultRename extends Refactoring with Evaluation {
                 CRenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).par.forall(i =>
                     isValidId(i) && i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) && new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
 
+            println("+++ Writeable IDs found: " + writeAbleIds.size)
+
             val variableIds = writeAbleIds.par.filter(id => {
                 val associatedIds = CRenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap)
                 val features = associatedIds.map(morpheus.getASTEnv.featureExpr)
                 !(features.distinct.length == 1 && features.distinct.contains(FeatureExprFactory.True))
             })
 
+            println("+++ Varialbe IDs found: " + variableIds.size)
+
             val id = if (!variableIds.isEmpty && FORCE_VARIABILITY) variableIds.apply((math.random * variableIds.size).toInt) else writeAbleIds.apply((math.random * writeAbleIds.size).toInt)
+            println("+++ Found Id: " + id)
             val associatedIds = CRenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap)
+            println("+++ Associated Ids: " + associatedIds.size)
             (id, associatedIds.length, associatedIds.map(morpheus.getASTEnv.featureExpr).distinct)
         }
 
