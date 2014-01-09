@@ -74,7 +74,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
         if (opt.writeBuildCondition) writeBuildCondition(opt.getFile)
 
         val linkInf = if (opt.refLink) new CLinking(opt.getLinkingInterfaceFile)
-        else new CLinking(null) // TODO Remove this hack
+        else new CLinking(opt.getFile + ".interface") // TODO Remove this hack
 
         if (opt.reuseAST && opt.parse && new File(opt.getSerializedASTFilename).exists()) {
             ast = loadSerializedAST(opt.getSerializedASTFilename)
