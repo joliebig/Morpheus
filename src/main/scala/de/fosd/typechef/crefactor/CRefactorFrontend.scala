@@ -56,7 +56,9 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
         val errorXML = new ErrorXML(opt.getErrorXMLFile)
         opt.setRenderParserError(errorXML.renderParserError)
 
-        val fm = opt.getLexerFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
+        val fm = if (opt.getUseDefaultPC) opt.getLexerFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
+        else opt.getLexerFeatureModel.and(opt.getLocalFeatureModel)
+
         opt.setFeatureModel(fm) //otherwise the lexer does not get the updated feature model with file presence conditions
 
         if (!opt.getFilePresenceCondition.isSatisfiable(fm)) {
