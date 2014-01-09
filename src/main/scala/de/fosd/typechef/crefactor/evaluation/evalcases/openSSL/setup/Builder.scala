@@ -1,9 +1,9 @@
-package de.fosd.typechef.crefactor.evaluation.openSSL.setup
+package de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.setup
 
-import de.fosd.typechef.crefactor.evaluation.openSSL.OpenSSLEvaluation
 import de.fosd.typechef.crefactor.evaluation.setup.Building
 import de.fosd.typechef.parser.c.AST
 import java.io.File
+import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.OpenSSLEvaluation
 
 
 object Builder extends OpenSSLEvaluation with Building {

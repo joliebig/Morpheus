@@ -1,4 +1,4 @@
-package de.fosd.typechef.crefactor.evaluation.sqlite.setup
+package de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.setup
 
 import de.fosd.typechef.crefactor.evaluation.setup.Building
 import de.fosd.typechef.parser.c.AST

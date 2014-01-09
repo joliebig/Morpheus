@@ -1,10 +1,9 @@
-package de.fosd.typechef.crefactor.linking
+package de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking
 
-import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.BusyBoxEvaluation
 import java.io.File
 import de.fosd.typechef.typesystem.linker.{EmptyInterface, CInterface, InterfaceWriter, SystemLinker}
 import de.fosd.typechef.featureexpr.{FeatureExprParser, FeatureExpr, FeatureExprFactory}
-import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking.CLinking
+import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.BusyBoxEvaluation
 
 /**
  * Singleton instance for generating linking informations of a whole given project. This is one is for BusyBox.

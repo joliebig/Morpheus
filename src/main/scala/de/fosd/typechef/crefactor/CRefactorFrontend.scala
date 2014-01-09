@@ -10,7 +10,6 @@ import java.io._
 import de.fosd.typechef.parser.TokenReader
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.typesystem.linker.InterfaceWriter
-import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking.CLinking
 import de.fosd.typechef.crefactor.evaluation.{Refactor, StatsJar}
 import de.fosd.typechef.crefactor.evaluation.setup.{Building, BuildCondition}
 import java.util.zip.{GZIPOutputStream, GZIPInputStream}
@@ -21,6 +20,7 @@ import javax.swing.SwingUtilities
 import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.SQLiteRefactor
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.BusyBoxRefactor
 import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.OpenSSLRefactor
+import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking.CLinking
 
 object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
 
@@ -125,9 +125,9 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
     }
     private def testBuildingAndTesting(ast: AST, opt: FrontendOptions) {
         val builder: Building = {
-            if (opt.getRefStudy.equalsIgnoreCase("busybox")) de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.setup.building.Builder
-            else if (opt.getRefStudy.equalsIgnoreCase("openssl")) de.fosd.typechef.crefactor.evaluation.openSSL.setup.Builder
-            else if (opt.getRefStudy.equalsIgnoreCase("sqlite")) de.fosd.typechef.crefactor.evaluation.sqlite.setup.Builder
+            if (opt.getRefStudy.equalsIgnoreCase("busybox")) de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.building.Builder
+            else if (opt.getRefStudy.equalsIgnoreCase("openssl")) de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.setup.Builder
+            else if (opt.getRefStudy.equalsIgnoreCase("sqlite")) de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.setup.Builder
             else null
         }
 

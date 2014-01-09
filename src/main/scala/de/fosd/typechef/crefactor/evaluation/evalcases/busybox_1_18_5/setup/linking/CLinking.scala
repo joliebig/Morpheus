@@ -1,4 +1,4 @@
-package de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking
+package de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking
 
 import java.io.File
 import de.fosd.typechef.typesystem.linker.{CSignature, InterfaceWriter}

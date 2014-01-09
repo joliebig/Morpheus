@@ -4,12 +4,12 @@ import de.fosd.typechef.crefactor.evaluation.sqlite.SQLiteEvaluation
 import de.fosd.typechef.crefactor.evaluation.{StatsJar, Refactoring, Refactor}
 import de.fosd.typechef.parser.c.AST
 import de.fosd.typechef.featureexpr.FeatureModel
-import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking.CLinking
 import java.io.File
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.refactor.{Extract, Inline, Rename}
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.crefactor.evaluation.Stats._
+import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking.CLinking
 
 
 object SQLiteRefactor extends SQLiteEvaluation with Refactor {

@@ -6,4 +6,5 @@ trait Building {
 
     def canBuild(ast: AST, file: String): Boolean
 
+
 }

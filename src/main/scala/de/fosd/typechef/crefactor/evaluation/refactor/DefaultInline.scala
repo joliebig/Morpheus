@@ -3,12 +3,12 @@ package de.fosd.typechef.crefactor.evaluation.refactor
 import de.fosd.typechef.crefactor.evaluation.{StatsJar, Evaluation, Refactoring}
 import de.fosd.typechef.parser.c.{AST, FunctionCall, Id, PostfixExpr}
 import de.fosd.typechef.crefactor.Morpheus
-import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking.CLinking
 import de.fosd.typechef.featureexpr.FeatureExpr
 import de.fosd.typechef.crefactor.backend.refactor.CInlineFunction
 import scala.util.Random
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.crefactor.evaluation.Stats._
+import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking.CLinking
 
 trait DefaultInline extends Refactoring with Evaluation {
 

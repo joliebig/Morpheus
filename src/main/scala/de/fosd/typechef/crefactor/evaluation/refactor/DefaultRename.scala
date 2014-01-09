@@ -2,7 +2,6 @@ package de.fosd.typechef.crefactor.evaluation.refactor
 
 import de.fosd.typechef.crefactor.evaluation.{Evaluation, StatsJar, Refactoring}
 import de.fosd.typechef.crefactor.{CRefactorFrontend, Morpheus}
-import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking.CLinking
 import de.fosd.typechef.parser.c.AST
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 import de.fosd.typechef.crefactor.backend.refactor.CRenameIdentifier
@@ -12,6 +11,7 @@ import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.parser.c.Id
 import scala.collection.mutable
 import de.fosd.typechef.error.Position
+import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking.CLinking
 
 
 trait DefaultRename extends Refactoring with Evaluation {

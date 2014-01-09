@@ -5,11 +5,10 @@ import de.fosd.typechef.parser.c.AST
 import de.fosd.typechef.featureexpr.FeatureModel
 import de.fosd.typechef.crefactor.Morpheus
 import java.io.File
-import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.linking.CLinking
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.crefactor.evaluation.Stats._
-import de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.{PrepareASTforVerification, BusyBoxVerification, BusyBoxEvaluation}
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.refactor.{Rename, Inline, Extract}
+import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking.CLinking
 
 
 object BusyBoxRefactor extends BusyBoxEvaluation with Refactor {

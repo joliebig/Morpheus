@@ -22,6 +22,7 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
     val filesToEval: String
     val blackListFiles: List[String]
     val sourcePath: String
+    val testPath: String
     val result: String
 
     val filterFeatures: List[String]
@@ -540,4 +541,30 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
     }
 
     def constantSlice[T](list: List[T], start: Int, end: Int) = list.drop(start).take(end - start)
+
+    def evaluateScriptResult(result: (InputStream, InputStream)): (Boolean, String, String) = {
+        val stream = streamsToString(result)
+        println("+++ STDOUT")
+        println(stream._1)
+        println("+++ STDERR")
+        println(stream._2)
+        (stream._1.contains("Success_Build"), stream._1, stream._2)
+    }
+
+    def streamsToString(streams: (InputStream, InputStream)): (String, String) = {
+        val readerOut = new BufferedReader(new InputStreamReader(streams._1))
+        val readerErr = new BufferedReader(new InputStreamReader(streams._2))
+
+        val out = readIn(readerOut, new StringBuilder)
+        val err = readIn(readerErr, new StringBuilder)
+        (out, err)
+    }
+
+    def readIn(reader: BufferedReader, builder: StringBuilder): String = {
+        while (reader.ready()) {
+            val line = reader.readLine()
+            builder.append(line + "\n")
+        }
+        builder.toString()
+    }
 }

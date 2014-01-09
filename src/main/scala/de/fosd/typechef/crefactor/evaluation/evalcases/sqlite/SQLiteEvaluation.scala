@@ -14,7 +14,7 @@ trait SQLiteEvaluation extends Evaluation with ASTNavigation with ConditionalNav
     val blackListFiles: List[String] = List()
     //Source.fromFile(getClass.getResource("/openssl_blacklist").getFile).getLines().toList
     val sourcePath = completePath + "/" + evalName + "/"
-    val th3Path = completePath + "/TH3/"
+    val testPath = completePath + "/TH3/"
     val result = "/result/"
 
     val filterFeatures = List()
