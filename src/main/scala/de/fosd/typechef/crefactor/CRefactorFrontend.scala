@@ -108,7 +108,10 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
 
     private def writeInterface(ast: AST, fm: FeatureModel, opt: FrontendOptions, errorXML: ErrorXML) {
         val ts = new CTypeSystemFrontend(ast.asInstanceOf[TranslationUnit], fm, opt) with CTypeCache with CDeclUse
-        val interface = ts.getInferredInterface().and(opt.getFilePresenceCondition)
+        val interface = {
+            if (opt.getUseDefaultPC) ts.getInferredInterface().and(opt.getFilePresenceCondition)
+            else ts.getInferredInterface()
+        }
 
         ts.checkAST()
         ts.errors.map(errorXML.renderTypeError)
