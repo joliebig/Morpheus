@@ -22,10 +22,13 @@ trait DefaultRename extends Refactoring with Evaluation {
         def findIdInAST(position: Position, id: Id, ast: AST) = filterASTElems[Id](ast).par.find(aId => (position.equals(aId.getPositionFrom) || position.equals(aId.getPositionTo)) && aId.name.equalsIgnoreCase(id.name))
 
         def getVariableIdToRename: (Id, Int, List[FeatureExpr]) = {
-            def isValidId(id: Id): Boolean = !id.name.contains("_main") && !linkInterface.isBlackListed(id.name)
+            def isValidId(id: Id): Boolean = !id.name.contains("_main") && {
+                if (linkInterface != null) !linkInterface.isBlackListed(id.name)
+                else true
+            }
 
             val allIds = morpheus.getUseDeclMap.values.toArray(Array[List[Id]]()).par.foldLeft(List[Id]())((list, entry) => list ::: entry)
-            val linkedIds = if (FORCE_LINKING) allIds.par.filter(id => linkInterface.isListed(id.name)) else allIds
+            val linkedIds = if (FORCE_LINKING && linkInterface != null) allIds.par.filter(id => linkInterface.isListed(id.name)) else allIds
             val ids = if (linkedIds.isEmpty) allIds else linkedIds
 
             println("+++ IDs found: " + ids.size)
