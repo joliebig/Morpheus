@@ -87,15 +87,15 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
 
             if (ast != null && opt.serializeAST) serializeAST(ast, opt.getSerializedASTFilename)
 
-            if (opt.writeInterface) writeInterface(ast, fm, opt, errorXML)
+            if (ast != null && opt.writeInterface) writeInterface(ast, fm, opt, errorXML)
 
-            if (opt.refEval) refactorEval(opt, ast, fm, linkInf)
+            if (ast != null && opt.refEval) refactorEval(opt, ast, fm, linkInf)
 
-            if (opt.prettyPrint) prettyPrint(ast, opt)
+            if (ast != null && opt.prettyPrint) prettyPrint(ast, opt)
 
-            if (opt.canBuild) testBuildingAndTesting(ast, opt)
+            if (ast != null && opt.canBuild) testBuildingAndTesting(ast, opt)
 
-            if (opt.showGui) createAndShowGui(ast, fm, opt)
+            if (ast != null && opt.showGui) createAndShowGui(ast, fm, opt)
         }
 
 
