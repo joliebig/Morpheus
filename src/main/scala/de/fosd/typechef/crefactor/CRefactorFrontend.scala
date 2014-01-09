@@ -20,6 +20,7 @@ import de.fosd.typechef.crefactor.frontend.Editor
 import javax.swing.SwingUtilities
 import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.SQLiteRefactor
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.BusyBoxRefactor
+import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.OpenSSLRefactor
 
 object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
 
@@ -66,8 +67,6 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
             return (null, null)
         }
 
-        // TODO Implement studies for refactorings
-
         var ast: AST = null
 
         if (opt.writeBuildCondition) writeBuildCondition(opt.getFile)
@@ -94,7 +93,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
 
             if (opt.prettyPrint) prettyPrint(ast, opt)
 
-            if (opt.canBuild) canBuildAndTest(ast, opt)
+            if (opt.canBuild) testBuildingAndTesting(ast, opt)
 
             if (opt.showGui) createAndShowGui(ast, fm, opt)
         }
@@ -109,7 +108,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
         val ts = new CTypeSystemFrontend(ast.asInstanceOf[TranslationUnit], fm, opt) with CTypeCache with CDeclUse
         val interface = ts.getInferredInterface().and(opt.getFilePresenceCondition)
 
-        val typeCheckStatus = ts.checkAST()
+        ts.checkAST()
         ts.errors.map(errorXML.renderTypeError)
 
         ts.writeInterface(interface, new File(opt.getInterfaceFilename))
@@ -124,7 +123,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
 
         ast
     }
-    private def canBuildAndTest(ast: AST, opt: FrontendOptions) {
+    private def testBuildingAndTesting(ast: AST, opt: FrontendOptions) {
         val builder: Building = {
             if (opt.getRefStudy.equalsIgnoreCase("busybox")) de.fosd.typechef.crefactor.evaluation.busybox_1_18_5.setup.building.Builder
             else if (opt.getRefStudy.equalsIgnoreCase("openssl")) de.fosd.typechef.crefactor.evaluation.openSSL.setup.Builder
@@ -138,7 +137,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
     private def refactorEval(opt: FrontendOptions, ast: AST, fm: FeatureModel, linkInf: CLinking) {
         val caseStudy: Refactor = {
             if (opt.getRefStudy.equalsIgnoreCase("busybox")) BusyBoxRefactor
-            // else if (opt.getRefStudy.equalsIgnoreCase("openssl")) de.fosd.typechef.crefactor.evaluation.openSSL.setup.Builder
+            else if (opt.getRefStudy.equalsIgnoreCase("openssl")) OpenSSLRefactor
             else if (opt.getRefStudy.equalsIgnoreCase("sqlite")) SQLiteRefactor
             else null
         }

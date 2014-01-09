@@ -14,6 +14,7 @@ trait SQLiteEvaluation extends Evaluation with ASTNavigation with ConditionalNav
     val blackListFiles: List[String] = List()
     //Source.fromFile(getClass.getResource("/openssl_blacklist").getFile).getLines().toList
     val sourcePath = completePath + "/" + evalName + "/"
+    val th3Path = completePath + "/TH3/"
     val result = "/result/"
 
     val filterFeatures = List()
@@ -24,7 +25,7 @@ trait SQLiteEvaluation extends Evaluation with ASTNavigation with ConditionalNav
     val featureModel: String = completePath + "/fm.txt"
     val featureModel_DIMACS: String = completePath + "/sqlite.dimacs"
 
-    val runTimeout = 300000
+    val runTimeout = 4800000
 
     val FORCE_VARIABILITY = true
     val FORCE_LINKING = false

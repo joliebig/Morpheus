@@ -1,4 +1,4 @@
-package de.fosd.typechef.crefactor.evaluation.openSSL
+package de.fosd.typechef.crefactor.evaluation.evalcases.openSSL
 
 import de.fosd.typechef.crefactor.evaluation.Evaluation
 import de.fosd.typechef.parser.c.{ConditionalNavigation, ASTNavigation}
