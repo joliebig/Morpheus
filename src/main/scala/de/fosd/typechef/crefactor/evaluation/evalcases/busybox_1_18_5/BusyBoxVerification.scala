@@ -10,7 +10,7 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
 
 
     def verify(evalFile: String, fm: FeatureModel, mode: String): Unit = {
-        val resultDir = new File(evalFile.replaceAll("busybox-1.18.5", "result"))
+        val resultDir = new File(evalFile.replaceAll(evalName, "result"))
         val configs = resultDir.listFiles(new FilenameFilter {
             def accept(input: File, file: String): Boolean = file.endsWith(".config")
         })
@@ -60,12 +60,7 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
 
     def build: (Boolean, String, String) = {
         val result = runScript("./buildBusyBox.sh", sourcePath)
-        val stream = streamsToString(result)
-        println("+++ STDOUT")
-        println(stream._1)
-        println("+++ STDERR")
-        println(stream._2)
-        (stream._1.contains("Success_Build"), stream._1, stream._2)
+        evaluateScriptResult(result)
     }
 
 }

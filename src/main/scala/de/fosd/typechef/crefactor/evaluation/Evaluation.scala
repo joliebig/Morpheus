@@ -255,23 +255,6 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
 
     def copyFile(file1: File, file2: File) = new FileOutputStream(file2).getChannel.transferFrom(new FileInputStream(file1).getChannel, 0, Long.MaxValue)
 
-    def streamsToString(streams: (InputStream, InputStream)): (String, String) = {
-        val readerOut = new BufferedReader(new InputStreamReader(streams._1))
-        val readerErr = new BufferedReader(new InputStreamReader(streams._2))
-
-        val out = readIn(readerOut, new StringBuilder)
-        val err = readIn(readerErr, new StringBuilder)
-        (out, err)
-    }
-
-    def readIn(reader: BufferedReader, builder: StringBuilder): String = {
-        while (reader.ready()) {
-            val line = reader.readLine()
-            builder.append(line + "\n")
-        }
-        builder.toString()
-    }
-
     /**
      * Runs a shell script with either default timeout or a custom timeout in ms
      */
