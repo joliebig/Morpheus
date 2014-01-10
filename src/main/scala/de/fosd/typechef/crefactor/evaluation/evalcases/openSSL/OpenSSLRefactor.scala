@@ -18,7 +18,7 @@ object OpenSSLRefactor extends OpenSSLEvaluation with Refactor {
     private def evaluate(ast: AST, fm: FeatureModel, file: String, r: Refactoring): Unit = {
         println("+++ File to refactor: " + getFileName(file) + " +++")
         val resultDir = getResultDir(file)
-        val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(file)
+        val path = resultDir.getCanonicalPath + File.separatorChar
         val resDir = new File(path)
         resDir.mkdirs()
         if (ast == null) println("+++ AST is null! +++")
