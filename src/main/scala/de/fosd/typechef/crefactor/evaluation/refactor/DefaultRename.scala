@@ -27,25 +27,37 @@ trait DefaultRename extends Refactoring with Evaluation {
                 else true
             }
 
+            def isWritable(id: Id): Boolean = {
+                morpheus.getAllConnectedIdentifier(id).forall(i =>
+                    isValidId(i) && (i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) || new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
+            }
+
             val allIds = morpheus.getUseDeclMap.keys
             val linkedIds = if (FORCE_LINKING && linkInterface != null) allIds.par.filter(id => linkInterface.isListed(id.name)) else allIds
             val ids = if (linkedIds.isEmpty) allIds else linkedIds
 
             println("+++ IDs found: " + ids.size)
 
+            /**
             val writeAbleIds = ids.filter(id =>
                 morpheus.getAllConnectedIdentifier(id).forall(i =>
                     isValidId(i) && (i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) || new File(i.getFile.get.replaceFirst("file ", "")).canWrite)))
 
-            println("+++ Writeable IDs found: " + writeAbleIds.size)
+            println("+++ Writeable IDs found: " + writeAbleIds.size) */
 
-            val variableIds = writeAbleIds.par.filter(id => isVariable(parentOpt(id, morpheus.getASTEnv)))
+            val variableIds = ids.par.filter(id => isVariable(parentOpt(id, morpheus.getASTEnv)))
 
             println("+++ Varialbe IDs found: " + variableIds.size)
 
-            val id = if (!variableIds.isEmpty && FORCE_VARIABILITY) variableIds.apply((math.random * variableIds.size).toInt) else writeAbleIds.apply((math.random * writeAbleIds.size).toInt)
-            println("+++ Found Id: " + id)
+            def getRandomID: Id = {
+                val randID = if (!variableIds.isEmpty && FORCE_VARIABILITY) variableIds.apply((math.random * variableIds.size).toInt) else ids.apply((math.random * ids.size).toInt)
+                if (isWritable(randID)) randID
+                else getRandomID
+            }
+
+            val id = getRandomID
             val associatedIds = morpheus.getAllConnectedIdentifier(id)
+            println("+++ Found Id: " + id)
             println("+++ Associated Ids: " + associatedIds.size)
             (id, associatedIds.length, associatedIds.map(morpheus.getASTEnv.featureExpr).distinct)
         }
