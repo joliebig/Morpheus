@@ -3,7 +3,7 @@ package de.fosd.typechef.crefactor.evaluation.refactor
 import de.fosd.typechef.crefactor.evaluation.{Evaluation, StatsJar, Refactoring}
 import de.fosd.typechef.crefactor.{CRefactorFrontend, Morpheus}
 import de.fosd.typechef.parser.c.AST
-import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
+import de.fosd.typechef.featureexpr.FeatureExpr
 import de.fosd.typechef.crefactor.backend.refactor.CRenameIdentifier
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.crefactor.evaluation.Stats._
@@ -11,6 +11,7 @@ import de.fosd.typechef.parser.c.Id
 import scala.collection.mutable
 import de.fosd.typechef.error.Position
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking.CLinking
+import java.io.File
 
 
 trait DefaultRename extends Refactoring with Evaluation {
@@ -32,17 +33,13 @@ trait DefaultRename extends Refactoring with Evaluation {
 
             println("+++ IDs found: " + ids.size)
 
-            val writeAbleIds = ids.par.filter(id =>
+            val writeAbleIds = ids.filter(id =>
                 morpheus.getAllConnectedIdentifier(id).forall(i =>
-                    isValidId(i) && i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) /* && new File(i.getFile.get.replaceFirst("file ", "")).canWrite */))
+                    isValidId(i) && (i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) || new File(i.getFile.get.replaceFirst("file ", "")).canWrite)))
 
             println("+++ Writeable IDs found: " + writeAbleIds.size)
 
-            val variableIds = writeAbleIds.par.filter(id => {
-                val associatedIds = morpheus.getAllConnectedIdentifier(id)
-                val features = associatedIds.map(morpheus.getASTEnv.featureExpr)
-                !(features.distinct.length == 1 && features.distinct.contains(FeatureExprFactory.True))
-            })
+            val variableIds = writeAbleIds.par.filter(id => isVariable(parentOpt(id, morpheus.getASTEnv)))
 
             println("+++ Varialbe IDs found: " + variableIds.size)
 
