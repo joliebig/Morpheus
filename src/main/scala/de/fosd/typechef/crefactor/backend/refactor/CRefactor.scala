@@ -1,8 +1,6 @@
 package de.fosd.typechef.crefactor.backend.refactor
 
-import java.util
-import util.Collections
-import de.fosd.typechef.typesystem.{IdentityIdHashMap, CEnvCache}
+import de.fosd.typechef.typesystem.CEnvCache
 import de.fosd.typechef.crefactor.Morpheus
 import org.kiama.rewriting.Rewriter._
 import de.fosd.typechef.parser.c._
@@ -64,28 +62,6 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         CompoundStatementExpr(CompoundStatement(innerstmts))
     }
 
-    def getAllConnectedIdentifier(lookup: Id, declUse: IdentityIdHashMap, useDecl: IdentityIdHashMap) = {
-        val occurrences = Collections.newSetFromMap[Id](new util.IdentityHashMap())
-
-        // find all uses of an callId
-        def addOccurrence(occurrence: Id) {
-            if (!occurrences.contains(occurrence)) {
-                occurrences.add(occurrence)
-                if (!declUse.containsKey(occurrence)) return
-                // workaround to avoid null pointer @ wrong forward declarations
-                // occurrences.clear()
-                declUse.get(occurrence).foreach(use => {
-                    occurrences.add(use)
-                    if (useDecl.containsKey(use)) useDecl.get(use).foreach(entry => addOccurrence(entry))
-                })
-            }
-        }
-
-        if (useDecl.containsKey(lookup)) useDecl.get(lookup).foreach(id => addOccurrence(id)) // lookup declarations and search for further referenced declarations
-        else addOccurrence(lookup) // callId is decl - search for further referenced declarations
-
-        occurrences.toArray(Array[Id]()).toList
-    }
 
     def isShadowed(name: String, element: AST, morpheus: Morpheus): Boolean = {
         val lookupValue = findPriorASTElem[CompoundStatement](element, morpheus.getASTEnv) match {

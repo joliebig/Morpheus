@@ -22,7 +22,7 @@ object CRenameIdentifier extends ASTSelection with CRefactor {
     def isAvailable(morpheus: Morpheus, selection: Selection): Boolean = !getAvailableIdentifiers(morpheus, selection).isEmpty
 
     def rename(id: Id, newName: String, morpheus: Morpheus): Either[String, AST] = {
-        val idsToRename = getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap)
+        val idsToRename = morpheus.getAllConnectedIdentifier(id)
         StatsJar.addStat(morpheus.getFile, Amount, idsToRename.size)
         if (!isValidName(newName)) Left(Configuration.getInstance().getConfig("default.error.invalidName"))
         else if (idsToRename.exists(isShadowed(newName, _, morpheus))) Left(Configuration.getInstance().getConfig("refactor.rename.failed.shadowing"))

@@ -33,13 +33,13 @@ trait DefaultRename extends Refactoring with Evaluation {
             println("+++ IDs found: " + ids.size)
 
             val writeAbleIds = ids.par.filter(id =>
-                CRenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap).forall(i =>
+                morpheus.getAllConnectedIdentifier(id).forall(i =>
                     isValidId(i) && i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) /* && new File(i.getFile.get.replaceFirst("file ", "")).canWrite */))
 
             println("+++ Writeable IDs found: " + writeAbleIds.size)
 
             val variableIds = writeAbleIds.par.filter(id => {
-                val associatedIds = CRenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap)
+                val associatedIds = morpheus.getAllConnectedIdentifier(id)
                 val features = associatedIds.map(morpheus.getASTEnv.featureExpr)
                 !(features.distinct.length == 1 && features.distinct.contains(FeatureExprFactory.True))
             })
@@ -48,7 +48,7 @@ trait DefaultRename extends Refactoring with Evaluation {
 
             val id = if (!variableIds.isEmpty && FORCE_VARIABILITY) variableIds.apply((math.random * variableIds.size).toInt) else writeAbleIds.apply((math.random * writeAbleIds.size).toInt)
             println("+++ Found Id: " + id)
-            val associatedIds = CRenameIdentifier.getAllConnectedIdentifier(id, morpheus.getDeclUseMap, morpheus.getUseDeclMap)
+            val associatedIds = morpheus.getAllConnectedIdentifier(id)
             println("+++ Associated Ids: " + associatedIds.size)
             (id, associatedIds.length, associatedIds.map(morpheus.getASTEnv.featureExpr).distinct)
         }
