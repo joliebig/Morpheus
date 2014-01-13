@@ -27,7 +27,7 @@ trait DefaultRename extends Refactoring with Evaluation {
                 else true
             }
 
-            val allIds = morpheus.getUseDeclMap.values.toArray(Array[List[Id]]()).par.foldLeft(List[Id]())((list, entry) => list ::: entry)
+            val allIds = morpheus.getUseDeclMap.keys
             val linkedIds = if (FORCE_LINKING && linkInterface != null) allIds.par.filter(id => linkInterface.isListed(id.name)) else allIds
             val ids = if (linkedIds.isEmpty) allIds else linkedIds
 
