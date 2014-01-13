@@ -55,7 +55,9 @@ trait DefaultRename extends Refactoring with Evaluation {
 
         val time = new TimeMeasurement
         val toRename = getVariableIdToRename
-        StatsJar.addStat(morpheus.getFile, RandomRefactorDeterminationTime, time.getTime)
+        val determineTime = time.getTime
+        println("+++ Time to determine id: " + time.getTime)
+        StatsJar.addStat(morpheus.getFile, RandomRefactorDeterminationTime, determineTime)
         val id = toRename._1
         StatsJar.addStat(morpheus.getFile, RenamedId, id.name)
 
