@@ -10,18 +10,19 @@ trait Verification extends Evaluation {
     val cleanScript: String = "./clean.sh"
 
     def verify(evalFile: String, fm: FeatureModel, mode: String) = {
-        val resultDir = new File(evalFile.replaceAll(evalName, "result"))
+        val resultDir = new File(evalFile.replaceAll(evalName, "result") + "/" + mode + "/")
+        if (!resultDir.exists) resultDir.mkdirs
 
         val buildResult = build
         val testResult = test
 
-        writeResult(buildResult._2, resultDir.getCanonicalPath + "/" + mode + "/" + ".build")
-        if (!buildResult._1) writeResult(buildResult._3, resultDir.getCanonicalPath + "/" + mode + "/" + ".buildErr")
+        writeResult(buildResult._2, resultDir.getCanonicalPath + "/" + "build")
+        if (!buildResult._1) writeResult(buildResult._3, resultDir.getCanonicalPath + "/" + "buildErr")
 
-        writeResult(testResult._2, resultDir.getCanonicalPath + "/" + mode + "/" + ".test")
-        if (!testResult._1) writeResult(testResult._3, resultDir.getCanonicalPath + "/" + mode + "/" + ".testError")
+        writeResult(testResult._2, resultDir.getCanonicalPath + "/" + "test")
+        if (!testResult._1) writeResult(testResult._3, resultDir.getCanonicalPath + "/" + "testError")
 
-        writeResult((testResult._1 && buildResult._1).toString, resultDir.getCanonicalPath + "/" + mode + "/" + ".result")
+        writeResult((testResult._1 && buildResult._1).toString, resultDir.getCanonicalPath + "/" + "result")
     }
 
     def test: (Boolean, String, String) = {
