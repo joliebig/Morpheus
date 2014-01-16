@@ -6,7 +6,7 @@ import java.io.File
 trait Verification extends Evaluation {
 
     val buildScript: String = "./build.sh"
-    val testScript: String = "./test.sh"
+    val testScript: String = "./runtest.sh"
     val cleanScript: String = "./clean.sh"
 
     def verify(evalFile: String, fm: FeatureModel, mode: String) = {
