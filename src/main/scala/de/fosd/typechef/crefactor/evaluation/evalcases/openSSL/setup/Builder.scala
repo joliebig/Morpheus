@@ -70,7 +70,7 @@ object Builder extends OpenSSLEvaluation with Building {
             val confFile = new File(sourcePath + "/crypto/opensslconf.h")
 
             Files.copy(Paths.get(makeFile.toURI), Paths.get(dir.getCanonicalPath + "/Makefile"))
-            Files.copy(Paths.get(confFile.toURI), Paths.get(dir.getCanonicalPath + "/crypto/opensslconf.h"))
+            Files.copy(Paths.get(confFile.toURI), Paths.get(dir.getCanonicalPath + "/opensslconf.h"))
 
             val makeDep = runScript("./makedep.sh", sourcePath)
             val makeDepStrings = streamsToString(makeDep)
