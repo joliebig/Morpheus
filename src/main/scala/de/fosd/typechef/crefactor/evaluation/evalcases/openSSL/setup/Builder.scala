@@ -59,7 +59,7 @@ object Builder extends OpenSSLEvaluation with Building {
                 filterNoFeature(feature, None, Some(feature.feature)))
 
 
-            val configure = runScript("./Configure " + configureArguments, sourcePath)
+            val configure = runScript("./Configure", sourcePath, configureArguments, runTimeout)
             val confStrings = streamsToString(configure)
 
             writeResult(confStrings._1, dir.getCanonicalPath + "/configureStd")
