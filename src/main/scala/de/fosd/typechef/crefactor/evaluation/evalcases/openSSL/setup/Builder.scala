@@ -4,10 +4,11 @@ import de.fosd.typechef.crefactor.evaluation.setup.Building
 import de.fosd.typechef.parser.c.AST
 import java.io.File
 import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.OpenSSLEvaluation
+import de.fosd.typechef.featureexpr.FeatureModel
 
 
 object Builder extends OpenSSLEvaluation with Building {
-    def canBuild(ast: AST, file: String): Boolean = {
+    def canBuild(ast: AST, fm: FeatureModel, file: String): Boolean = {
         val currentFile = new File(file)
         // clean dir first
         runScript("./clean.sh", sourcePath)
@@ -26,9 +27,12 @@ object Builder extends OpenSSLEvaluation with Building {
         }
 
         val org = buildAndTest(currentFile, "_org")
+        val pairWiseConfigs = loadConfigurationsFromCSVFile(new File(pairWiseFeaturesFile), new File(featureModel_DIMACS), features, fm, "CONFIG_")
 
         // clean dir
         runScript("./clean.sh", sourcePath)
+
+
 
         // write AST in current result dir
         printAndWriteAST(ast, refFile.getCanonicalPath)

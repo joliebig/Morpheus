@@ -20,7 +20,7 @@ trait OpenSSLEvaluation extends Evaluation with ASTNavigation with ConditionalNa
     val filterFeatures = List()
     val allFeaturesFile = null
     val allFeatures = null
-    val pairWiseFeaturesFile = null
+    val pairWiseFeaturesFile = caseStudyPath + "/openssl_pairwise_configs.csv"
 
     val featureModel: String = completePath + "/fm.txt"
     val featureModel_DIMACS: String = completePath + "/OpenSSL.dimacs"

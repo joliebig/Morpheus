@@ -4,10 +4,11 @@ import de.fosd.typechef.parser.c.AST
 import java.io.File
 import de.fosd.typechef.crefactor.evaluation.setup.Building
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.BusyBoxEvaluation
+import de.fosd.typechef.featureexpr.FeatureModel
 
 object Builder extends BusyBoxEvaluation with Building {
 
-    def canBuild(ast: AST, file: String): Boolean = {
+    def canBuild(ast: AST, fm: FeatureModel, file: String): Boolean = {
         val currentFile = new File(file)
 
         // clean dir first

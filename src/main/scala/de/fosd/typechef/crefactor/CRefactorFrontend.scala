@@ -95,7 +95,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
 
             if (ast != null && opt.prettyPrint) prettyPrint(ast, opt)
 
-            if (ast != null && opt.canBuild) testBuildingAndTesting(ast, opt)
+            if (ast != null && opt.canBuild) testBuildingAndTesting(ast, fm, opt)
 
             if (ast != null && opt.showGui) createAndShowGui(ast, fm, opt)
         }
@@ -128,7 +128,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
 
         ast
     }
-    private def testBuildingAndTesting(ast: AST, opt: FrontendOptions) {
+    private def testBuildingAndTesting(ast: AST, fm: FeatureModel, opt: FrontendOptions) {
         val builder: Building = {
             if (opt.getRefStudy.equalsIgnoreCase("busybox")) de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.building.Builder
             else if (opt.getRefStudy.equalsIgnoreCase("openssl")) de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.setup.Builder
@@ -136,7 +136,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
             else null
         }
 
-        val canBuild = builder.canBuild(ast, opt.getFile)
+        val canBuild = builder.canBuild(ast, fm, opt.getFile)
         println("+++ Can build " + new File(opt.getFile).getName + " : " + canBuild + " +++")
     }
     private def refactorEval(opt: FrontendOptions, ast: AST, fm: FeatureModel, linkInf: CLinking) {
