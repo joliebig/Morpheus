@@ -49,7 +49,7 @@ object Builder extends OpenSSLEvaluation with Building {
                 else falseRet
             }
 
-            val configureArguments = conf.getTrueSet.flatten(feature =>
+            val configureArguments = buildSystem + " " + conf.getTrueSet.flatten(feature =>
                 filterNoFeature(feature, Some(feature.feature.replace(openSSLFeaturePrefix, "").replace("_", "-").toLowerCase), None)) mkString (" ")
 
             val compilerDArgs = conf.getTrueSet.flatten(feature =>
@@ -59,7 +59,7 @@ object Builder extends OpenSSLEvaluation with Building {
                 filterNoFeature(feature, None, Some(feature.feature)))
 
 
-            val configure = runScript("./Configure " + configureArguments, sourcePath, configureArguments, runTimeout)
+            val configure = runScript("./Configure " + configureArguments, sourcePath)
             val confStrings = streamsToString(configure)
 
             writeResult(confStrings._1, dir.getCanonicalPath + "/configureStd")
