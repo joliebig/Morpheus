@@ -260,7 +260,15 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
      * Runs a shell script with either default timeout or a custom timeout in ms
      */
     def runScript(script: String, dir: String, timeout: Int = runTimeout): (InputStream, InputStream) = {
-        val pb = new ProcessBuilder(script)
+        runScript(script, dir, null, timeout)
+    }
+
+    /**
+     * Runs a shell script with either default timeout or a custom timeout in ms
+     */
+    def runScript(script: String, dir: String, args: String, timeout: Int): (InputStream, InputStream) = {
+        val pb = if (args == null) new ProcessBuilder(script)
+        else new ProcessBuilder(script, args)
         pb.directory(new File(dir))
         val process = pb.start()
         val timer = new Timer(true)

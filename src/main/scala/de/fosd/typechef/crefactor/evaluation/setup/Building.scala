@@ -7,5 +7,4 @@ trait Building {
 
     def canBuild(ast: AST, fm: FeatureModel, file: String): Boolean
 
-
 }
