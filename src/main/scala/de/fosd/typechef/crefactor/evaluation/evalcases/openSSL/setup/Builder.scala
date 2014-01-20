@@ -50,7 +50,7 @@ object Builder extends OpenSSLEvaluation with Building {
             }
 
             val configureArguments = buildSystem + " " + conf.getTrueSet.flatten(feature =>
-                filterNoFeature(feature, Some(feature.feature.replace(openSSLFeaturePrefix, "").replace("_", "-").toLowerCase), None)) mkString (" ")
+                filterNoFeature(feature, Some(feature.feature.replace(openSSLFeaturePrefix, "").replace("_", "-").toLowerCase), None)).mkString(" ")
 
             val compilerDArgs = conf.getTrueSet.flatten(feature =>
                 filterNoFeature(feature, Some(feature.feature), None))
