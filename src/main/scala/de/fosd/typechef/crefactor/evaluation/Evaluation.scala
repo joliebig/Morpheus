@@ -575,4 +575,13 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
         }
         builder.toString()
     }
+
+    def addOwnGCCcmds(arg: String, line: String, enabledFeatures: Set[String], disabledFeatures: Set[String]): String = {
+        val args = line.substring(arg.length).split(" ")
+
+        val dFeatures = enabledFeatures.filterNot(eFeature => args.exists(_.endsWith(eFeature)))
+        val filterArgs = args.toList.filterNot(argFeature => disabledFeatures.exists(argFeature.endsWith))
+
+        arg + " " + filterArgs + dFeatures.map(feature => "-D" + feature).mkString(" ")
+    }
 }
