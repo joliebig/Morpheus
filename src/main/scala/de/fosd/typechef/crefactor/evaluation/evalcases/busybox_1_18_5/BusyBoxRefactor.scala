@@ -8,7 +8,7 @@ import java.io.File
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.refactor.{Rename, Inline, Extract}
-import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking.CLinking
+import de.fosd.typechef.crefactor.evaluation.setup.CLinking
 
 
 object BusyBoxRefactor extends BusyBoxEvaluation with Refactor {

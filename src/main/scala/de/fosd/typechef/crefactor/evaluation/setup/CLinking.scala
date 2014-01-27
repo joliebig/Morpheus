@@ -1,4 +1,4 @@
-package de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking
+package de.fosd.typechef.crefactor.evaluation.setup
 
 import java.io.File
 import de.fosd.typechef.typesystem.linker.{CSignature, InterfaceWriter}
@@ -25,10 +25,7 @@ class CLinking(linkPath: String) {
             if (isListed(expr.name)) addToMaps(expr)
             else blackList += expr.name
         )
-    }
-
-
-    println("+++ Warning: No interface used! +++")
+    } else println("+++ Warning: No interface used! +++")
 
     def addToMaps(exp: CSignature): List[Position] = {
         addToExpMap(exp.name, exp)

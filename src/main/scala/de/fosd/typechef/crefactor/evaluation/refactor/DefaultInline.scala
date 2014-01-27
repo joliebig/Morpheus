@@ -8,7 +8,7 @@ import de.fosd.typechef.crefactor.backend.refactor.CInlineFunction
 import scala.util.Random
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.crefactor.evaluation.Stats._
-import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking.CLinking
+import de.fosd.typechef.crefactor.evaluation.setup.CLinking
 
 trait DefaultInline extends Refactoring with Evaluation {
 

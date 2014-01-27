@@ -9,7 +9,7 @@ import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.parser.c.CompoundStatement
 import de.fosd.typechef.conditional.Opt
-import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking.CLinking
+import de.fosd.typechef.crefactor.evaluation.setup.CLinking
 
 trait DefaultExtract extends Refactoring with Evaluation {
 

@@ -11,7 +11,7 @@ import de.fosd.typechef.parser.TokenReader
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.typesystem.linker.InterfaceWriter
 import de.fosd.typechef.crefactor.evaluation.{Refactor, StatsJar}
-import de.fosd.typechef.crefactor.evaluation.setup.{Building, BuildCondition}
+import de.fosd.typechef.crefactor.evaluation.setup.{CLinking, Building, BuildCondition}
 import java.util.zip.{GZIPOutputStream, GZIPInputStream}
 import de.fosd.typechef.parser.c.CTypeContext
 import de.fosd.typechef.typesystem.{CDeclUse, CTypeCache, CTypeSystemFrontend}
@@ -20,7 +20,6 @@ import javax.swing.SwingUtilities
 import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.SQLiteRefactor
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.BusyBoxRefactor
 import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.OpenSSLRefactor
-import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking.CLinking
 
 object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
 

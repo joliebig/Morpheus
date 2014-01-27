@@ -10,8 +10,8 @@ import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.parser.c.Id
 import scala.collection.mutable
 import de.fosd.typechef.error.Position
-import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking.CLinking
 import java.io.File
+import de.fosd.typechef.crefactor.evaluation.setup.CLinking
 
 
 trait DefaultRename extends Refactoring with Evaluation {

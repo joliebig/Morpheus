@@ -8,7 +8,7 @@ import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.refactor.{Inline, Extract, Rename}
 import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
 import de.fosd.typechef.crefactor.evaluation.Stats._
-import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking.CLinking
+import de.fosd.typechef.crefactor.evaluation.setup.CLinking
 
 object OpenSSLRefactor extends OpenSSLEvaluation with Refactor {
     def rename(ast: AST, fm: FeatureModel, file: String, linkInterface: CLinking) = evaluate(ast, fm, file, Rename)
