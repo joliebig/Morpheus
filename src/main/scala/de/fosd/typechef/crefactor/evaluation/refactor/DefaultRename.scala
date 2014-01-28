@@ -27,7 +27,12 @@ trait DefaultRename extends Refactoring with Evaluation {
                 else true
             }
 
+
+            // TODO Fix Bug in OpenSSL for functions without body
             def isWritable(id: Id): Boolean = {
+                morpheus.getAllConnectedIdentifier(id).foreach(i2 => {
+                    println(parentAST(parentAST(parentAST(i2, morpheus.getASTEnv), morpheus.getASTEnv), morpheus.getASTEnv))
+                })
                 morpheus.getAllConnectedIdentifier(id).forall(i =>
                     isValidId(i) && (i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) || new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
             }
