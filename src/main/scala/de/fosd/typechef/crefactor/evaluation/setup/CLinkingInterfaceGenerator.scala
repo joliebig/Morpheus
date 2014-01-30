@@ -57,11 +57,11 @@ trait CLinkingInterfaceGenerator extends Evaluation with App {
 
     val finalInterface = linkTreewise(interfaces).andFM(fm_constraints).pack
 
-    reader.writeInterface(finalInterface, new File("linking.interface"))
-    reader.debugInterface(finalInterface, new File("linking.dbginterface"))
+    reader.writeInterface(finalInterface, new File(completePath + "/linking.interface"))
+    reader.debugInterface(finalInterface, new File(completePath + "/linking.dbginterface"))
 
     println("Generated linkinterfaces.")
 
-    new CLinking("linking.interface")
+    new CLinking(completePath + "/linking.interface")
 
 }
