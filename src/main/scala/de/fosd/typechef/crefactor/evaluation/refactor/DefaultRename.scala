@@ -5,7 +5,7 @@ import de.fosd.typechef.crefactor.{CRefactorFrontend, Morpheus}
 import de.fosd.typechef.parser.c.AST
 import de.fosd.typechef.featureexpr.FeatureExpr
 import de.fosd.typechef.crefactor.backend.refactor.CRenameIdentifier
-import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
+import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.parser.c.Id
 import scala.collection.mutable
@@ -67,7 +67,7 @@ trait DefaultRename extends Refactoring with Evaluation {
             (id, associatedIds.length, associatedIds.map(morpheus.getASTEnv.featureExpr).distinct)
         }
 
-        val time = new TimeMeasurement
+        val time = new StopClock
         val toRename = getVariableIdToRename
         val determineTime = time.getTime
         println("+++ Time to determine id: " + time.getTime)
@@ -82,7 +82,7 @@ trait DefaultRename extends Refactoring with Evaluation {
         val features = toRename._3
         StatsJar.addStat(morpheus.getFile, AffectedFeatures, features)
 
-        val startRenaming = new TimeMeasurement
+        val startRenaming = new StopClock
         val refactored = CRenameIdentifier.rename(id, REFACTOR_NAME, morpheus)
 
         StatsJar.addStat(morpheus.getFile, RefactorTime, startRenaming.getTime)
@@ -91,7 +91,7 @@ trait DefaultRename extends Refactoring with Evaluation {
             case Right(ast) => {
                 val linkedRefactored = refactorChain.map(x => {
                     val linkedId = findIdInAST(x._2, id, x._1.getAST)
-                    val time = new TimeMeasurement
+                    val time = new StopClock
                     val ref = CRenameIdentifier.rename(linkedId.get, REFACTOR_NAME, x._1)
                     StatsJar.addStat(x._1.getFile, RefactorTime, time.getTime)
                     ref match {

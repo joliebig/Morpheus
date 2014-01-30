@@ -5,7 +5,7 @@ import de.fosd.typechef.parser.c.AST
 import de.fosd.typechef.featureexpr.FeatureModel
 import de.fosd.typechef.crefactor.Morpheus
 import java.io.File
-import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
+import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.refactor.{Rename, Inline, Extract}
 import de.fosd.typechef.crefactor.evaluation.setup.CLinking
@@ -32,7 +32,7 @@ object BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
                 if (result._1) {
                     write(result._2, morpheus.getFile)
                     PrepareASTforVerification.makeConfigs(result._2, morpheus.getFeatureModel, morpheus.getFile, result._3)
-                    val time = new TimeMeasurement
+                    val time = new StopClock
                     StatsJar.addStat(file, AffectedFeatures, result._3)
                     // run refactored first
                     BusyBoxVerification.verify(file, fm, "_ref")

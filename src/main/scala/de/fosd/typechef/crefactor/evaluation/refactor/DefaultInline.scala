@@ -6,7 +6,7 @@ import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.featureexpr.FeatureExpr
 import de.fosd.typechef.crefactor.backend.refactor.CInlineFunction
 import scala.util.Random
-import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
+import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.crefactor.evaluation.setup.CLinking
 
@@ -38,7 +38,7 @@ trait DefaultInline extends Refactoring with Evaluation {
         println("+++ Trying to inline call: " + callIdToInline)
 
         try {
-            val refTime = new TimeMeasurement
+            val refTime = new StopClock
             val refAST = CInlineFunction.inline(morpheus, callIdToInline, true, true)
             StatsJar.addStat(morpheus.getFile, RefactorTime, refTime.getTime)
             val callDeclDef = CInlineFunction.divideCallDeclDef(callIdToInline, morpheus)

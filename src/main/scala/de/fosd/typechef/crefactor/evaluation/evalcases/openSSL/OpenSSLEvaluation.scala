@@ -22,7 +22,7 @@ trait OpenSSLEvaluation extends Evaluation with ASTNavigation with ConditionalNa
     val allFeatures = null
     val pairWiseFeaturesFile = sourcePath + "/openssl_pairwise_configs.csv"
 
-    val featureModel: String = completePath + "/fm.txt"
+    val featureModel: String = sourcePath + "/featuremodel"
     val featureModel_DIMACS: String = sourcePath + "/OpenSSL.dimacs"
 
     val runTimeout = 300000

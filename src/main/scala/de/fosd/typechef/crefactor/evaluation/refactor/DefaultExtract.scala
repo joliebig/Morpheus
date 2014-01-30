@@ -5,7 +5,7 @@ import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.parser.c.{Statement, AST}
 import de.fosd.typechef.featureexpr.FeatureExpr
 import de.fosd.typechef.crefactor.backend.refactor.CExtractFunction
-import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
+import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.parser.c.CompoundStatement
 import de.fosd.typechef.conditional.Opt
@@ -61,7 +61,7 @@ trait DefaultExtract extends Refactoring with Evaluation {
             }
 
             def getExtractStatements: List[AST] = {
-                val startTime = new TimeMeasurement
+                val startTime = new StopClock
                 val availableStmtsToExtract = compStmts.par.flatMap(compSmt => getAvailableExtractStatements(compSmt)).filterNot(x => x.isEmpty)
                 println("+++ Time to determine statements: " + startTime.getTime + " +++")
                 // Pick a random available element from the resulting array
@@ -82,7 +82,7 @@ trait DefaultExtract extends Refactoring with Evaluation {
             }
 
             val features = filterAllOptElems(statements).map(morpheus.getASTEnv.featureExpr(_)).distinct
-            val refactorTime = new TimeMeasurement
+            val refactorTime = new StopClock
             statements.foreach(stmt => println(stmt + " " + stmt.getPositionFrom))
             val refactored = CExtractFunction.extract(morpheus, statements, NAME)
             refactored match {

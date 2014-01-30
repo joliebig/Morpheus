@@ -1,7 +1,5 @@
 package de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking
 
-import de.fosd.typechef.typesystem.linker.SystemLinker
-import de.fosd.typechef.featureexpr.FeatureExprParser
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.BusyBoxEvaluation
 import de.fosd.typechef.crefactor.evaluation.setup.CLinkingInterfaceGenerator
 

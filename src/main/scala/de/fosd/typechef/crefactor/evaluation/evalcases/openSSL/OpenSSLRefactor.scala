@@ -6,7 +6,7 @@ import de.fosd.typechef.featureexpr.FeatureModel
 import java.io.File
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.refactor.{Inline, Extract, Rename}
-import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
+import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.crefactor.evaluation.setup.CLinking
 
@@ -31,7 +31,7 @@ object OpenSSLRefactor extends OpenSSLEvaluation with Refactor {
                 val result = r.refactor(morpheus)
                 if (result._1) {
                     write(result._2, morpheus.getFile.replace(".pi", ".c"))
-                    val time = new TimeMeasurement
+                    val time = new StopClock
                     StatsJar.addStat(file, AffectedFeatures, result._2)
                     OpenSSLVerification.verify(morpheus.getFile, morpheus.getFeatureModel, "first")
                     runScript("./clean.sh", sourcePath)

@@ -56,7 +56,7 @@ import de.fosd.typechef.parser.c.StaticSpecifier
 import de.fosd.typechef.parser.c.ConstSpecifier
 import de.fosd.typechef.parser.c.UnaryExpr
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
-import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
+import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.StatsJar
 import de.fosd.typechef.crefactor.evaluation.Stats._
 
@@ -232,7 +232,7 @@ object CExtractFunction extends ASTSelection with CRefactor {
             /**
              * Liveness analysis
              */
-            val startTime = new TimeMeasurement
+            val startTime = new StopClock
 
             val externalUses = externalOccurrences(selectedIds, morpheus.getDeclUseMap, morpheus)
             val externalDefs = externalOccurrences(selectedIds, morpheus.getUseDeclMap, morpheus)

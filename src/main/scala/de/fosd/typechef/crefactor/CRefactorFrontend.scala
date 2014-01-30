@@ -8,7 +8,7 @@ import de.fosd.typechef.options.{RefactorType, FrontendOptions, OptionException,
 import de.fosd.typechef.{lexer, ErrorXML}
 import java.io._
 import de.fosd.typechef.parser.TokenReader
-import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
+import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.typesystem.linker.InterfaceWriter
 import de.fosd.typechef.crefactor.evaluation.{Refactor, StatsJar}
 import de.fosd.typechef.crefactor.evaluation.setup.{CLinking, Building, BuildCondition}
@@ -99,8 +99,6 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
             if (ast != null && opt.showGui) createAndShowGui(ast, fm, opt)
         }
 
-
-
         (ast, fm)
     }
 
@@ -119,7 +117,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
             ts.debugInterface(interface, new File(opt.getDebugInterfaceFilename))
     }
     private def parseAST(fm: FeatureModel, opt: FrontendOptions): AST = {
-        val parsingTime = new TimeMeasurement
+        val parsingTime = new StopClock
         val parserMain = new ParserMain(new CParser(fm))
         val ast = parserMain.parserMain(lex(opt), opt)
         StatsJar.addStat(opt.getFile, Parsing, parsingTime.getTime)

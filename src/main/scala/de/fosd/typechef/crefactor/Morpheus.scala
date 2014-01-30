@@ -7,7 +7,7 @@ import de.fosd.typechef.parser.c._
 import de.fosd.typechef.typesystem._
 import java.util.Observable
 import de.fosd.typechef.parser.c.TranslationUnit
-import de.fosd.typechef.crefactor.evaluation.util.TimeMeasurement
+import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.StatsJar
 
 class Morpheus(ast: AST, fm: FeatureModel, file: String) extends Observable with CDeclUse with CTypeEnv with CEnvCache with CTypeCache with CTypeSystem with Logging {
@@ -19,7 +19,7 @@ class Morpheus(ast: AST, fm: FeatureModel, file: String) extends Observable with
 
     private var astCached: AST = ast
     private var astEnvCached: ASTEnv = CASTEnv.createASTEnv(ast)
-    val typeCheck = new TimeMeasurement
+    val typeCheck = new StopClock
     typecheckTranslationUnit(ast.asInstanceOf[TranslationUnit])
     if (file != null) StatsJar.addStat(file, TypeCheck, typeCheck.getTime)
 
