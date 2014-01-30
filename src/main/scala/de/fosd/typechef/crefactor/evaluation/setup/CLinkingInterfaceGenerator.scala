@@ -40,7 +40,7 @@ trait CLinkingInterfaceGenerator extends Evaluation with App {
                     println(c + " is not a tautology in feature model.")
             if (!(left isCompatibleTo right))
                 println(confl + " is not compatible with feature model.")
-            left link right
+            left debug_join right
         } else if (l.size == 1) l(0)
         else {
             assert(false, l)
@@ -51,11 +51,14 @@ trait CLinkingInterfaceGenerator extends Evaluation with App {
 
     private def linkIncrementally(l: List[CInterface]): CInterface = l.fold(EmptyInterface)((left, right) => {
         if (!(left isCompatibleTo right))
-            println(left getConflicts right)
-        left link right
+            println("Conflict: " + (left getConflicts right))
+        left debug_join right
     })
 
-    val finalInterface = linkTreewise(interfaces).andFM(fm_constraints).pack
+    val finalInterface = linkIncrementally(interfaces).pack
+
+    println("Exports: " + finalInterface.exports)
+    println("Imports: " + finalInterface.imports)
 
     reader.writeInterface(finalInterface, new File(completePath + "/linking.interface"))
     reader.debugInterface(finalInterface, new File(completePath + "/linking.dbginterface"))

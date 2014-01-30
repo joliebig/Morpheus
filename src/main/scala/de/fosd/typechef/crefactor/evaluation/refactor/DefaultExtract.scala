@@ -10,6 +10,7 @@ import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.parser.c.CompoundStatement
 import de.fosd.typechef.conditional.Opt
 import de.fosd.typechef.crefactor.evaluation.setup.CLinking
+import java.io.File
 
 trait DefaultExtract extends Refactoring with Evaluation {
 
@@ -21,6 +22,9 @@ trait DefaultExtract extends Refactoring with Evaluation {
 
 
     def refactor(morpheus: Morpheus, linkInterface: CLinking): (Boolean, AST, List[FeatureExpr], List[(String, AST)]) = {
+        val resultDir = getResultDir(morpheus.getFile)
+        val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(morpheus.getFile)
+
         def refactor(morpheus: Morpheus, linkInterface: CLinking, depth: Int): (Boolean, AST, List[FeatureExpr], List[(String, AST)]) = {
             val compStmts = filterAllASTElems[CompoundStatement](morpheus.getAST)
 
@@ -77,6 +81,7 @@ trait DefaultExtract extends Refactoring with Evaluation {
             }
 
             if (statements.isEmpty) {
+                writeError("no valid extract statement found", path + "stmt")
                 println("no valid statement found")
                 return (false, null, List(), List())
             }
@@ -95,6 +100,7 @@ trait DefaultExtract extends Refactoring with Evaluation {
                     // TODO Correct Error Handling
                     println("error")
                     println(s)
+                    writeError("Refactor Error:\n" + s, path + "ref")
                     if (depth < RETRIES) refactor(morpheus, linkInterface, depth + 1)
                     else (false, null, List(), List())
                 }
