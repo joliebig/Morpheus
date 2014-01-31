@@ -37,10 +37,12 @@ trait CLinkingInterfaceGenerator extends Evaluation with App {
             val confl = left getConflicts right
             for (c <- confl)
                 if (!c._2.isTautology(fm))
-                    println(c + " is not a tautology in feature model.")
-            if (!(left isCompatibleTo right))
-                println(confl + " is not compatible with feature model.")
-            left debug_join right
+                    println("Waring: " + c + " is not a tautology in feature model.")
+            if (!(left isCompatibleTo right)) {
+                println("Conflict: " + confl + " is not compatible with feature model.")
+                left
+            }
+            else left link right
         } else if (l.size == 1) l(0)
         else {
             assert(false, l)
@@ -50,15 +52,17 @@ trait CLinkingInterfaceGenerator extends Evaluation with App {
     }
 
     private def linkIncrementally(l: List[CInterface]): CInterface = l.fold(EmptyInterface)((left, right) => {
-        if (!(left isCompatibleTo right))
+        if (!(left isCompatibleTo right)) {
             println("Conflict: " + (left getConflicts right))
-        left debug_join right
+            left
+        }
+        else left link right
     })
 
-    val finalInterface = linkIncrementally(interfaces).pack
+    val finalInterface = linkTreewise(interfaces).pack.andFM(fm_constraints)
 
-    println("Exports: " + finalInterface.exports)
-    println("Imports: " + finalInterface.imports)
+    println(finalInterface.exports.size + " Exports: " + finalInterface.exports)
+    println(finalInterface.imports.size + " Imports: " + finalInterface.imports)
 
     reader.writeInterface(finalInterface, new File(completePath + "/linking.interface"))
     reader.debugInterface(finalInterface, new File(completePath + "/linking.dbginterface"))
