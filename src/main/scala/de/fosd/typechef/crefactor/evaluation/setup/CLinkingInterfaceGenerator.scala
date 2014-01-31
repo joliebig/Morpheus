@@ -10,6 +10,10 @@ import java.io.File
  */
 trait CLinkingInterfaceGenerator extends Evaluation with App {
 
+    val filename = "CLinking"
+    val linkExt = ".interface"
+    val dbgLinkExt = ".dbginterface"
+
     val fileList = io.Source.fromFile(filesToEval).getLines().toList
 
     private def getFMConstraints: Iterator[FeatureExpr] =
@@ -24,51 +28,53 @@ trait CLinkingInterfaceGenerator extends Evaluation with App {
 
     val interfaces = fileList.map(f => reader.readInterface(new File(sourcePath + f + ".interface"))).map(SystemLinker.linkStdLib)
 
-    private def linkTreewise(l: List[CInterface]): CInterface = {
+    def linkTreewise(l: List[CInterface]): CInterface = {
         if (l.size > 2) {
             val m: Int = l.size / 2
             val left = l.take(m)
             val right = l.drop(m)
             linkTreewise(List(linkTreewise(left), linkTreewise(right)))
-        }
-        else if (l.size == 2) {
+        } else if (l.size == 2) {
             val left = l(0)
             val right = l(1)
-            val confl = left getConflicts right
-            for (c <- confl)
+            val conflicts = left getConflicts right
+
+            for (c <- conflicts)
                 if (!c._2.isTautology(fm))
                     println("Waring: " + c + " is not a tautology in feature model.")
+
             if (!(left isCompatibleTo right)) {
-                println("Conflict: " + confl + " is not compatible with feature model.")
+                println("Conflict: " + conflicts + " is not compatible with feature model.")
                 left
-            }
-            else left link right
+            } else left link right
         } else if (l.size == 1) l(0)
         else {
             assert(false, l)
             EmptyInterface
         }
-
     }
 
-    private def linkIncrementally(l: List[CInterface]): CInterface = l.fold(EmptyInterface)((left, right) => {
+    /** def linkIncrementally(l: List[CInterface]): CInterface = l.fold(EmptyInterface)((left, right) => {
         if (!(left isCompatibleTo right)) {
             println("Conflict: " + (left getConflicts right))
             left
         }
         else left link right
-    })
+    }) */
 
     val finalInterface = linkTreewise(interfaces).pack.andFM(fm_constraints)
 
-    println(finalInterface.exports.size + " Exports: " + finalInterface.exports)
-    println(finalInterface.imports.size + " Imports: " + finalInterface.imports)
+    println(finalInterface.exports.size + " exports: " + finalInterface.exports)
+    println(finalInterface.imports.size + " imports: " + finalInterface.imports)
 
-    reader.writeInterface(finalInterface, new File(completePath + "/linking.interface"))
-    reader.debugInterface(finalInterface, new File(completePath + "/linking.dbginterface"))
+    val interfacePath = new File(completePath + "/" + filename + linkExt)
+    val dbgInterfacePath = new File(completePath + "/" + filename + dbgLinkExt)
 
-    println("Generated linkinterfaces.")
+    reader.writeInterface(finalInterface, interfacePath)
+    println("Generated interface in " + interfacePath.getCanonicalPath)
 
-    new CLinking(completePath + "/linking.interface")
+    reader.debugInterface(finalInterface, dbgInterfacePath)
+    println("Generated debug interface in " + dbgInterfacePath.getCanonicalPath)
 
+    new CLinking(interfacePath.getCanonicalPath)
 }
