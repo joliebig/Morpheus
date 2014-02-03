@@ -129,7 +129,7 @@ object CExtractFunction extends ASTSelection with CRefactor {
                         } else statement
                 }
             } catch {
-                case _ => statement
+                case _: Throwable => statement
             }
         }
 
@@ -155,7 +155,7 @@ object CExtractFunction extends ASTSelection with CRefactor {
                     case _ => statement
                 }
             } catch {
-                case _ => statement
+                case _: Throwable => statement
             }
         }
         val uniqueSelectedStatements = Collections.newSetFromMap[Statement](new util.IdentityHashMap())
@@ -269,7 +269,7 @@ object CExtractFunction extends ASTSelection with CRefactor {
             Right(refAST)
         } catch {
             case r: RefactorException => Left(r.error)
-            case x: Exception => {
+            case x: Throwable => {
                 x.printStackTrace
                 Left(x.getMessage)
             }
@@ -408,7 +408,7 @@ object CExtractFunction extends ASTSelection with CRefactor {
                     case x => logger.warn("Missed pattern choice? " + x)
                 }
             } catch {
-                case e: Exception => // logger.warn("No entry found for: " + param)
+                case _: Throwable => // logger.warn("No entry found for: " + param)
             })
 
         val decls = declFeatureMap.keySet().toArray(Array[Declaration]()).toList
