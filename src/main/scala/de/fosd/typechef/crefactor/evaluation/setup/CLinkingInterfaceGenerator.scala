@@ -4,6 +4,7 @@ import de.fosd.typechef.crefactor.evaluation.Evaluation
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExprParser, FeatureExpr}
 import de.fosd.typechef.typesystem.linker.{EmptyInterface, CInterface, SystemLinker, InterfaceWriter}
 import java.io.File
+import de.fosd.typechef.crefactor.evaluation.util.StopClock
 
 /**
  * Interface for generating linking informations of a whole given project
@@ -15,17 +16,22 @@ trait CLinkingInterfaceGenerator extends Evaluation with App {
     val dbgLinkExt = ".dbginterface"
 
     val fileList = io.Source.fromFile(filesToEval).getLines().toList
+    println(fileList.size + " files to analyse for linking informations.")
 
     private def getFMConstraints: Iterator[FeatureExpr] =
         for (l: String <- io.Source.fromFile(featureModel).getLines(); if l != "")
         yield new FeatureExprParser().parse(l)
 
+    val fm_const_genClock = new StopClock
     val fm_constraints = getFMConstraints.fold(FeatureExprFactory.True)(_ and _)
-    val fm = FeatureExprFactory.default.featureModelFactory.create(fm_constraints)
+    println("Loaded constraints in " + fm_const_genClock.getTime + "ms.")
+
+    val fm_genClock = new StopClock
+    //val fm = FeatureExprFactory.default.featureModelFactory.create(fm_constraints)
+    val fm = FeatureExprFactory.default.featureModelFactory.createFromDimacsFile(featureModel_DIMACS, "")
+    println("Loaded feature model in " + fm_genClock.getTime + "ms.")
+
     val reader = new InterfaceWriter() {}
-
-    println(fileList.size + " files to analyse for linking informations.")
-
     val interfaces = fileList.map(f => reader.readInterface(new File(sourcePath + f + ".interface"))).map(SystemLinker.linkStdLib)
 
     def linkTreewise(l: List[CInterface]): CInterface = {
@@ -62,7 +68,13 @@ trait CLinkingInterfaceGenerator extends Evaluation with App {
         else left link right
     }) */
 
-    val finalInterface = linkTreewise(interfaces).pack.andFM(fm_constraints)
+    val linkingClock = new StopClock
+    val finalInterface = linkTreewise(interfaces).pack //.andFM(fm_constraints)
+    println("Linked interfaces in " + linkingClock.getTime + "ms.")
+
+    println("Linked interface is complete:\t" + finalInterface.isComplete)
+    println("Linked interface is fully configured:\t" + finalInterface.isFullyConfigured)
+    println("Linked interface is wellformed:\t" + finalInterface.isWellformed)
 
     println(finalInterface.exports.size + " exports: " + finalInterface.exports)
     println(finalInterface.imports.size + " imports: " + finalInterface.imports)
