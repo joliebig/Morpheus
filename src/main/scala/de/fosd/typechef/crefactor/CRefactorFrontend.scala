@@ -21,7 +21,7 @@ import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.SQLiteRefactor
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.BusyBoxRefactor
 import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.OpenSSLRefactor
 
-object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
+object CRefactorFrontend extends App with InterfaceWriter with BuildCondition with Logging {
 
     var command: Array[String] = Array()
 
@@ -32,7 +32,6 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
     def parse(args: Array[String], saveArg: Boolean): (AST, FeatureModel) = {
         // Parsing MorphFrontend is adapted by the original typechef frontend
         val opt = new FrontendOptionsWithConfigFiles()
-
         try {
             opt.parseOptions(args)
         } catch {
@@ -40,6 +39,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
                 println("Invocation error: " + o.getMessage)
                 println("use parameter --help for more information.")
                 throw o
+                System.exit(-1)
         }
 
         // Current re-run hack - storing the initial arguments for parsing further files then the initial with the same arguments
@@ -64,7 +64,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
         opt.setFeatureModel(fm) //otherwise the lexer does not get the updated feature model with file presence conditions
 
         if (opt.getUseDefaultPC && !opt.getFilePresenceCondition.isSatisfiable(fm)) {
-            println("file has contradictory presence condition. existing.") //otherwise this can lead to strange parser errors, because True is satisfiable, but anything else isn't
+            logger.error("file has contradictory presence condition. existing.") //otherwise this can lead to strange parser errors, because True is satisfiable, but anything else isn't
             return (null, null)
         }
 
@@ -77,7 +77,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
 
         if (opt.reuseAST && opt.parse && new File(opt.getSerializedASTFilename).exists()) {
             ast = loadSerializedAST(opt.getSerializedASTFilename)
-            if (ast == null) println("... failed reading AST\n")
+            if (ast == null) logger.error("... failed reading AST\n")
         }
 
         if (opt.parse) {
@@ -133,7 +133,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
         }
 
         val canBuild = builder.canBuild(ast, fm, opt.getFile)
-        println("+++ Can build " + new File(opt.getFile).getName + " : " + canBuild + " +++")
+        logger.info("Can build " + new File(opt.getFile).getName + " : " + canBuild + " +++")
     }
     private def refactorEval(opt: FrontendOptions, ast: AST, fm: FeatureModel, linkInf: CLinking) {
         val caseStudy: Refactor = {
@@ -170,7 +170,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition {
     private def prettyPrint(ast: AST, options: FrontendOptions) = {
         val filePath = options.getFile ++ ".pp"
         val file = new File(filePath)
-        println("+++ Pretty printing to: " + file.getCanonicalPath)
+        logger.info("Pretty printing to: " + file.getCanonicalPath)
         val prettyPrinted = PrettyPrinter.print(ast).replace("definedEx", "defined")
         val writer = new FileWriter(file, false)
         writer.write(addBuildCondition(filePath, prettyPrinted))

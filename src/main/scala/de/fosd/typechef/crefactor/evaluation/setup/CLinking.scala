@@ -5,8 +5,9 @@ import de.fosd.typechef.typesystem.linker.{CSignature, InterfaceWriter}
 import java.util
 import de.fosd.typechef.error.Position
 import scala.collection.parallel.mutable
+import de.fosd.typechef.crefactor.Logging
 
-class CLinking(linkPath: String) {
+class CLinking(linkPath: String) extends Logging {
 
     val reader = new InterfaceWriter {}
     val linkFile = new File(linkPath)
@@ -25,7 +26,7 @@ class CLinking(linkPath: String) {
             if (isListed(expr.name)) addToMaps(expr)
             else blackList += expr.name
         )
-    } else println("+++ Warning: No interface used! +++")
+    } else logger.info("No linking interface loaded!")
 
     def addToMaps(exp: CSignature): List[Position] = {
         addToExpMap(exp.name, exp)

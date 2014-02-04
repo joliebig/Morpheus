@@ -5,18 +5,19 @@ import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExprParser, Feat
 import de.fosd.typechef.typesystem.linker.{EmptyInterface, CInterface, SystemLinker, InterfaceWriter}
 import java.io.File
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
+import de.fosd.typechef.crefactor.Logging
 
 /**
  * Interface for generating linking informations of a whole given project
  */
-trait CLinkingInterfaceGenerator extends Evaluation with App {
+trait CLinkingInterfaceGenerator extends Evaluation with App with Logging {
 
     val filename = "CLinking"
     val linkExt = ".interface"
     val dbgLinkExt = ".dbginterface"
 
     val fileList = io.Source.fromFile(filesToEval).getLines().toList
-    println(fileList.size + " files to analyse for linking informations.")
+    logger.info(fileList.size + " files to analyse for linking informations.")
 
     private def getFMConstraints: Iterator[FeatureExpr] =
         for (l: String <- io.Source.fromFile(featureModel).getLines(); if l != "")
@@ -24,12 +25,12 @@ trait CLinkingInterfaceGenerator extends Evaluation with App {
 
     val fm_const_genClock = new StopClock
     val fm_constraints = getFMConstraints.fold(FeatureExprFactory.True)(_ and _)
-    println("Loaded constraints in " + fm_const_genClock.getTime + "ms.")
+    logger.info("Loaded constraints in " + fm_const_genClock.getTime + "ms.")
 
     val fm_genClock = new StopClock
     //val fm = FeatureExprFactory.default.featureModelFactory.create(fm_constraints)
     val fm = FeatureExprFactory.default.featureModelFactory.createFromDimacsFile(featureModel_DIMACS, "")
-    println("Loaded feature model in " + fm_genClock.getTime + "ms.")
+    logger.info("Loaded feature model in " + fm_genClock.getTime + "ms.")
 
     val reader = new InterfaceWriter() {}
     val interfaces = fileList.map(f => reader.readInterface(new File(sourcePath + f + ".interface"))).map(SystemLinker.linkStdLib)
@@ -47,10 +48,10 @@ trait CLinkingInterfaceGenerator extends Evaluation with App {
 
             for (c <- conflicts)
                 if (!c._2.isTautology(fm))
-                    println("Waring: " + c + " is not a tautology in feature model.")
+                    logger.warn(c + " is not a tautology in feature model.")
 
             if (!(left isCompatibleTo right)) {
-                println("Conflict: " + conflicts + " is not compatible with feature model.")
+                logger.error(conflicts + " is not compatible with feature model.")
                 left
             } else left link right
         } else if (l.size == 1) l(0)
@@ -70,23 +71,23 @@ trait CLinkingInterfaceGenerator extends Evaluation with App {
 
     val linkingClock = new StopClock
     val finalInterface = linkTreewise(interfaces).pack //.andFM(fm_constraints)
-    println("Linked interfaces in " + linkingClock.getTime + "ms.")
+    logger.info("Linked interfaces in " + linkingClock.getTime + "ms.")
 
-    println("Linked interface is complete:\t" + finalInterface.isComplete)
-    println("Linked interface is fully configured:\t" + finalInterface.isFullyConfigured)
-    println("Linked interface is wellformed:\t" + finalInterface.isWellformed)
+    logger.info("Linked interface is complete:\t" + finalInterface.isComplete)
+    logger.info("Linked interface is fully configured:\t" + finalInterface.isFullyConfigured)
+    logger.info("Linked interface is wellformed:\t" + finalInterface.isWellformed)
 
-    println(finalInterface.exports.size + " exports: " + finalInterface.exports)
-    println(finalInterface.imports.size + " imports: " + finalInterface.imports)
+    logger.info(finalInterface.exports.size + " exports: " + finalInterface.exports)
+    logger.info(finalInterface.imports.size + " imports: " + finalInterface.imports)
 
     val interfacePath = new File(completePath + "/" + filename + linkExt)
     val dbgInterfacePath = new File(completePath + "/" + filename + dbgLinkExt)
 
     reader.writeInterface(finalInterface, interfacePath)
-    println("Generated interface in " + interfacePath.getCanonicalPath)
+    logger.info("Generated interface in " + interfacePath.getCanonicalPath)
 
     reader.debugInterface(finalInterface, dbgInterfacePath)
-    println("Generated debug interface in " + dbgInterfacePath.getCanonicalPath)
+    logger.info("Generated debug interface in " + dbgInterfacePath.getCanonicalPath)
 
     new CLinking(interfacePath.getCanonicalPath)
 }

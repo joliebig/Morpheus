@@ -22,10 +22,6 @@ public final class Configuration {
      */
     private final String configFileName = "config.properties";
 
-    /**
-     * Name of the typechef configuration file.
-     */
-    private final String typeChefConfig = "typechef.properties";
 
     /**
      * The referenced configuration properties object.
@@ -39,7 +35,7 @@ public final class Configuration {
         this.configuration = new Properties();
         FileReader reader = null;
         try {
-            reader = new FileReader(Configuration.class.getResource(configFileName).getFile());
+            reader = new FileReader(ClassLoader.getSystemClassLoader().getResource(configFileName).getFile());
             this.configuration.load(reader);
         } catch (IOException e) {
             e.printStackTrace();
@@ -75,14 +71,5 @@ public final class Configuration {
      */
     public int getConfigAsInt(final String key) {
         return Integer.parseInt(configuration.getProperty(key));
-    }
-
-    /**
-     * Retrieves the path of the typechef configuration properties file.
-     *
-     * @return the typechef configuration properties filepath
-     */
-    public String getTypeChefConfigFilePath() {
-        return Configuration.class.getResource(typeChefConfig).getFile();
     }
 }
