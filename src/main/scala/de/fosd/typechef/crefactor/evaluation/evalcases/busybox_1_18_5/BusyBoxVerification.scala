@@ -52,7 +52,7 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
                 false
             }
         })
-        logger.info(evalFile + " passed build and testing as " + mode + ": " + result.exists(_))
+        logger.info(evalFile + " passed build and testing as " + mode + ": " + result.exists(x => x))
     }
 
     def runTest: String = {
