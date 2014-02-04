@@ -38,7 +38,6 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
             case o: OptionException =>
                 println("Invocation error: " + o.getMessage)
                 println("use parameter --help for more information.")
-                throw o
                 System.exit(-1)
         }
 
@@ -64,7 +63,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         opt.setFeatureModel(fm) //otherwise the lexer does not get the updated feature model with file presence conditions
 
         if (opt.getUseDefaultPC && !opt.getFilePresenceCondition.isSatisfiable(fm)) {
-            logger.error("file has contradictory presence condition. existing.") //otherwise this can lead to strange parser errors, because True is satisfiable, but anything else isn't
+            logger.error("file has contradictory presence condition. exiting.") //otherwise this can lead to strange parser errors, because True is satisfiable, but anything else isn't
             return (null, null)
         }
 
@@ -133,7 +132,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         }
 
         val canBuild = builder.canBuild(ast, fm, opt.getFile)
-        logger.info("Can build " + new File(opt.getFile).getName + " : " + canBuild + " +++")
+        logger.info("Can build " + new File(opt.getFile).getName + " : " + canBuild)
     }
     private def refactorEval(opt: FrontendOptions, ast: AST, fm: FeatureModel, linkInf: CLinking) {
         val caseStudy: Refactor = {
