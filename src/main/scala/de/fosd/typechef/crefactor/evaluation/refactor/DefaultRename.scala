@@ -29,19 +29,14 @@ trait DefaultRename extends Refactoring with Evaluation {
 
 
             // TODO Fix Bug in OpenSSL for functions without body
-            def isWritable(id: Id): Boolean = {
-                morpheus.getAllConnectedIdentifier(id).foreach(i2 => {
-                    println(parentAST(parentAST(parentAST(i2, morpheus.getASTEnv), morpheus.getASTEnv), morpheus.getASTEnv))
-                })
-                morpheus.getAllConnectedIdentifier(id).forall(i =>
-                    isValidId(i) && (i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) || new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
-            }
+            def isWritable(id: Id): Boolean = morpheus.getAllConnectedIdentifier(id).forall(i =>
+                isValidId(i) && (i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) || new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
 
             val allIds = morpheus.getUseDeclMap.keys
             val linkedIds = if (FORCE_LINKING && linkInterface != null) allIds.par.filter(id => linkInterface.isListed(id.name)) else allIds
             val ids = if (linkedIds.isEmpty) allIds else linkedIds
 
-            println("+++ IDs found: " + ids.size)
+            logger.info("IDs found: " + ids.size)
 
             /**
             val writeAbleIds = ids.filter(id =>
@@ -52,7 +47,7 @@ trait DefaultRename extends Refactoring with Evaluation {
 
             val variableIds = ids.par.filter(id => isVariable(parentOpt(id, morpheus.getASTEnv)))
 
-            println("+++ Varialbe IDs found: " + variableIds.size)
+            logger.info("+++ Variable IDs found: " + variableIds.size)
 
             def getRandomID: Id = {
                 val randID = if (!variableIds.isEmpty && FORCE_VARIABILITY) variableIds.apply((math.random * variableIds.size).toInt) else ids.apply((math.random * ids.size).toInt)
@@ -70,7 +65,7 @@ trait DefaultRename extends Refactoring with Evaluation {
         val time = new StopClock
         val toRename = getVariableIdToRename
         val determineTime = time.getTime
-        println("+++ Time to determine id: " + time.getTime)
+        logger.info("Time to determine id: " + time.getTime)
         StatsJar.addStat(morpheus.getFile, RandomRefactorDeterminationTime, determineTime)
         val id = toRename._1
         StatsJar.addStat(morpheus.getFile, RenamedId, id.name)
@@ -111,7 +106,7 @@ trait DefaultRename extends Refactoring with Evaluation {
         val affectedFiles = linked.foldLeft(new mutable.HashMap[String, Position])((map, pos) => map += (pos.getFile -> pos))
         val refactorChain = affectedFiles.foldLeft(List[(Morpheus, Position)]())((list, entry) => {
             if (blackListFiles.exists(getFileName(entry._1).equalsIgnoreCase)) {
-                println("+++ File is blacklisted and cannot be build +++")
+                logger.info("File is blacklisted and cannot be build +++")
                 return null
             }
             val ast = CRefactorFrontend.parse(entry._1)

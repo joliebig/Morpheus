@@ -67,7 +67,7 @@ trait DefaultExtract extends Refactoring with Evaluation {
             def getExtractStatements: List[AST] = {
                 val startTime = new StopClock
                 val availableStmtsToExtract = compStmts.par.flatMap(compSmt => getAvailableExtractStatements(compSmt)).filterNot(x => x.isEmpty)
-                println("+++ Time to determine statements: " + startTime.getTime + " +++")
+                logger.info("Time to determine statements: " + startTime.getTime)
                 // Pick a random available element from the resulting array
                 if (!availableStmtsToExtract.isEmpty) availableStmtsToExtract.apply(util.Random.nextInt(availableStmtsToExtract.length))
                 else List()
@@ -82,7 +82,7 @@ trait DefaultExtract extends Refactoring with Evaluation {
 
             if (statements.isEmpty) {
                 writeError("no valid extract statement found", path + "stmt")
-                println("no valid statement found")
+                logger.warn("no valid extract statement found")
                 return (false, null, List(), List())
             }
 
@@ -98,8 +98,7 @@ trait DefaultExtract extends Refactoring with Evaluation {
                 }
                 case Left(s) => {
                     // TODO Correct Error Handling
-                    println("error")
-                    println(s)
+                    logger.error(s)
                     writeError("Refactor Error:\n" + s, path + "ref")
                     if (depth < RETRIES) refactor(morpheus, linkInterface, depth + 1)
                     else (false, null, List(), List())

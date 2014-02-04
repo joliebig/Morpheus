@@ -18,10 +18,10 @@ object BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
     def inline(ast: AST, fm: FeatureModel, file: String, linkInterface: CLinking) = evaluate(ast, fm, file, linkInterface, Inline)
 
     private def evaluate(ast: AST, fm: FeatureModel, file: String, linkInterface: CLinking, r: Refactoring): Unit = {
-        println("+++ File to refactor: " + getFileName(file) + " +++")
+        logger.info("File to refactor: " + getFileName(file) + " +++")
         val resultDir = getResultDir(file)
         val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(file)
-        if (ast == null) println("+++ AST is null! +++")
+        if (ast == null) logger.error("+++ AST is null! +++")
         else if (blackListFiles.exists(getFileName(file).equalsIgnoreCase)) println("+++ File is blacklisted and cannot be build +++")
         else {
             try {

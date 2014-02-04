@@ -185,7 +185,7 @@ object CExtractFunction extends ASTSelection with CRefactor {
         } else parents = uniqueSelectedExpressions.toArray(Array[Expr]()).toList
 
         cachedSelectedElements = parents.sortWith(comparePosition)
-        println("ExtractFuncSelection: " + cachedSelectedElements)
+        logger.info("ExtractFuncSelection: " + cachedSelectedElements)
         cachedSelectedElements
     }
 
@@ -281,7 +281,7 @@ object CExtractFunction extends ASTSelection with CRefactor {
         val externalUses = externalOccurrences(selectedIds, morpheus.getDeclUseMap, morpheus)
         val idsToDeclare = getIdsToDeclare(externalUses)
 
-        if (!idsToDeclare.isEmpty) println("+++ Invalid selection for: " + selection + " with follwoing ids to declare: " + idsToDeclare)
+        if (!idsToDeclare.isEmpty) logger.error("Invalid selection for: " + selection + " with follwoing ids to declare: " + idsToDeclare)
 
         !idsToDeclare.isEmpty
     }
@@ -369,22 +369,22 @@ object CExtractFunction extends ASTSelection with CRefactor {
                 case o@One((CFunction(_, _), _, _)) =>
                 case o@One((_, KEnumVar, _, _)) =>
                     // direct enum use -> check for visibility only as enums are constant - if not visible afterwards the refactoring can not be made.
-                if (morpheus.getUseDeclMap.get(id).exists(t => findPriorASTElem[CompoundStatement](t, morpheus.getASTEnv) match {
+                    if (morpheus.getUseDeclMap.get(id).exists(t => findPriorASTElem[CompoundStatement](t, morpheus.getASTEnv) match {
                         case None => false
                         case _ => true
                     })) throw new RefactorException("Type Declaration for " + id.name + " would be invisible after extraction!")
                 case o@One((CType(_, _, _, _), KParameter, _, _)) =>
                     // Passed as parameter in parent function
-                val decl = findPriorASTElem[ParameterDeclaration](id, morpheus.getASTEnv)
+                    val decl = findPriorASTElem[ParameterDeclaration](id, morpheus.getASTEnv)
                     decl match {
                         case Some(p@ParameterDeclarationD(_, _, _)) =>
                             val genDeclFromPDecl = Declaration(p.specifiers, List(Opt(ft, InitDeclaratorI(p.decl, p.attr, None))))
                             addDeclToDeclsToGenerate(ft, genDeclFromPDecl, id)
-                        case x => println("+++Error: Missed " + x)
+                        case x => logger.error("Missed parameter decl pattern" + x)
                     }
                 case _ =>
                     // Declared in parent function or globally definied
-                val decl = findPriorASTElem[Declaration](id, morpheus.getASTEnv)
+                    val decl = findPriorASTElem[Declaration](id, morpheus.getASTEnv)
                     decl match {
                         case Some(entry) => {
                             val feature = if (ft.equivalentTo(FeatureExprFactory.True)) parentOpt(entry, morpheus.getASTEnv).feature else ft
@@ -394,7 +394,7 @@ object CExtractFunction extends ASTSelection with CRefactor {
                             addTodeclDeclPointerMap(entry, generateInit(entry, id))
                             addTodeclIdMapMap(entry, id)
                         }
-                        case x => println("+++Error:" + x)
+                        case x => logger.error("Missed declaration: " + x)
                     }
             }
         }

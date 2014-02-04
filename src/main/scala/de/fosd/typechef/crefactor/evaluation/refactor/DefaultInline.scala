@@ -29,13 +29,13 @@ trait DefaultInline extends Refactoring with Evaluation {
             }
         }).toList
 
-        println("+++ Function calls found to inline: " + availableFuncCalls.size)
+        logger.info("Function calls found to inline: " + availableFuncCalls.size)
 
         if (availableFuncCalls.isEmpty) return (false, null, List(), List())
 
         val callIdToInline = availableFuncCalls(Random.nextInt(availableFuncCalls.size)).p.asInstanceOf[Id]
 
-        println("+++ Trying to inline call: " + callIdToInline)
+        logger.info("Trying to inline call: " + callIdToInline)
 
         try {
             val refTime = new StopClock
@@ -52,13 +52,13 @@ trait DefaultInline extends Refactoring with Evaluation {
             StatsJar.addStat(morpheus.getFile, Amount, callDeclDef._1.size)
             StatsJar.addStat(morpheus.getFile, InlinedFunction, callIdToInline)
 
-            println("+++ Affected features: " + features)
+            logger.info("Affected features: " + features)
 
             (true, refAST, features, List())
 
         } catch {
             case e: Exception => {
-                println("+++ Inlining failed!")
+                logger.error("Inlining failed!")
                 e.printStackTrace
                 return (false, null, List(), List())
             }
