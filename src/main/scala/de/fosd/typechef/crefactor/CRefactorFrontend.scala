@@ -23,13 +23,13 @@ import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.OpenSSLRefactor
 
 object CRefactorFrontend extends App with InterfaceWriter with BuildCondition with Logging {
 
-    var command: Array[String] = Array()
+    private var command: Array[String] = Array()
 
-    var runOpt: FrontendOptionsWithConfigFiles
+    private var runOpt: FrontendOptions = new FrontendOptions()
 
     override def main(args: Array[String]): Unit = parse(args, true)
 
-    def parse(args: Array[String], saveArg: Boolean = false): (AST, FeatureModel) = {
+    def parse(args: Array[String], saveArg: Boolean = false) = {
         // Parsing MorphFrontend is adapted by the original typechef frontend
         runOpt = new FrontendOptionsWithConfigFiles()
         try {
@@ -55,71 +55,76 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         val opt = new FrontendOptionsWithConfigFiles()
         opt.parseOptions(file +: command)
 
-        val fm = {
-            if (opt.getUseDefaultPC) opt.getLexerFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
-            else opt.getLexerFeatureModel.and(opt.getLocalFeatureModel)
-        }
-
-        val serialASTFile = file + runOpt.getSerializedASTFileExtension
+        val fm = getFM(opt)
+        opt.setFeatureModel(fm) //otherwise the lexer does not get the updated feature model with file presence conditions
 
         val ast = {
-            if (runOpt.reuseAST && new File(serialASTFile).exists()) loadSerializedAST(serialASTFile)
+            if (runOpt.reuseAST && new File(opt.getSerializedASTFilename).exists()) loadSerializedAST(opt.getSerializedASTFilename)
             else parseAST(fm, opt)
+        }
+
+        if (ast == null) {
+            logger.error("... failed reading AST " + opt.getFile + "\nExiting.")
+            System.exit(-1)
         }
 
         (ast, fm)
     }
 
-    private def processFile(opt: FrontendOptions): (AST, FeatureModel) = {
+    private def processFile(opt: FrontendOptions) = {
         val errorXML = new ErrorXML(opt.getErrorXMLFile)
         opt.setRenderParserError(errorXML.renderParserError)
 
-        val fm = {
-            if (opt.getUseDefaultPC) opt.getLexerFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
-            else opt.getLexerFeatureModel.and(opt.getLocalFeatureModel)
-        }
-
+        val fm = getFM(opt)
         opt.setFeatureModel(fm) //otherwise the lexer does not get the updated feature model with file presence conditions
-
-        if (opt.getUseDefaultPC && !opt.getFilePresenceCondition.isSatisfiable(fm)) {
-            logger.error("file has contradictory presence condition. exiting.") //otherwise this can lead to strange parser errors, because True is satisfiable, but anything else isn't
-            return (null, null)
-        }
-
-        var ast: AST = null
 
         if (opt.writeBuildCondition) writeBuildCondition(opt.getFile)
 
-        val linkInf = if (opt.refLink) new CLinking(opt.getLinkingInterfaceFile)
-        else null
-
-        if (opt.reuseAST && opt.parse && new File(opt.getSerializedASTFilename).exists()) {
-            ast = loadSerializedAST(opt.getSerializedASTFilename)
-            if (ast == null) logger.error("... failed reading AST\n")
+        val linkInf = {
+            if (opt.refLink) new CLinking(opt.getLinkingInterfaceFile)
+            else null
         }
 
         if (opt.parse) {
 
-            if (ast == null) ast = parseAST(fm, opt)
+            val ast = {
+                if (runOpt.reuseAST && new File(opt.getSerializedASTFilename).exists()) loadSerializedAST(opt.getSerializedASTFilename)
+                else parseAST(fm, opt)
+            }
 
-            if (ast == null) errorXML.write()
+            if (ast == null) {
+                errorXML.write()
+                logger.error("... failed reading AST " + opt.getFile + "\nExiting.")
+                System.exit(-1)
+            }
 
-            if (ast != null && opt.serializeAST) serializeAST(ast, opt.getSerializedASTFilename)
+            if (opt.serializeAST) serializeAST(ast, opt.getSerializedASTFilename)
 
-            if (ast != null && opt.writeInterface) writeInterface(ast, fm, opt, errorXML)
+            if (opt.writeInterface) writeInterface(ast, fm, opt, errorXML)
 
-            if (ast != null && opt.refEval) refactorEval(opt, ast, fm, linkInf)
+            if (opt.refEval) refactorEval(opt, ast, fm, linkInf)
 
-            if (ast != null && opt.prettyPrint) prettyPrint(ast, opt)
+            if (opt.prettyPrint) prettyPrint(ast, opt)
 
-            if (ast != null && opt.canBuild) testBuildingAndTesting(ast, fm, opt)
+            if (opt.canBuild) testBuildingAndTesting(ast, fm, opt)
 
-            if (ast != null && opt.showGui) createAndShowGui(ast, fm, opt)
+            if (opt.showGui) createAndShowGui(ast, fm, opt)
         }
-
-        (ast, fm)
     }
 
+    private def getFM(opt: FrontendOptions): FeatureModel = {
+        val fm = {
+            if (opt.getUseDefaultPC) opt.getLexerFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
+            else opt.getLexerFeatureModel.and(opt.getLocalFeatureModel)
+        }
+
+        if (opt.getUseDefaultPC && !opt.getFilePresenceCondition.isSatisfiable(fm)) {
+            logger.error("file has contradictory presence condition. exiting.") //otherwise this can lead to strange parser errors, because True is satisfiable, but anything else isn't
+            System.exit(-1)
+        }
+
+        fm
+    }
 
     private def writeInterface(ast: AST, fm: FeatureModel, opt: FrontendOptions, errorXML: ErrorXML) {
         val ts = new CTypeSystemFrontend(ast.asInstanceOf[TranslationUnit], fm, opt) with CTypeCache with CDeclUse
