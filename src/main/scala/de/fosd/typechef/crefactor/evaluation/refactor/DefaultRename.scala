@@ -109,7 +109,7 @@ trait DefaultRename extends Refactoring with Evaluation {
                 logger.info("File is blacklisted and cannot be build +++")
                 return null
             }
-            val ast = CRefactorFrontend.parse(entry._1)
+            val ast = CRefactorFrontend.parseOrLoadAST(entry._1)
             list :+(new Morpheus(ast._1, ast._2, entry._1), entry._2)
         })
         refactorChain

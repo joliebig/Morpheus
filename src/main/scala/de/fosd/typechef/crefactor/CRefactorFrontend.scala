@@ -25,15 +25,17 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
 
     var command: Array[String] = Array()
 
+    var fm: FeatureModel
+
+    var runOpt: FrontendOptionsWithConfigFiles
+
     override def main(args: Array[String]): Unit = parse(args, true)
 
-    def parse(file: String): (AST, FeatureModel) = parse(file +: command, false)
-
-    def parse(args: Array[String], saveArg: Boolean): (AST, FeatureModel) = {
+    def parse(args: Array[String], saveArg: Boolean = false): (AST, FeatureModel) = {
         // Parsing MorphFrontend is adapted by the original typechef frontend
-        val opt = new FrontendOptionsWithConfigFiles()
+        runOpt = new FrontendOptionsWithConfigFiles()
         try {
-            opt.parseOptions(args)
+            runOpt.parseOptions(args)
         } catch {
             case o: OptionException =>
                 println("Invocation error: " + o.getMessage)
@@ -43,19 +45,38 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
 
         // Current re-run hack - storing the initial arguments for parsing further files then the initial with the same arguments
         if (saveArg) command = args.foldLeft(List[String]())((args, arg) => {
-            if (arg.equalsIgnoreCase(opt.getFile)) args
+            if (arg.equalsIgnoreCase(runOpt.getFile)) args
             else if (arg.equalsIgnoreCase("--refEval") || arg.equalsIgnoreCase("rename") || arg.equalsIgnoreCase("extract") || arg.equalsIgnoreCase("inline")) args
             else args :+ arg
         }).toArray
 
-        processFile(opt)
+        processFile(runOpt)
+    }
+
+    def parseOrLoadAST(file: String): (AST, FeatureModel) = {
+        val opt = new FrontendOptionsWithConfigFiles()
+        opt.parseOptions(file +: command)
+
+        val localfm = {
+            if (opt.getUseDefaultPC) opt.getLexerFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
+            else opt.getLexerFeatureModel.and(opt.getLocalFeatureModel)
+        }
+
+        val serialASTFile = file + runOpt.getSerializedASTFileExtension
+
+        val ast = {
+            if (runOpt.reuseAST && new File(serialASTFile).exists()) loadSerializedAST(serialASTFile)
+            else parseAST(localfm, opt)
+        }
+
+        (ast, localfm)
     }
 
     private def processFile(opt: FrontendOptions): (AST, FeatureModel) = {
         val errorXML = new ErrorXML(opt.getErrorXMLFile)
         opt.setRenderParserError(errorXML.renderParserError)
 
-        val fm = {
+        fm = {
             if (opt.getUseDefaultPC) opt.getLexerFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
             else opt.getLexerFeatureModel.and(opt.getLocalFeatureModel)
         }
