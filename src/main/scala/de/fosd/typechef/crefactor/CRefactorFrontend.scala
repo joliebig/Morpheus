@@ -88,7 +88,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         if (opt.parse) {
 
             val ast = {
-                if (runOpt.reuseAST && new File(opt.getSerializedASTFilename).exists()) loadSerializedAST(opt.getSerializedASTFilename)
+                if (opt.reuseAST && new File(opt.getSerializedASTFilename).exists()) loadSerializedAST(opt.getSerializedASTFilename)
                 else parseAST(fm, opt)
             }
 
