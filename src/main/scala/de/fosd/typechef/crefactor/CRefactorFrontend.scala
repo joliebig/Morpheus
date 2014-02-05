@@ -27,9 +27,9 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
 
     private var runOpt: FrontendOptions = new FrontendOptions()
 
-    override def main(args: Array[String]): Unit = parse(args, true)
+    override def main(args: Array[String]): Unit = parseOrLoadASTandProcess(args, true)
 
-    def parse(args: Array[String], saveArg: Boolean = false) = {
+    def parseOrLoadASTandProcess(args: Array[String], saveArg: Boolean = false) = {
         // Parsing MorphFrontend is adapted by the original typechef frontend
         runOpt = new FrontendOptionsWithConfigFiles()
         try {
