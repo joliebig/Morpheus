@@ -27,7 +27,6 @@ trait DefaultRename extends Refactoring with Evaluation {
                 else true
             }
 
-
             // TODO Fix Bug in OpenSSL for functions without body
             def isWritable(id: Id): Boolean = morpheus.getAllConnectedIdentifier(id).forall(i =>
                 isValidId(i) && (i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) || new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
@@ -70,7 +69,7 @@ trait DefaultRename extends Refactoring with Evaluation {
         val id = toRename._1
         StatsJar.addStat(morpheus.getFile, RenamedId, id.name)
 
-        val refactorChain = if (linkInterface != null) refactorLinkedFiles(linkInterface, id)
+        val refactorChain = if (linkInterface != null) getLinkedFilesToRefactor(linkInterface, id)
         else List()
 
 
@@ -101,7 +100,7 @@ trait DefaultRename extends Refactoring with Evaluation {
     }
 
 
-    def refactorLinkedFiles(linkInterface: CLinking, id: Id): List[(Morpheus, Position)] = {
+    private def getLinkedFilesToRefactor(linkInterface: CLinking, id: Id): List[(Morpheus, Position)] = {
         val linked = linkInterface.getPositions(id.name)
         val affectedFiles = linked.foldLeft(new mutable.HashMap[String, Position])((map, pos) => map += (pos.getFile -> pos))
         val refactorChain = affectedFiles.foldLeft(List[(Morpheus, Position)]())((list, entry) => {
