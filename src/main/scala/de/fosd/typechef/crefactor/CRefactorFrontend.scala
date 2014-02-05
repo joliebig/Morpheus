@@ -25,8 +25,6 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
 
     var command: Array[String] = Array()
 
-    var fm: FeatureModel
-
     var runOpt: FrontendOptionsWithConfigFiles
 
     override def main(args: Array[String]): Unit = parse(args, true)
@@ -57,7 +55,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         val opt = new FrontendOptionsWithConfigFiles()
         opt.parseOptions(file +: command)
 
-        val localfm = {
+        val fm = {
             if (opt.getUseDefaultPC) opt.getLexerFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
             else opt.getLexerFeatureModel.and(opt.getLocalFeatureModel)
         }
@@ -66,17 +64,17 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
 
         val ast = {
             if (runOpt.reuseAST && new File(serialASTFile).exists()) loadSerializedAST(serialASTFile)
-            else parseAST(localfm, opt)
+            else parseAST(fm, opt)
         }
 
-        (ast, localfm)
+        (ast, fm)
     }
 
     private def processFile(opt: FrontendOptions): (AST, FeatureModel) = {
         val errorXML = new ErrorXML(opt.getErrorXMLFile)
         opt.setRenderParserError(errorXML.renderParserError)
 
-        fm = {
+        val fm = {
             if (opt.getUseDefaultPC) opt.getLexerFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
             else opt.getLexerFeatureModel.and(opt.getLocalFeatureModel)
         }
