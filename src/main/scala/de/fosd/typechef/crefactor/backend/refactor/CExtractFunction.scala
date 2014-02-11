@@ -15,46 +15,34 @@ import de.fosd.typechef.parser.c.AtomicNamedDeclarator
 import de.fosd.typechef.parser.c.InlineSpecifier
 import de.fosd.typechef.parser.c.VolatileSpecifier
 import scala.Some
-import de.fosd.typechef.parser.c.NAryExpr
 import de.fosd.typechef.parser.c.DoStatement
 import de.fosd.typechef.parser.c.ExternSpecifier
 import de.fosd.typechef.parser.c.PointerCreationExpr
-import de.fosd.typechef.parser.c.AssignExpr
 import de.fosd.typechef.parser.c.VoidSpecifier
-import de.fosd.typechef.parser.c.ConditionalExpr
 import de.fosd.typechef.parser.c.FunctionCall
 import de.fosd.typechef.conditional.{Choice, One, Opt}
 import de.fosd.typechef.parser.c.RestrictSpecifier
 import de.fosd.typechef.parser.c.ForStatement
-import de.fosd.typechef.parser.c.IfStatement
 import de.fosd.typechef.parser.c.DeclParameterDeclList
 import de.fosd.typechef.parser.c.WhileStatement
 import de.fosd.typechef.parser.c.Pointer
-import de.fosd.typechef.parser.c.SizeOfExprT
-import de.fosd.typechef.parser.c.UnaryOpExpr
 import de.fosd.typechef.parser.c.Declaration
 import de.fosd.typechef.parser.c.ExprStatement
 import de.fosd.typechef.parser.c.Id
-import de.fosd.typechef.parser.c.Constant
 import de.fosd.typechef.parser.c.AutoSpecifier
 import de.fosd.typechef.parser.c.PointerDerefExpr
 import de.fosd.typechef.parser.c.GotoStatement
-import de.fosd.typechef.parser.c.ElifStatement
 import de.fosd.typechef.parser.c.ExprList
 import de.fosd.typechef.parser.c.FunctionDef
-import de.fosd.typechef.parser.c.SizeOfExprU
 import de.fosd.typechef.parser.c.NestedFunctionDef
 import de.fosd.typechef.parser.c.BreakStatement
 import de.fosd.typechef.parser.c.ContinueStatement
 import de.fosd.typechef.parser.c.ParameterDeclarationD
-import de.fosd.typechef.parser.c.CastExpr
 import de.fosd.typechef.parser.c.CompoundStatement
 import de.fosd.typechef.parser.c.CaseStatement
 import de.fosd.typechef.parser.c.RegisterSpecifier
-import de.fosd.typechef.parser.c.StringLit
 import de.fosd.typechef.parser.c.StaticSpecifier
 import de.fosd.typechef.parser.c.ConstSpecifier
-import de.fosd.typechef.parser.c.UnaryExpr
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.StatsJar
@@ -78,7 +66,7 @@ object CExtractFunction extends ASTSelection with CRefactor {
         // TODO Better solution for Control Statements
         val ids = filterASTElementsForFile[Id](filterASTElems[Id](morpheus.getAST).par.filter(x => isInSelectionRange(x, selection)).toList, selection.getFilePath)
 
-        def findMostUpwardExpr(element: Expr): Expr = {
+        /** def findMostUpwardExpr(element: Expr): Expr = {
             parentAST(element, morpheus.getASTEnv) match {
                 case e: Id => findMostUpwardExpr(e)
                 case e: Constant => findMostUpwardExpr(e)
@@ -95,13 +83,15 @@ object CExtractFunction extends ASTSelection with CRefactor {
                 case e: ExprList => findMostUpwardExpr(e)
                 case e: ConditionalExpr => findMostUpwardExpr(e)
                 case e: AssignExpr => findMostUpwardExpr(e)
-                case _ => element
+                case x =>
+                    println(x)
+                    element
             }
-        }
+        }   */
 
-        def findParent(id: Id): Some[AST] = {
-            val priorElement = findPriorASTElem[Statement](id, morpheus.getASTEnv)
-            priorElement match {
+        def findParent(id: Id) = findPriorASTElem[Statement](id, morpheus.getASTEnv)
+        // TODO Old code - trying to identify expression for extraction.
+        /** priorElement match {
                 case None => null
                 case _ => priorElement.get match {
                     case ifState: IfStatement => Some(findMostUpwardExpr(id))
@@ -114,9 +104,7 @@ object CExtractFunction extends ASTSelection with CRefactor {
                     case caseState: CaseStatement => Some(findMostUpwardExpr(id))
                     case s => Some(s)
                 }
-            }
-
-        }
+            } **/
 
         def exploitStatements(statement: Statement): Statement = {
             try {
@@ -169,7 +157,7 @@ object CExtractFunction extends ASTSelection with CRefactor {
                 case s: Some[Statement] =>
                     uniqueSelectedStatements.add(s.get)
                     uniqueSelectedStatements.add(lookupControlStatements(s.get))
-                case e: Some[Expr] => uniqueSelectedExpressions.add(e.get)
+                case x => logger.info("There might have been an expression! " + x)
             }
         })
 
