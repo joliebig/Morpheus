@@ -8,6 +8,7 @@ import de.fosd.typechef.crefactor.evaluation_utils.Configuration
 import de.fosd.typechef.crefactor.evaluation.StatsJar
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.parser.c.Id
+import java.io.File
 
 /**
  * Implements the technique of correctly renaming an identifier.
@@ -26,6 +27,7 @@ object CRenameIdentifier extends ASTSelection with CRefactor {
         StatsJar.addStat(morpheus.getFile, Amount, idsToRename.size)
         if (!isValidName(newName)) Left(Configuration.getInstance().getConfig("default.error.invalidName"))
         else if (idsToRename.exists(isShadowed(newName, _, morpheus))) Left(Configuration.getInstance().getConfig("refactor.rename.failed.shadowing"))
+        else if (idsToRename.par.forall(id => new File(id.getFile.get.replaceFirst("file ", "")).canWrite)) Left(Configuration.getInstance().getConfig("refactor.rename.failed.rename"))
         else Right(renameIDsInAST(morpheus.getAST, idsToRename, newName))
     }
 }

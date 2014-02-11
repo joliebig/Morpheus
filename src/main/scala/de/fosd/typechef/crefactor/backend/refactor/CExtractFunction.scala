@@ -64,6 +64,7 @@ import de.fosd.typechef.crefactor.evaluation.Stats._
 /**
  * Implements the strategy of extracting a function.
  */
+// TODO Match with linking
 object CExtractFunction extends ASTSelection with CRefactor {
 
     private var lastSelection: Selection = null
