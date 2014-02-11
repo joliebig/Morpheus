@@ -21,6 +21,7 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
     val completePath: String
     val filesToEval: String
     val blackListFiles: List[String]
+    val blackListIds: List[String]
     val sourcePath: String
     val testPath: String
     val result: String
