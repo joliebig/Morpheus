@@ -196,14 +196,14 @@ object CExtractFunction extends ASTSelection with CRefactor {
 
     def isAvailable(morpheus: Morpheus, selection: Selection): Boolean = isAvailable(morpheus, getSelectedElements(morpheus, selection))
 
-    def extract(morpheus: Morpheus, selection: List[AST], funcName: String): Either[String, AST] = {
-        verifyFunctionName(funcName, selection, morpheus)
+    def extract(morpheus: Morpheus, selection: List[AST], fName: String): Either[String, AST] = {
+        isValidFunName(fName, selection, morpheus)
 
         // Analyze selection first -> either expression or statements
         // Workaraound for type erasure of Scala
         selection.head match {
             case e: Expr => Left("This refactoring is not yet supported!")
-            case s: Statement => extractStatements(morpheus, selection, funcName)
+            case s: Statement => extractStatements(morpheus, selection, fName)
             case _ => Left("Fatal error in selected elements!")
         }
     }
@@ -515,11 +515,11 @@ object CExtractFunction extends ASTSelection with CRefactor {
             case _ => null
         }
 
-    private def verifyFunctionName(funcName: String, selection: List[AST], morpheus: Morpheus) {
+    private def isValidFunName(funName: String, selection: List[AST], morpheus: Morpheus) {
         // TODO Change to bool function
-        assert(isValidName(funcName), Configuration.getInstance().getConfig("refactor.extractFunction.failed.shadowing"))
+        assert(isValidName(funName), Configuration.getInstance().getConfig("refactor.extractFunction.failed.shadowing"))
         // Check for shadowing with last statement of the extraction compound statement
-        assert(!isShadowed(funcName, getCompoundStatement(selection.head, morpheus).innerStatements.last.entry, morpheus), Configuration.getInstance().getConfig("default.error.invalidName"))
+        assert(!isShadowed(funName, getCompoundStatement(selection.head, morpheus).innerStatements.last.entry, morpheus), Configuration.getInstance().getConfig("default.error.invalidName"))
     }
 
     /**
