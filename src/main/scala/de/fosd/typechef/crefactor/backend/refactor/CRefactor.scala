@@ -89,7 +89,7 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
     /**
      * Replace a list of ids in AST with copied instance with new names.
      */
-    def renameIDsInAST[T <: Product](t: T, ids: List[Id], newName: String): T = {
+    def replaceIds[T <: Product](t: T, ids: List[Id], newName: String): T = {
         val r = manybu(rule {
             case id: Id => if (ids.exists(isPartOf(id, _))) id.copy(name = newName) else id
             case x => x
@@ -100,7 +100,8 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
     /**
      * Replaces the innerstatements of compoundstatements of a translation unit.
      */
-    def replaceCompoundStmtInAST[T <: Product](t: T, cStmt: CompoundStatement, newInnerStmt: List[Opt[Statement]]): T = {
+    def replaceCompoundStmt[T <: Product](t: T, cStmt: CompoundStatement,
+                                          newInnerStmt: List[Opt[Statement]]): T = {
         val r = manybu(rule {
             case cc: CompoundStatement => if (isPartOf(cStmt, cc)) cc.copy(innerStatements = newInnerStmt) else cc
             case x => x

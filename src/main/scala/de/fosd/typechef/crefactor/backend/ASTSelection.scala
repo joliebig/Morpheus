@@ -11,7 +11,7 @@ trait ASTSelection extends Logging {
 
     def getAvailableIdentifiers(morpheus: Morpheus, selection: Selection): List[Id]
 
-    def isInSelectionRange(value: AST, selection: Selection): Boolean = {
+    def isPartOfSelection(value: AST, selection: Selection): Boolean = {
         /**
          * Annotated ast elements have often the same starting line. As workaround we only identify the element by its end value.
          */
@@ -41,7 +41,7 @@ trait ASTSelection extends Logging {
         selection.filter(p => p.getFile.get.regionMatches(true, offset, file, 0, file.length())).toList
     }
 
-    def isElementOfFile[T <: AST](element: T, file: String) = element.getFile.get.regionMatches(true, 5, file, 0, file.length())
+    def isPartOfFile[T <: AST](element: T, file: String) = element.getFile.get.regionMatches(true, 5, file, 0, file.length())
 
     def isElementOfSelectionRange(element: AST, selection: Selection): Boolean = {
         val startLine = selection.getLineStart

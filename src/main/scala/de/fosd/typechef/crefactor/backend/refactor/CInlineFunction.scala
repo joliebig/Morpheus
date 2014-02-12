@@ -114,7 +114,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
         var defs = List[Opt[FunctionDef]]()
         var callExpr = List[Opt[AST]]()
 
-        morpheus.getAllConnectedIdentifier(callId).foreach(id => {
+        morpheus.linkage(callId).foreach(id => {
             val parent = parentOpt(id, morpheus.getASTEnv)
             parent.entry match {
                 case w: WhileStatement => callExpr ::= parent.asInstanceOf[Opt[AST]]
@@ -153,10 +153,10 @@ object CInlineFunction extends ASTSelection with CRefactor {
 
     private def isSelected(element: AST, astEnv: ASTEnv, selection: Selection): Boolean = {
         element match {
-            case f: FunctionDef => isInSelectionRange(f.declarator.getId, selection)
-            case n: NestedFunctionDef => isInSelectionRange(n.declarator.getId, selection)
+            case f: FunctionDef => isPartOfSelection(f.declarator.getId, selection)
+            case n: NestedFunctionDef => isPartOfSelection(n.declarator.getId, selection)
             case c: FunctionCall => isSelected(astEnv.parent(c).asInstanceOf[AST], astEnv, selection)
-            case p: PostfixExpr => isInSelectionRange(p.p, selection)
+            case p: PostfixExpr => isPartOfSelection(p.p, selection)
             case _ =>
                 assert(false, element)
                 false

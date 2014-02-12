@@ -18,16 +18,22 @@ object CRenameIdentifier extends ASTSelection with CRefactor {
     def getSelectedElements(morpheus: Morpheus, selection: Selection): List[AST] = getAvailableIdentifiers(morpheus, selection)
 
     def getAvailableIdentifiers(morpheus: Morpheus, selection: Selection): List[Id] =
-        filterASTElems[Id](morpheus.getTranslationUnit).par.filter(x => isInSelectionRange(x, selection)).toList.filter(x => isElementOfFile(x, selection.getFilePath))
+        filterASTElems[Id](morpheus.getTranslationUnit).
+            par.filter(x => isPartOfSelection(x, selection)).
+            toList.filter(x => isPartOfFile(x, selection.getFilePath))
 
-    def isAvailable(morpheus: Morpheus, selection: Selection): Boolean = !getAvailableIdentifiers(morpheus, selection).isEmpty
+    def isAvailable(morpheus: Morpheus, selection: Selection): Boolean =
+        !getAvailableIdentifiers(morpheus, selection).isEmpty
 
-    def rename(id: Id, newName: String, morpheus: Morpheus): Either[String, AST] = {
-        val idsToRename = morpheus.getAllConnectedIdentifier(id)
-        StatsJar.addStat(morpheus.getFile, Amount, idsToRename.size)
-        if (!isValidId(newName)) Left(Configuration.getInstance().getConfig("default.error.invalidName"))
-        else if (idsToRename.exists(isShadowed(newName, _, morpheus))) Left(Configuration.getInstance().getConfig("refactor.rename.failed.shadowing"))
-        else if (idsToRename.par.forall(id => new File(id.getFile.get.replaceFirst("file ", "")).canWrite)) Left(Configuration.getInstance().getConfig("refactor.rename.failed.rename"))
-        else Right(renameIDsInAST(morpheus.getTranslationUnit, idsToRename, newName))
+    def rename(id: Id, nid: String, morpheus: Morpheus): Either[String, AST] = {
+        val lid = morpheus.linkage(id)
+        StatsJar.addStat(morpheus.getFile, Amount, lid.size)
+        if (!isValidId(nid))
+            Left(Configuration.getInstance().getConfig("default.error.invalidName"))
+        else if (lid.exists(isShadowed(nid, _, morpheus)))
+            Left(Configuration.getInstance().getConfig("refactor.rename.failed.shadowing"))
+        else if (lid.par.forall(id => new File(id.getFile.get.replaceFirst("file ", "")).canWrite)) Left(Configuration.getInstance().getConfig("refactor.rename.failed.rename"))
+        else
+            Right(replaceIds(morpheus.getTranslationUnit, lid, nid))
     }
 }

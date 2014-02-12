@@ -65,7 +65,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         lastSelection = selection
 
         // TODO Better solution for Control Statements
-        val ids = filterASTElementsForFile[Id](filterASTElems[Id](morpheus.getTranslationUnit).par.filter(x => isInSelectionRange(x, selection)).toList, selection.getFilePath)
+        val ids = filterASTElementsForFile[Id](filterASTElems[Id](morpheus.getTranslationUnit).par.filter(x => isPartOfSelection(x, selection)).toList, selection.getFilePath)
 
         /** def findMostUpwardExpr(element: Expr): Expr = {
             parentAST(element, morpheus.getASTEnv) match {
@@ -184,17 +184,16 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         case false => List[Id]() // returns a empty list to signalize a valid selection was found
     }
 
-    def isAvailable(morpheus: Morpheus, selectedElements: List[AST]): Boolean = {
-        if (selectedElements.isEmpty) false
-        else if (!selectedElements.par.forall {
+    def isAvailable(morpheus: Morpheus, selection: List[AST]): Boolean = {
+        if (selection.isEmpty) false
+        else if (!selection.par.forall {
             element => findPriorASTElem[FunctionDef](element, morpheus.getASTEnv).isDefined
-
         }) false
-        else if (!isPartOfSameCompStmt(selectedElements, morpheus)) false
-        else if (!filterAllASTElems[ReturnStatement](selectedElements).isEmpty) false
-        else if (!selectedElements.par.forall(element => !isBadExtractStatement(element, selectedElements, morpheus))) false
-        else if (hasVarsToDefinedExternal(selectedElements, morpheus)) false
-        // else if (!isConditionalComplete(selectedElements, getParentFunction(selectedElements, morpheus), morpheus)) false // Not Relevant?
+        else if (!isPartOfSameCompStmt(selection, morpheus)) false
+        else if (!filterAllASTElems[ReturnStatement](selection).isEmpty) false
+        else if (!selection.par.forall(!isBadExtractStatement(_, selection, morpheus))) false
+        else if (hasVarsToDefinedExternal(selection, morpheus)) false
+        // else if (!isConditionalComplete(selection, getParentFunction(selection, morpheus), morpheus)) false // Not Relevant?
         else true
     }
 
@@ -265,7 +264,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             val ccStmtWithRemovedStmts = eqRemove(insertedCall, selectedOptStatements)
             val astWFunc = insertInAstBefore(morpheus.getTranslationUnit, parentFunctionOpt, funcOpt)
 
-            val refAST = replaceCompoundStmtInAST(astWFunc, compStmt, ccStmtWithRemovedStmts)
+            val refAST = replaceCompoundStmt(astWFunc, compStmt, ccStmtWithRemovedStmts)
             Right(refAST)
         } catch {
             case r: RefactorException => Left(r.error)
@@ -450,9 +449,9 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         })
     }
 
-    private def isPartOfSameCompStmt(selectedElements: List[AST], morpheus: Morpheus): Boolean =
-        findPriorASTElem[CompoundStatement](selectedElements.head, morpheus.getASTEnv) match {
-            case Some(c) => selectedElements.par.forall(element => isElementOfEqCompStmt(element, c, morpheus))
+    private def isPartOfSameCompStmt(selection: List[AST], morpheus: Morpheus): Boolean =
+        findPriorASTElem[CompoundStatement](selection.head, morpheus.getASTEnv) match {
+            case Some(c) => selection.par.forall(element => isElementOfEqCompStmt(element, c, morpheus))
             case _ => false // not element of an ccStmt
         }
 

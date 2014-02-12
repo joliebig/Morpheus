@@ -28,7 +28,7 @@ trait DefaultRename extends Refactoring with Evaluation {
             }
 
             // TODO Fix Bug in OpenSSL for functions without body
-            def isWritable(id: Id): Boolean = morpheus.getAllConnectedIdentifier(id).forall(i =>
+            def isWritable(id: Id): Boolean = morpheus.linkage(id).forall(i =>
                 isValidId(i) && (i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) || new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
 
             val allIds = morpheus.getUseDeclMap.keys
@@ -55,7 +55,7 @@ trait DefaultRename extends Refactoring with Evaluation {
             }
 
             val id = getRandomID
-            val associatedIds = morpheus.getAllConnectedIdentifier(id)
+            val associatedIds = morpheus.linkage(id)
             println("+++ Found Id: " + id)
             println("+++ Associated Ids: " + associatedIds.size)
             (id, associatedIds.length, associatedIds.map(morpheus.getASTEnv.featureExpr).distinct)
