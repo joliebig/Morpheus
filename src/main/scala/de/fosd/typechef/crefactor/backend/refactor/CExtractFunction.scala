@@ -198,7 +198,7 @@ object CExtractFunction extends ASTSelection with CRefactor {
 
     def extract(morpheus: Morpheus, selection: List[AST], funName: String): Either[String, AST] = {
 
-        if (!isValidName(funName))
+        if (!isValidId(funName))
             return Left(Configuration.getInstance().getConfig("refactor.extractFunction.failed.shadowing"))
 
         // we check binding and visibility using the last element in the translation unit

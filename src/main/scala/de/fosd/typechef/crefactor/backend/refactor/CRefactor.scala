@@ -31,7 +31,7 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
      * @param name name to check
      * @return <code>true</code> if valid, <code>false</code> if not
      */
-    def isValidName(name: String): Boolean = (name.matches(VALID_NAME_PATTERN) && !name.startsWith("__") && !isReservedLanguageKeyword(name))
+    def isValidId(name: String): Boolean = (name.matches(VALID_NAME_PATTERN) && !name.startsWith("__") && !isReservedLanguageKeyword(name))
 
     def generateValidNewName(id: Id, stmt: Opt[AST], morph: Morpheus, appendix: Int = 1): String = {
         val newName = id.name + "_" + appendix
