@@ -10,6 +10,7 @@ import de.fosd.typechef.crefactor.frontend.util.RefactorNameInputBox;
 import de.fosd.typechef.crefactor.frontend.util.Test2000;
 import de.fosd.typechef.parser.c.AST;
 import de.fosd.typechef.parser.c.Id;
+import de.fosd.typechef.parser.c.TranslationUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import scala.collection.immutable.List;
@@ -45,7 +46,8 @@ public class RefactorAction {
                 try {
                     final ThreadMXBean tb = ManagementFactory.getThreadMXBean();
                     final long startTime = tb.getCurrentThreadCpuTime();
-                    final Either<String, AST> refactored = CExtractFunction.extract(morpheus, selection, box.getInput());
+                    final Either<String, TranslationUnit> refactored =
+                            CExtractFunction.extract(morpheus, selection, box.getInput());
                     if (refactored.isLeft()) {
                         JOptionPane.showMessageDialog(null, Configuration.getInstance().getConfig("refactor.extractFunction.failed") + " "
                                 + refactored.left().get(), Configuration.getInstance().getConfig("default.error"), JOptionPane.ERROR_MESSAGE);
@@ -89,7 +91,8 @@ public class RefactorAction {
                 try {
                     final ThreadMXBean tb = ManagementFactory.getThreadMXBean();
                     final long startTime = tb.getCurrentThreadCpuTime();
-                    final AST refactored = CInlineFunction.inline(morpheus, id, dialog.isRename(), false, dialog.isOnce());
+                    final TranslationUnit refactored = CInlineFunction.inline(morpheus, id,
+                            dialog.isRename(), false, dialog.isOnce());
                     logger.info("Duration for transforming: " + ((tb.getCurrentThreadCpuTime() - startTime) / 1000000) + "ms");
                     morpheus.update(refactored);
                 } catch (final AssertionError e) {
@@ -123,7 +126,8 @@ public class RefactorAction {
                 try {
                     final ThreadMXBean tb = ManagementFactory.getThreadMXBean();
                     final long time = tb.getCurrentThreadCpuTime();
-                    final Either<String, AST> refactored = CRenameIdentifier.rename(id, box.getInput(), morpheus);
+                    final Either<String, TranslationUnit> refactored =
+                            CRenameIdentifier.rename(id, box.getInput(), morpheus);
                     logger.info("Duration for transforming: " + (tb.getCurrentThreadCpuTime() - time) / 1000000 + "ms");
                     if (refactored.isLeft()) {
                         JOptionPane.showMessageDialog(null, Configuration.getInstance().getConfig("refactor.rename.failed"), Configuration.getInstance().getConfig("default.error"), JOptionPane.ERROR_MESSAGE);

@@ -81,9 +81,10 @@ object CInlineFunction extends ASTSelection with CRefactor {
      * @param morpheus the morpheus environment
      * @param id the function's identifier
      * @param rename indicates if variables should be renamed
-     * @return the refactored ast
+     * @return the refactored tunit
      */
-    def inline(morpheus: Morpheus, id: Id, rename: Boolean, evalMode: Boolean, once: Boolean = false): AST = {
+    def inline(morpheus: Morpheus, id: Id, rename: Boolean, evalMode: Boolean, once: Boolean = false):
+    TranslationUnit = {
         val divided = divideCallDeclDef(id, morpheus)
         val calls = divided._1
         val decl = divided._2
@@ -93,18 +94,22 @@ object CInlineFunction extends ASTSelection with CRefactor {
         if (defs.isEmpty) assert(false, "No valid function definition found.") // Included because of linked functions
         // Do inlining.
         // TODO Inline once
-        var refactoredAST = calls.foldLeft(morpheus.getTranslationUnit)((workingAST, call) => inlineFuncCall(workingAST, new Morpheus(workingAST), call, defs, rename))
-        refactoredAST = callExpr.foldLeft(refactoredAST)((workingAST, expr) => inlineFuncCallExpr(workingAST, new Morpheus(workingAST), expr, defs, rename))
+        var tunitRefactored = calls.foldLeft(morpheus.getTranslationUnit)((workingAST, call) => inlineFuncCall(workingAST, new Morpheus(workingAST), call, defs, rename))
+        tunitRefactored = 
+            callExpr.foldLeft(tunitRefactored)(
+                (workingAST, expr) => inlineFuncCallExpr(workingAST, new Morpheus(workingAST),
+                    expr, defs, rename))
 
         // Remove inlined function stmt's declaration and definitions
-        if (!evalMode) refactoredAST = removeFuncDeclDefsFromAST(refactoredAST, decl, defs)
-        refactoredAST
+        if (!evalMode) tunitRefactored = removeFuncDeclDefsFromAST(tunitRefactored, decl, defs)
+        tunitRefactored
     }
 
 
-    private def removeFuncDeclDefsFromAST(ast: AST, decl: List[Opt[AST]], defs: List[Opt[FunctionDef]]): AST = {
-        val astWoDecl = decl.foldLeft(ast)((workingAST, x) => removeFromAST(workingAST, x))
-        val astWoDeclDef = defs.foldLeft(astWoDecl)((workingAST, x) => removeFromAST(workingAST, x))
+    private def removeFuncDeclDefsFromAST(tunit: TranslationUnit, decl: List[Opt[AST]],
+                                          defs: List[Opt[FunctionDef]]): TranslationUnit = {
+        val astWoDecl = decl.foldLeft(tunit)((curTunit, x) => removeFromAST(curTunit, x))
+        val astWoDeclDef = defs.foldLeft(astWoDecl)((curTunit, x) => removeFromAST(curTunit, x))
         astWoDeclDef
     }
 
@@ -217,7 +222,8 @@ object CInlineFunction extends ASTSelection with CRefactor {
         })
     }
 
-    private def inlineFuncCallExpr(ast: AST, morpheus: Morpheus, call: Opt[AST], funcDefs: List[Opt[_]], rename: Boolean): AST = {
+    private def inlineFuncCallExpr(ast: AST, morpheus: Morpheus, call: Opt[AST],
+                                   funcDefs: List[Opt[_]], rename: Boolean): TranslationUnit = {
         val workingCallCompStmt = getCallCompStatement(call, morpheus.getASTEnv)
 
         def generateInlineExprStmts: List[(CompoundStatementExpr, FeatureExpr)] = {
@@ -310,11 +316,13 @@ object CInlineFunction extends ASTSelection with CRefactor {
                         println("Missed InlineStatementExpr" + x)
                         assert(false, "Refactoring failed - missed InlineStatementExpr")
                 }
-                insertRefactoredAST(morpheus, getCallCompStatement(call, morpheus.getASTEnv), replaceStmt)
+                insertRefactoredAST(morpheus, getCallCompStatement(call, morpheus.getASTEnv),
+                    replaceStmt)
         }
     }
 
-    private def inlineFuncCall(ast: AST, morpheus: Morpheus, call: Opt[Statement], funcDefs: List[Opt[_]], rename: Boolean): AST = {
+    private def inlineFuncCall(ast: TranslationUnit, morpheus: Morpheus, call: Opt[Statement],
+                               funcDefs: List[Opt[_]], rename: Boolean): TranslationUnit = {
         var workingCallCompStmt = getCallCompStatement(call, morpheus.getASTEnv)
 
         def inlineIfStmt(funcDefs: List[Opt[_]], callCompStmt: CompoundStatement): CompoundStatement = {
@@ -447,7 +455,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
         // find return statements
         val returnStmts = getReturnStmts(statements)
 
-        // instert in ast
+        // instert in tunit
         workingStatement = insertInAstBefore(workingStatement, call, initializer)
         workingStatement = insertInAstBefore(workingStatement, call, statements)
 

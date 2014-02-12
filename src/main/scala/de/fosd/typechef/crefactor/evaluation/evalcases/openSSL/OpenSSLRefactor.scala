@@ -1,7 +1,7 @@
 package de.fosd.typechef.crefactor.evaluation.evalcases.openSSL
 
 import de.fosd.typechef.crefactor.evaluation.{StatsJar, Refactoring, Refactor}
-import de.fosd.typechef.parser.c.AST
+import de.fosd.typechef.parser.c.TranslationUnit
 import de.fosd.typechef.featureexpr.FeatureModel
 import java.io.File
 import de.fosd.typechef.crefactor.Morpheus
@@ -11,21 +11,24 @@ import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.crefactor.evaluation.setup.CLinking
 
 object OpenSSLRefactor extends OpenSSLEvaluation with Refactor {
-    def rename(ast: AST, fm: FeatureModel, file: String, linkInterface: CLinking) = evaluate(ast, fm, file, Rename)
-    def extract(ast: AST, fm: FeatureModel, file: String, linkInterface: CLinking) = evaluate(ast, fm, file, Extract)
-    def inline(ast: AST, fm: FeatureModel, file: String, linkInterface: CLinking) = evaluate(ast, fm, file, Inline)
+    def rename(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking) =
+        evaluate(tunit, fm, file, Rename)
+    def extract(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking) =
+        evaluate(tunit, fm, file, Extract)
+    def inline(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking) =
+        evaluate(tunit, fm, file, Inline)
 
-    private def evaluate(ast: AST, fm: FeatureModel, file: String, r: Refactoring): Unit = {
+    private def evaluate(tunit: TranslationUnit, fm: FeatureModel, file: String, r: Refactoring): Unit = {
         println("+++ File to refactor: " + getFileName(file) + " +++")
         val resultDir = getResultDir(file)
         val path = resultDir.getCanonicalPath + File.separatorChar
         val resDir = new File(path)
         resDir.mkdirs()
-        if (ast == null) println("+++ AST is null! +++")
+        if (tunit == null) println("+++ AST is null! +++")
         else if (blackListFiles.exists(getFileName(file).equalsIgnoreCase)) println("+++ File is blacklisted and cannot be build +++")
         else {
             try {
-                val morpheus = new Morpheus(ast, fm, file)
+                val morpheus = new Morpheus(tunit, fm, file)
                 // reset test environment
                 runScript("./clean.sh", sourcePath)
                 val result = r.refactor(morpheus)
@@ -40,7 +43,7 @@ object OpenSSLRefactor extends OpenSSLEvaluation with Refactor {
                 StatsJar.write(path + ".stats")
             } catch {
                 case e: Exception => {
-                    e.printStackTrace
+                    e.printStackTrace()
                     writeException(e.getCause.toString + "\n" + e.getMessage + "\n" + e.getStackTrace.mkString("\n"), resDir.getCanonicalPath)
                 }
             }

@@ -51,24 +51,25 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         processFile(runOpt)
     }
 
-    def parseOrLoadAST(file: String): (AST, FeatureModel) = {
+    def parseOrLoadAST(file: String): (TranslationUnit, FeatureModel) = {
         val opt = new FrontendOptionsWithConfigFiles()
         opt.parseOptions(file +: command)
 
         val fm = getFM(opt)
         opt.setFeatureModel(fm) //otherwise the lexer does not get the updated feature model with file presence conditions
 
-        val ast = {
-            if (runOpt.reuseAST && new File(opt.getSerializedASTFilename).exists()) loadSerializedAST(opt.getSerializedASTFilename)
+        val tunit = {
+            if (runOpt.reuseAST && new File(opt.getSerializedASTFilename).exists())
+                loadSerializedAST(opt.getSerializedASTFilename)
             else parseAST(fm, opt)
         }
 
-        if (ast == null) {
+        if (tunit == null) {
             logger.error("... failed reading AST " + opt.getFile + "\nExiting.")
             System.exit(-1)
         }
 
-        (ast, fm)
+        (tunit, fm)
     }
 
     private def processFile(opt: FrontendOptions) = {
@@ -87,28 +88,29 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
 
         if (opt.parse) {
 
-            val ast = {
-                if (opt.reuseAST && new File(opt.getSerializedASTFilename).exists()) loadSerializedAST(opt.getSerializedASTFilename)
+            val tunit = {
+                if (opt.reuseAST && new File(opt.getSerializedASTFilename).exists())
+                    loadSerializedAST(opt.getSerializedASTFilename)
                 else parseAST(fm, opt)
             }
 
-            if (ast == null) {
+            if (tunit == null) {
                 errorXML.write()
                 logger.error("... failed reading AST " + opt.getFile + "\nExiting.")
                 System.exit(-1)
             }
 
-            if (opt.serializeAST) serializeAST(ast, opt.getSerializedASTFilename)
+            if (opt.serializeAST) serializeAST(tunit, opt.getSerializedASTFilename)
 
-            if (opt.writeInterface) writeInterface(ast, fm, opt, errorXML)
+            if (opt.writeInterface) writeInterface(tunit, fm, opt, errorXML)
 
-            if (opt.refEval) refactorEval(opt, ast, fm, linkInf)
+            if (opt.refEval) refactorEval(opt, tunit, fm, linkInf)
 
-            if (opt.prettyPrint) prettyPrint(ast, opt)
+            if (opt.prettyPrint) prettyPrint(tunit, opt)
 
-            if (opt.canBuild) testBuildingAndTesting(ast, fm, opt)
+            if (opt.canBuild) testBuildingAndTesting(tunit, fm, opt)
 
-            if (opt.showGui) createAndShowGui(ast, fm, opt)
+            if (opt.showGui) createAndShowGui(tunit, fm, opt)
         }
     }
 
@@ -139,7 +141,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         if (opt.writeDebugInterface)
             ts.debugInterface(interface, new File(opt.getDebugInterfaceFilename))
     }
-    private def parseAST(fm: FeatureModel, opt: FrontendOptions): AST = {
+    private def parseAST(fm: FeatureModel, opt: FrontendOptions): TranslationUnit = {
         val parsingTime = new StopClock
         val parserMain = new ParserMain(new CParser(fm))
         val ast = parserMain.parserMain(lex(opt), opt)
@@ -158,7 +160,8 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         val canBuild = builder.canBuild(ast, fm, opt.getFile)
         logger.info("Can build " + new File(opt.getFile).getName + " : " + canBuild)
     }
-    private def refactorEval(opt: FrontendOptions, ast: AST, fm: FeatureModel, linkInf: CLinking) {
+    private def refactorEval(opt: FrontendOptions, tunit: TranslationUnit,
+                             fm: FeatureModel, linkInf: CLinking) {
         val caseStudy: Refactor = {
             if (opt.getRefStudy.equalsIgnoreCase("busybox")) BusyBoxRefactor
             else if (opt.getRefStudy.equalsIgnoreCase("openssl")) OpenSSLRefactor
@@ -167,9 +170,9 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         }
 
         opt.getRefactorType match {
-            case RefactorType.RENAME => caseStudy.rename(ast, fm, opt.getFile, linkInf)
-            case RefactorType.EXTRACT => caseStudy.extract(ast, fm, opt.getFile, linkInf)
-            case RefactorType.INLINE => caseStudy.inline(ast, fm, opt.getFile, linkInf)
+            case RefactorType.RENAME => caseStudy.rename(tunit, fm, opt.getFile, linkInf)
+            case RefactorType.EXTRACT => caseStudy.extract(tunit, fm, opt.getFile, linkInf)
+            case RefactorType.INLINE => caseStudy.inline(tunit, fm, opt.getFile, linkInf)
             case RefactorType.NONE => println("No refactor type defined")
         }
     }
@@ -181,11 +184,11 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         fw.close()
     }
 
-    private def loadSerializedAST(filename: String): AST = {
+    private def loadSerializedAST(filename: String): TranslationUnit = {
         val fr = new ObjectInputStream(new GZIPInputStream(new FileInputStream(filename))) {
             override protected def resolveClass(desc: ObjectStreamClass) = { /*println(desc);*/ super.resolveClass(desc) }
         }
-        val ast = fr.readObject().asInstanceOf[AST]
+        val ast = fr.readObject().asInstanceOf[TranslationUnit]
         fr.close()
         ast
     }
@@ -201,13 +204,13 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         writer.close()
     }
 
-    private def createAndShowGui(ast: AST, fm: FeatureModel, opts: FrontendOptions) = {
-        val morpheus = new Morpheus(ast, fm, opts.getFile)
+    private def createAndShowGui(tunit: TranslationUnit, fm: FeatureModel, opts: FrontendOptions) = {
+        val morpheus = new Morpheus(tunit, fm, opts.getFile)
         SwingUtilities.invokeLater(new Runnable {
             def run() {
                 val editor = new Editor(morpheus)
                 editor.loadFileInEditor(opts.getFile)
-                editor.pack
+                editor.pack()
                 editor.setVisible(true)
             }
         })

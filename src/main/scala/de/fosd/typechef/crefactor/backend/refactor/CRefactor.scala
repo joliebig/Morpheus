@@ -10,7 +10,6 @@ import de.fosd.typechef.featureexpr.FeatureExpr
 import de.fosd.typechef.parser.c.CompoundStatementExpr
 import scala.{Product, Some}
 import de.fosd.typechef.conditional.Choice
-import de.fosd.typechef.parser.c.TranslationUnit
 import de.fosd.typechef.conditional.One
 import de.fosd.typechef.parser.c.Id
 import de.fosd.typechef.parser.c.FunctionDef
@@ -31,11 +30,12 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
      * @param name name to check
      * @return <code>true</code> if valid, <code>false</code> if not
      */
-    def isValidId(name: String): Boolean = (name.matches(VALID_NAME_PATTERN) && !name.startsWith("__") && !isReservedLanguageKeyword(name))
+    def isValidId(name: String): Boolean =
+        name.matches(VALID_NAME_PATTERN) && !name.startsWith("__") && !isReservedLanguageKeyword(name)
 
     def generateValidNewName(id: Id, stmt: Opt[AST], morph: Morpheus, appendix: Int = 1): String = {
         val newName = id.name + "_" + appendix
-        if (isShadowed(newName, stmt.entry, morph)) generateValidNewName(id, stmt, morph, (appendix + 1))
+        if (isShadowed(newName, stmt.entry, morph)) generateValidNewName(id, stmt, morph, appendix + 1)
         else newName
     }
 
@@ -66,7 +66,7 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
     def isShadowed(name: String, element: AST, morpheus: Morpheus): Boolean = {
         val lookupValue = findPriorASTElem[CompoundStatement](element, morpheus.getASTEnv) match {
             case s@Some(x) => x.innerStatements.last.entry
-            case _ => morpheus.getTranslationUnit.asInstanceOf[TranslationUnit].defs.last.entry
+            case _ => morpheus.getTranslationUnit.defs.last.entry
         }
 
         val env = morpheus.getEnv(lookupValue)
@@ -109,7 +109,7 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         r(t).get.asInstanceOf[T]
     }
 
-    // TODO Clean up ast rewrite strategies
+    // TODO Clean up tunit rewrite strategies
     def insertInAstBefore[T <: Product](t: T, mark: Opt[_], insert: Opt[_])(implicit m: Manifest[T]): T = {
         val r = oncetd(rule {
             case l: List[Opt[_]] => l.flatMap(x => if (x.eq(mark)) insert :: x :: Nil else x :: Nil)
@@ -152,7 +152,8 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         r(t).get.asInstanceOf[T]
     }
 
-    // TODO toRemove
+    // TODO toRemove; I'm not sure whether the function signature reflects its purpose!
+    //                Second and third T should be different!
     def replaceInAST[T <: Product](t: T, e: T, n: T)(implicit m: Manifest[T]): T = {
         println("start replace")
         val r = manybu(rule {
@@ -196,11 +197,13 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         else s :: nl
     }).reverse
 
-    def insertRefactoredAST(morpheus: Morpheus, callCompStmt: CompoundStatement, workingCallCompStmt: CompoundStatement): AST = {
+    def insertRefactoredAST(morpheus: Morpheus, callCompStmt: CompoundStatement, workingCallCompStmt: CompoundStatement): TranslationUnit = {
         val parent = parentOpt(callCompStmt, morpheus.getASTEnv)
         parent.entry match {
             case f: FunctionDef => replaceInASTOnceTD(morpheus.getTranslationUnit, parent, parent.copy(entry = f.copy(stmt = workingCallCompStmt)))
-            case c: CompoundStatement => replaceInAST(morpheus.getTranslationUnit, c, c.copy(innerStatements = workingCallCompStmt.innerStatements))
+            case c: CompoundStatement => replaceInAST(morpheus.getTranslationUnit, c,
+                c.copy(innerStatements = workingCallCompStmt.innerStatements))
+                .asInstanceOf[TranslationUnit]
             case x =>
                 assert(false, "Something bad happend - i am going to cry, i missed: " + x)
                 morpheus.getTranslationUnit
@@ -209,7 +212,7 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
 
     private def isPartOf(subterm: Product, term: Any): Boolean = {
         term match {
-            case _: Product if (subterm.asInstanceOf[AnyRef].eq(term.asInstanceOf[AnyRef])) => true
+            case _: Product if subterm.asInstanceOf[AnyRef].eq(term.asInstanceOf[AnyRef]) => true
             case l: List[_] => l.map(isPartOf(subterm, _)).exists(_ == true)
             case p: Product => p.productIterator.toList.map(isPartOf(subterm, _)).exists(_ == true)
             case x => false

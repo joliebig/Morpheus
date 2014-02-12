@@ -1,7 +1,7 @@
 package de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5
 
 import de.fosd.typechef.crefactor.evaluation.{Refactoring, StatsJar, Refactor}
-import de.fosd.typechef.parser.c.AST
+import de.fosd.typechef.parser.c.{TranslationUnit, AST}
 import de.fosd.typechef.featureexpr.FeatureModel
 import de.fosd.typechef.crefactor.Morpheus
 import java.io.File
@@ -13,19 +13,22 @@ import de.fosd.typechef.crefactor.evaluation.setup.CLinking
 
 object BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
 
-    def rename(ast: AST, fm: FeatureModel, file: String, linkInterface: CLinking) = evaluate(ast, fm, file, linkInterface, Rename)
-    def extract(ast: AST, fm: FeatureModel, file: String, linkInterface: CLinking) = evaluate(ast, fm, file, linkInterface, Extract)
-    def inline(ast: AST, fm: FeatureModel, file: String, linkInterface: CLinking) = evaluate(ast, fm, file, linkInterface, Inline)
+    def rename(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking) = 
+        evaluate(tunit, fm, file, linkInterface, Rename)
+    def extract(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking) =
+        evaluate(tunit, fm, file, linkInterface, Extract)
+    def inline(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking) =
+        evaluate(tunit, fm, file, linkInterface, Inline)
 
-    private def evaluate(ast: AST, fm: FeatureModel, file: String, linkInterface: CLinking, r: Refactoring): Unit = {
+    private def evaluate(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking, r: Refactoring): Unit = {
         logger.info("File to refactor: " + getFileName(file) + " +++")
         val resultDir = getResultDir(file)
         val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(file)
-        if (ast == null) logger.error("+++ AST is null! +++")
+        if (tunit == null) logger.error("+++ AST is null! +++")
         else if (blackListFiles.exists(getFileName(file).equalsIgnoreCase)) println("+++ File is blacklisted and cannot be build +++")
         else {
             try {
-                val morpheus = new Morpheus(ast, fm, file)
+                val morpheus = new Morpheus(tunit, fm, file)
                 // reset test environment
                 runScript("./cleanAndReset.sh", sourcePath)
                 val result = r.refactor(morpheus, linkInterface)

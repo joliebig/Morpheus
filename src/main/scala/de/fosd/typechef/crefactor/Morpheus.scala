@@ -21,7 +21,7 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, file: String) extends O
     typecheckTranslationUnit(tunit.asInstanceOf[TranslationUnit])
     if (file != null) StatsJar.addStat(file, TypeCheck, typeCheck.getTime)
 
-    //private var ts = new CTypeSystemFrontend(ast.asInstanceOf[TranslationUnit], fm)
+    //private var ts = new CTypeSystemFrontend(tunit.asInstanceOf[TranslationUnit], fm)
     //ts.checkAST
     def update(tunit: TranslationUnit) {
         tunitCached = tunit

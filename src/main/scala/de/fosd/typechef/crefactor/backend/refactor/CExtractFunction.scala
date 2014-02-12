@@ -199,7 +199,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
     def isAvailable(morpheus: Morpheus, selection: Selection): Boolean = isAvailable(morpheus, getSelectedElements(morpheus, selection))
 
-    def extract(morpheus: Morpheus, selection: List[AST], funName: String): Either[String, AST] = {
+    def extract(morpheus: Morpheus, selection: List[AST], funName: String):
+    Either[String, TranslationUnit] = {
 
         if (!isValidId(funName))
             return Left(Configuration.getInstance().getConfig("refactor.extractFunction.failed.shadowing"))
@@ -209,16 +210,23 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             return Left(Configuration.getInstance().getConfig("default.error.invalidName"))
 
         // we can only handle statements. report error otherwise.
-        if (selection.exists { case _: Expr => true } )
+        if (selection.exists {
+            case _: Expr => true
+            case _ => false
+        } )
             return Left("This refactoring is not yet supported!")
 
-        if (!selection.forall { case _: Statement => true } )
+        if (!selection.forall {
+            case _: Statement => true
+            case _ => false
+        } )
             return Left("Fatal error in selected elements!")
 
         extractStatements(morpheus, selection, funName)
     }
 
-    private def extractStatements(morpheus: Morpheus, selection: List[AST], funcName: String): Either[String, AST] = {
+    private def extractStatements(morpheus: Morpheus, selection: List[AST], funcName: String):
+    Either[String, TranslationUnit] = {
         try {
             val parentFunction = getParentFunction(selection, morpheus)
             val parentFunctionOpt: Opt[FunctionDef] = parentOpt(parentFunction, morpheus.getASTEnv).asInstanceOf[Opt[FunctionDef]]
@@ -269,7 +277,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         } catch {
             case r: RefactorException => Left(r.error)
             case x: Throwable => {
-                x.printStackTrace
+                x.printStackTrace()
                 Left(x.getMessage)
             }
         }
@@ -522,6 +530,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     /**
      * Conditional complete?
      */
+    /*
     private def isConditionalComplete(selection: List[AST], parentFunction: FunctionDef, morpheus: Morpheus): Boolean = {
         if (selection.isEmpty) return false
 
@@ -538,18 +547,21 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         val prevState = prevOpt(expr1, morpheus.getASTEnv)
         val nextState = nextOpt(expr2, morpheus.getASTEnv)
 
-        if (((prevState != null) && (prevState.feature.equals(expr2.feature)))
-            || ((nextState != null) && (nextState.feature.equals(expr1.feature)))
+        if (((prevState != null) && prevState.feature.equals(expr2.feature))
+            || ((nextState != null) && nextState.feature.equals(expr1.feature))
             || ((prevState != null) && (nextState != null) && nextState.feature.equals(prevState.feature))) return true
         // prev feature and next feature are the same -> eligible
         // TODO Null States!
         false
     }
+    */
 
     /**
      * InlineFuncOptionSelector is conditonal?
      */
-    private def selectionIsConditional(selection: List[AST]) = selection.exists(x => (isVariable(x)))
+    /*
+    private def selectionIsConditional(selection: List[AST]) = selection.exists(isVariable)
+    */
 
     private def isBadExtractStatement(element: AST, selection: List[AST], morpheus: Morpheus): Boolean = {
 
@@ -645,7 +657,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     private def generateFuncDef(specs: List[Opt[Specifier]], decl: Declarator, stmts: CompoundStatement, oldStyleParameters: List[Opt[OldParameterDeclaration]] = List[Opt[OldParameterDeclaration]]()) = FunctionDef(specs, decl, oldStyleParameters, stmts)
 
     /**
-     * Generates the opt node for the ast.
+     * Generates the opt node for the tunit.
      */
     private def generateFuncOpt(oldFunc: FunctionDef, newFunc: FunctionDef, morpheus: Morpheus, feature: FeatureExpr = FeatureExprFactory.True) = Opt[FunctionDef](parentOpt(oldFunc, morpheus.getASTEnv).feature.and(feature), newFunc)
 

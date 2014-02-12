@@ -290,7 +290,7 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
         val resultDir = getResultDir(refFile)
         val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(filePath)
         printAndWriteAST(ast, path)
-        writePlainAST(ast, path + ".ast")
+        writePlainAST(ast, path + ".tunit")
     }
 
     def writeResult(result: String, file: String) = {
