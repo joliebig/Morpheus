@@ -46,8 +46,8 @@ import de.fosd.typechef.crefactor.frontend.util.Selection
 object CInlineFunction extends ASTSelection with CRefactor {
 
     def getSelectedElements(morpheus: Morpheus, selection: Selection): List[AST] = {
-        val functions = (filterASTElems[FunctionDef](morpheus.getAST) ::: filterASTElems[FunctionCall](morpheus.getAST)
-            ::: filterAllASTElems[NestedFunctionDef](morpheus.getAST)).filter(x => isSelected(x, morpheus.getASTEnv, selection))
+        val functions = (filterASTElems[FunctionDef](morpheus.getTranslationUnit) ::: filterASTElems[FunctionCall](morpheus.getTranslationUnit)
+            ::: filterAllASTElems[NestedFunctionDef](morpheus.getTranslationUnit)).filter(x => isSelected(x, morpheus.getASTEnv, selection))
         filterASTElementsForFile(functions, selection.getFilePath).sortWith(comparePosition)
     }
 
@@ -93,7 +93,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
         if (defs.isEmpty) assert(false, "No valid function definition found.") // Included because of linked functions
         // Do inlining.
         // TODO Inline once
-        var refactoredAST = calls.foldLeft(morpheus.getAST)((workingAST, call) => inlineFuncCall(workingAST, new Morpheus(workingAST), call, defs, rename))
+        var refactoredAST = calls.foldLeft(morpheus.getTranslationUnit)((workingAST, call) => inlineFuncCall(workingAST, new Morpheus(workingAST), call, defs, rename))
         refactoredAST = callExpr.foldLeft(refactoredAST)((workingAST, expr) => inlineFuncCallExpr(workingAST, new Morpheus(workingAST), expr, defs, rename))
 
         // Remove inlined function stmt's declaration and definitions

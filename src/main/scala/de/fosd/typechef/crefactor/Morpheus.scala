@@ -10,34 +10,32 @@ import de.fosd.typechef.parser.c.TranslationUnit
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.StatsJar
 
-class Morpheus(ast: AST, fm: FeatureModel, file: String) extends Observable with CDeclUse with CTypeEnv with CEnvCache with CTypeCache with CTypeSystem with Logging {
-    def this(ast: AST) = this(ast, null, null)
+class Morpheus(tunit: TranslationUnit, fm: FeatureModel, file: String) extends Observable with CDeclUse with CTypeEnv with CEnvCache with CTypeCache with CTypeSystem with Logging {
+    def this(tunit: TranslationUnit) = this(tunit, null, null)
+    def this(tunit: TranslationUnit, fm: FeatureModel) = this(tunit, fm, null)
+    def this(tunit: TranslationUnit, file: String) = this(tunit, null, file)
 
-    def this(ast: AST, fm: FeatureModel) = this(ast, fm, null)
-
-    def this(ast: AST, file: String) = this(ast, null, file)
-
-    private var astCached: AST = ast
-    private var astEnvCached: ASTEnv = CASTEnv.createASTEnv(ast)
+    private var tunitCached: TranslationUnit = tunit
+    private var astEnvCached: ASTEnv = CASTEnv.createASTEnv(tunit)
     val typeCheck = new StopClock
-    typecheckTranslationUnit(ast.asInstanceOf[TranslationUnit])
+    typecheckTranslationUnit(tunit.asInstanceOf[TranslationUnit])
     if (file != null) StatsJar.addStat(file, TypeCheck, typeCheck.getTime)
 
     //private var ts = new CTypeSystemFrontend(ast.asInstanceOf[TranslationUnit], fm)
     //ts.checkAST
-    def update(ast: AST) {
-        astCached = ast
-        astEnvCached = CASTEnv.createASTEnv(astCached)
+    def update(tunit: TranslationUnit) {
+        tunitCached = tunit
+        astEnvCached = CASTEnv.createASTEnv(tunitCached)
         //ts = new CTypeSystemFrontend(astCached.asInstanceOf[TranslationUnit], fm)
         //ts.checkAST
-        typecheckTranslationUnit(ast.asInstanceOf[TranslationUnit])
+        typecheckTranslationUnit(tunit)
         setChanged()
         notifyObservers()
     }
 
     def getEnv(ast: AST) = lookupEnv(ast)
 
-    def getAST = astCached
+    def getTranslationUnit = tunitCached
 
     def getASTEnv = astEnvCached
 

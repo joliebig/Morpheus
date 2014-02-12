@@ -18,7 +18,7 @@ object CRenameIdentifier extends ASTSelection with CRefactor {
     def getSelectedElements(morpheus: Morpheus, selection: Selection): List[AST] = getAvailableIdentifiers(morpheus, selection)
 
     def getAvailableIdentifiers(morpheus: Morpheus, selection: Selection): List[Id] =
-        filterASTElems[Id](morpheus.getAST).par.filter(x => isInSelectionRange(x, selection)).toList.filter(x => isElementOfFile(x, selection.getFilePath))
+        filterASTElems[Id](morpheus.getTranslationUnit).par.filter(x => isInSelectionRange(x, selection)).toList.filter(x => isElementOfFile(x, selection.getFilePath))
 
     def isAvailable(morpheus: Morpheus, selection: Selection): Boolean = !getAvailableIdentifiers(morpheus, selection).isEmpty
 
@@ -28,6 +28,6 @@ object CRenameIdentifier extends ASTSelection with CRefactor {
         if (!isValidName(newName)) Left(Configuration.getInstance().getConfig("default.error.invalidName"))
         else if (idsToRename.exists(isShadowed(newName, _, morpheus))) Left(Configuration.getInstance().getConfig("refactor.rename.failed.shadowing"))
         else if (idsToRename.par.forall(id => new File(id.getFile.get.replaceFirst("file ", "")).canWrite)) Left(Configuration.getInstance().getConfig("refactor.rename.failed.rename"))
-        else Right(renameIDsInAST(morpheus.getAST, idsToRename, newName))
+        else Right(renameIDsInAST(morpheus.getTranslationUnit, idsToRename, newName))
     }
 }

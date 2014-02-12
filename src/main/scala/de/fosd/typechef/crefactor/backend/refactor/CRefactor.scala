@@ -66,7 +66,7 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
     def isShadowed(name: String, element: AST, morpheus: Morpheus): Boolean = {
         val lookupValue = findPriorASTElem[CompoundStatement](element, morpheus.getASTEnv) match {
             case s@Some(x) => x.innerStatements.last.entry
-            case _ => morpheus.getAST.asInstanceOf[TranslationUnit].defs.last.entry
+            case _ => morpheus.getTranslationUnit.asInstanceOf[TranslationUnit].defs.last.entry
         }
 
         val env = morpheus.getEnv(lookupValue)
@@ -198,11 +198,11 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
     def insertRefactoredAST(morpheus: Morpheus, callCompStmt: CompoundStatement, workingCallCompStmt: CompoundStatement): AST = {
         val parent = parentOpt(callCompStmt, morpheus.getASTEnv)
         parent.entry match {
-            case f: FunctionDef => replaceInASTOnceTD(morpheus.getAST, parent, parent.copy(entry = f.copy(stmt = workingCallCompStmt)))
-            case c: CompoundStatement => replaceInAST(morpheus.getAST, c, c.copy(innerStatements = workingCallCompStmt.innerStatements))
+            case f: FunctionDef => replaceInASTOnceTD(morpheus.getTranslationUnit, parent, parent.copy(entry = f.copy(stmt = workingCallCompStmt)))
+            case c: CompoundStatement => replaceInAST(morpheus.getTranslationUnit, c, c.copy(innerStatements = workingCallCompStmt.innerStatements))
             case x =>
                 assert(false, "Something bad happend - i am going to cry, i missed: " + x)
-                morpheus.getAST
+                morpheus.getTranslationUnit
         }
     }
 

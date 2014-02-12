@@ -26,7 +26,7 @@ trait DefaultExtract extends Refactoring with Evaluation {
         val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(morpheus.getFile)
 
         def refactor(morpheus: Morpheus, linkInterface: CLinking, depth: Int): (Boolean, AST, List[FeatureExpr], List[(String, AST)]) = {
-            val compStmts = filterAllASTElems[CompoundStatement](morpheus.getAST)
+            val compStmts = filterAllASTElems[CompoundStatement](morpheus.getTranslationUnit)
 
             // Real random approach
             def getRandomStatements(depth: Int = 0): List[AST] = {

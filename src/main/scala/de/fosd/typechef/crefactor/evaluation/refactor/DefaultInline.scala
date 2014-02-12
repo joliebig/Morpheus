@@ -20,7 +20,7 @@ trait DefaultInline extends Refactoring with Evaluation {
     }
 
     def refactor(morpheus: Morpheus, linkInterface: CLinking): (Boolean, AST, List[FeatureExpr], List[(String, AST)]) = {
-        val psExpr = filterAllASTElems[PostfixExpr](morpheus.getAST)
+        val psExpr = filterAllASTElems[PostfixExpr](morpheus.getTranslationUnit)
         val funcCalls = psExpr.par.filter(isFunctionCall)
         val availableFuncCalls = funcCalls.par.filter(p => {
             p.p match {

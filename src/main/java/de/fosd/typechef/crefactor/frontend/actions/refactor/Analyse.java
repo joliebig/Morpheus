@@ -40,7 +40,7 @@ public class Analyse {
                 }
                 prettyPrintActive = true;
                 astDisplayActive = false;
-                editor.getRTextArea().setText(PrettyPrinter.print(editor.getMorpheus().getAST()));
+                editor.getRTextArea().setText(PrettyPrinter.print(editor.getMorpheus().getTranslationUnit()));
             }
         };
         return action;
@@ -68,7 +68,7 @@ public class Analyse {
                 }
                 astDisplayActive = true;
                 prettyPrintActive = false;
-                editor.getRTextArea().setText(editor.getMorpheus().getAST().toString());
+                editor.getRTextArea().setText(editor.getMorpheus().getTranslationUnit().toString());
             }
         };
         return action;

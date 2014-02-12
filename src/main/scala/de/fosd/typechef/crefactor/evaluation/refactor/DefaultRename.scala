@@ -84,7 +84,7 @@ trait DefaultRename extends Refactoring with Evaluation {
         refactored match {
             case Right(ast) => {
                 val linkedRefactored = refactorChain.map(x => {
-                    val linkedId = findIdInAST(x._2, id, x._1.getAST)
+                    val linkedId = findIdInAST(x._2, id, x._1.getTranslationUnit)
                     val time = new StopClock
                     val ref = CRenameIdentifier.rename(linkedId.get, REFACTOR_NAME, x._1)
                     StatsJar.addStat(x._1.getFile, RefactorTime, time.getTime)

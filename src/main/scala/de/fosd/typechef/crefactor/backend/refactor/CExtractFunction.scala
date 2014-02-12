@@ -64,7 +64,7 @@ object CExtractFunction extends ASTSelection with CRefactor {
         lastSelection = selection
 
         // TODO Better solution for Control Statements
-        val ids = filterASTElementsForFile[Id](filterASTElems[Id](morpheus.getAST).par.filter(x => isInSelectionRange(x, selection)).toList, selection.getFilePath)
+        val ids = filterASTElementsForFile[Id](filterASTElems[Id](morpheus.getTranslationUnit).par.filter(x => isInSelectionRange(x, selection)).toList, selection.getFilePath)
 
         /** def findMostUpwardExpr(element: Expr): Expr = {
             parentAST(element, morpheus.getASTEnv) match {
@@ -252,7 +252,7 @@ object CExtractFunction extends ASTSelection with CRefactor {
             // Keep changes at the AST as local as possible
             val insertedCall = insertBefore(compStmt.innerStatements, selectedOptStatements.head, functionCall)
             val ccStmtWithRemovedStmts = eqRemove(insertedCall, selectedOptStatements)
-            val astWFunc = insertInAstBefore(morpheus.getAST, parentFunctionOpt, funcOpt)
+            val astWFunc = insertInAstBefore(morpheus.getTranslationUnit, parentFunctionOpt, funcOpt)
 
             val refAST = replaceCompoundStmtInAST(astWFunc, compStmt, ccStmtWithRemovedStmts)
             Right(refAST)
