@@ -47,13 +47,14 @@ import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.StatsJar
 import de.fosd.typechef.crefactor.evaluation.Stats._
+import de.fosd.typechef.crewrite.IntraCFG
 
 
 /**
  * Implements the strategy of extracting a function.
  */
 // TODO Match with linking
-object CExtractFunction extends ASTSelection with CRefactor {
+object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
     private var lastSelection: Selection = null
 
@@ -185,7 +186,10 @@ object CExtractFunction extends ASTSelection with CRefactor {
 
     def isAvailable(morpheus: Morpheus, selectedElements: List[AST]): Boolean = {
         if (selectedElements.isEmpty) false
-        else if (!selectedElements.par.forall(element => isPartOfAFunction(element, morpheus))) false
+        else if (!selectedElements.par.forall {
+            element => findPriorASTElem[FunctionDef](element, morpheus.getASTEnv).isDefined
+
+        }) false
         else if (!isPartOfSameCompStmt(selectedElements, morpheus)) false
         else if (!filterAllASTElems[ReturnStatement](selectedElements).isEmpty) false
         else if (!selectedElements.par.forall(element => !isBadExtractStatement(element, selectedElements, morpheus))) false
@@ -205,13 +209,14 @@ object CExtractFunction extends ASTSelection with CRefactor {
         if (isShadowed(funName, morpheus.getTranslationUnit.defs.last.entry, morpheus))
             return Left(Configuration.getInstance().getConfig("default.error.invalidName"))
 
-        // Analyze selection first -> either expression or statements
-        // Workaraound for type erasure of Scala
-        selection.head match {
-            case e: Expr => Left("This refactoring is not yet supported!")
-            case s: Statement => extractStatements(morpheus, selection, funName)
-            case _ => Left("Fatal error in selected elements!")
-        }
+        // we can only handle statements. report error otherwise.
+        if (selection.exists { case _: Expr => true } )
+            return Left("This refactoring is not yet supported!")
+
+        if (!selection.forall { case _: Statement => true } )
+            return Left("Fatal error in selected elements!")
+
+        extractStatements(morpheus, selection, funName)
     }
 
     private def extractStatements(morpheus: Morpheus, selection: List[AST], funcName: String): Either[String, AST] = {
@@ -506,12 +511,6 @@ object CExtractFunction extends ASTSelection with CRefactor {
                 else Some(id, external)
             } else None
         }).toList
-
-    private def isPartOfAFunction(toValidate: AST, morpheus: Morpheus): Boolean =
-        findPriorASTElem[FunctionDef](toValidate, morpheus.getASTEnv) match {
-            case Some(f) => true
-            case _ => false
-        }
 
     private def isElementOfEqCompStmt(element: AST, compStmt: CompoundStatement, morpheus: Morpheus) = getCompoundStatement(element, morpheus).eq(compStmt)
 
