@@ -35,7 +35,7 @@ trait DefaultInline extends Refactoring with Evaluation {
 
         val callIdToInline = availableFuncCalls(Random.nextInt(availableFuncCalls.size)).p.asInstanceOf[Id]
 
-        logger.info("Trying to inline call: " + callIdToInline)
+        logger.info("Trying to inline fcall: " + callIdToInline)
 
         try {
             val refTime = new StopClock

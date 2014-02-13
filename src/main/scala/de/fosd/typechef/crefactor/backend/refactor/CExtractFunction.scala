@@ -274,7 +274,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             val newFDef = generateFuncDef(specifiers, declarator, compundStatement)
             val newFDefOpt = generateFuncOpt(parentFunction, newFDef, morpheus)
 
-            // generate function call
+            // generate function fCall
             val callParameters = generateFuncCallParameter(parameters)
             val functionCall = Opt[ExprStatement](newFDefOpt.feature,
                 ExprStatement(PostfixExpr(Id(newFDefOpt.entry.getName),

@@ -56,15 +56,17 @@ object CInlineFunction extends ASTSelection with CRefactor {
         ids.sortWith(comparePosition)
     }
 
-    def isAvailable(morpheus: Morpheus, selection: Selection): Boolean = !getAvailableIdentifiers(morpheus, selection).isEmpty
+    def isAvailable(morpheus: Morpheus, selection: Selection): Boolean =
+        !getAvailableIdentifiers(morpheus, selection).isEmpty
 
     def isAvailable(morpheus: Morpheus, call: Id): Boolean = {
         if (!isFunctionCall(morpheus, call)) return false
-        // Check for def
+
         val defs = divideCallDeclDef(call, morpheus)._3
         if (defs.isEmpty) return false
         // Bad return or recursive
-        if (defs.exists(func => hasBadReturns(func.entry, morpheus) || isRecursive(func.entry))) return false
+        if (defs.exists(func => compatibleCFG(func.entry, morpheus)
+            || isRecursive(func.entry))) return false
         true
     }
 
@@ -85,15 +87,12 @@ object CInlineFunction extends ASTSelection with CRefactor {
      */
     def inline(morpheus: Morpheus, id: Id, rename: Boolean, evalMode: Boolean, once: Boolean = false):
     TranslationUnit = {
-        val divided = divideCallDeclDef(id, morpheus)
-        val calls = divided._1
-        val decl = divided._2
-        val defs = divided._3
-        val callExpr = divided._4
+        val (calls, decl, defs, callExpr) = divideCallDeclDef(id, morpheus)
+        
+        // TODO rewrite to Either[String, TranslationUnit]; similar to the other refactorings!
+        if (defs.isEmpty)
+            assert(false, "Inlining of external function definitions is not supported.")
 
-        if (defs.isEmpty) assert(false, "No valid function definition found.") // Included because of linked functions
-        // Do inlining.
-        // TODO Inline once
         var tunitRefactored = calls.foldLeft(morpheus.getTranslationUnit)((workingAST, call) => inlineFuncCall(workingAST, new Morpheus(workingAST), call, defs, rename))
         tunitRefactored = 
             callExpr.foldLeft(tunitRefactored)(
@@ -101,7 +100,8 @@ object CInlineFunction extends ASTSelection with CRefactor {
                     expr, defs, rename))
 
         // Remove inlined function stmt's declaration and definitions
-        if (!evalMode) tunitRefactored = removeFuncDeclDefsFromAST(tunitRefactored, decl, defs)
+        if (!evalMode)
+            tunitRefactored = removeFuncDeclDefsFromAST(tunitRefactored, decl, defs)
         tunitRefactored
     }
 
@@ -171,7 +171,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
     /*
      * Retrieves if there are bad conditional return during control flow.
      */
-    private def hasBadReturns(func: FunctionDef, morpheus: Morpheus): Boolean = {
+    private def compatibleCFG(func: FunctionDef, morpheus: Morpheus): Boolean = {
 
         // TODO Optimize Runtime
         def codeAfterStatement(feature: FeatureExpr, opt: Opt[_]): Boolean = {
@@ -321,7 +321,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
         }
     }
 
-    private def inlineFuncCall(ast: TranslationUnit, morpheus: Morpheus, call: Opt[Statement],
+    private def inlineFuncCall(tunit: TranslationUnit, morpheus: Morpheus, call: Opt[Statement],
                                funcDefs: List[Opt[_]], rename: Boolean): TranslationUnit = {
         var workingCallCompStmt = getCallCompStatement(call, morpheus.getASTEnv)
 
@@ -337,11 +337,12 @@ object CInlineFunction extends ASTSelection with CRefactor {
                     println("Forgotten definition")
                     None
             })
-            // Remove call and inline function
+            // Remove fCall and inline function
             replaceInAST(callCompStmt, morpheus.getASTEnv.parent(call.entry), buildChoice(inlineExprStatements)).asInstanceOf[CompoundStatement]
         }
 
-        def inlineCompStmt(funcDefs: List[Opt[_]], callCompStmt: CompoundStatement): CompoundStatement = {
+        def inlineCompStmt(funcDefs: List[Opt[_]], callCompStmt: CompoundStatement):
+        CompoundStatement = {
             val workingCallCompStmt = funcDefs.foldLeft(callCompStmt)((workingStatement, funcDef) => funcDef match {
                 case f: Opt[FunctionDef] => inlineFuncDefInCompStmt(workingStatement, morpheus, call, f, rename)
                 case _ =>
@@ -397,16 +398,20 @@ object CInlineFunction extends ASTSelection with CRefactor {
             replaceInASTOnceTD(cStatement.asInstanceOf[AST], statement, call.copy(feature, declStatement.copy(rDecl))).asInstanceOf[CompoundStatement]
         }
 
-        def assignStatement(statement: Opt[Statement], cStatement: CompoundStatement, call: Opt[Statement], entry: Expr): CompoundStatement = {
-            var wStatement = cStatement
+        def assignStatement(stmt: Opt[Statement], compoundStmt: CompoundStatement,
+                            call: Opt[Statement], entry: Expr): CompoundStatement = {
+            var wStatement = compoundStmt
             call.entry match {
                 case ExprStatement(AssignExpr(t, o, _)) =>
-                    val feature = statement.feature.and(call.feature)
+                    val feature = stmt.feature.and(call.feature)
                     if (feature.isSatisfiable())
                     // TODO Ask Jörg for better solution -> manybu/oncetd <- wtf!?!!?!
-                        if (wStatement.innerStatements.exists(entry => entry.eq(statement))) wStatement = replaceInASTOnceTD(wStatement, statement, Opt(feature, ExprStatement(AssignExpr(t, o, entry))))
-                        else wStatement = replaceInAST(wStatement, statement, Opt(feature, ExprStatement(AssignExpr(t, o, entry))))
-                    else wStatement = removeFromAST(wStatement, statement)
+                        if (wStatement.innerStatements.exists(entry => entry.eq(statement)))
+                            wStatement = replaceInASTOnceTD(wStatement, stmt,
+                                Opt(feature, ExprStatement(AssignExpr(t, o, entry))))
+                        else wStatement = replaceInAST(wStatement, stmt,
+                            Opt(feature, ExprStatement(AssignExpr(t, o, entry))))
+                    else wStatement = removeFromAST(wStatement, stmt)
                 case _ => assert(false, "Missed Pattern!")
             }
             wStatement
@@ -439,38 +444,47 @@ object CInlineFunction extends ASTSelection with CRefactor {
         workingStatement
     }
 
-    private def inlineFuncDefInCompStmt(ccStatement: CompoundStatement, morpheus: Morpheus, call: Opt[Statement], funcDef: Opt[FunctionDef], rename: Boolean): CompoundStatement = {
-        if (!isValidFuncDef(funcDef, call, ccStatement, morpheus)) return ccStatement
-        var workingStatement = ccStatement
+    private def inlineFuncDefInCompStmt(compoundStmt: CompoundStatement,
+                                        morpheus: Morpheus, fCall: Opt[Statement],
+                                        fDef: Opt[FunctionDef], rename: Boolean):
+    CompoundStatement = {
+        if (!isValidFDef(fDef, fCall, compoundStmt, morpheus))
+            return compoundStmt
+        var workingStatement = compoundStmt
 
-        val idsToRename = getIdentifierToRename(funcDef.entry, call.entry, workingStatement, morpheus)
-        if (!rename && !idsToRename.isEmpty) assert(false, "Can not inline - variables need to be renamed")
+        val idsToRename = getIdsToRename(fDef.entry, fCall.entry, workingStatement, morpheus)
+        if (!rename && !idsToRename.isEmpty)
+            assert(false, "Can not inline - variables need to be renamed")
 
-        val renamed = renameShadowedIds(idsToRename, funcDef, call, morpheus)
-        val initializer = getInitializers(call, renamed._2)
+        val renamed = renameShadowedIds(idsToRename, fDef, fCall, morpheus)
+        val initializer = getInitializers(fCall, renamed._2)
 
-        // Apply feature environment
-        val statements = applyFeaturesOnInlineStmts(renamed._1, call, morpheus)
+        // apply feature environment
+        val statements = applyFeaturesOnInlineStmts(renamed._1, fCall, morpheus)
 
         // find return statements
         val returnStmts = getReturnStmts(statements)
 
-        // instert in tunit
-        workingStatement = insertInAstBefore(workingStatement, call, initializer)
-        workingStatement = insertInAstBefore(workingStatement, call, statements)
+        // insert in tunit
+        workingStatement = insertInAstBefore(workingStatement, fCall, initializer)
+        workingStatement = insertInAstBefore(workingStatement, fCall, statements)
 
         // insert return statements
-        assignReturnValue(workingStatement, call, returnStmts)
+        assignReturnValue(workingStatement, fCall, returnStmts)
     }
 
-    private def inlineFuncDefInExprStmt(compStmt: CompoundStatement, morpheuseus: Morpheus, call: Opt[AST], funcDef: Opt[FunctionDef], rename: Boolean): ExprStatement = {
-        if (!isValidFuncDef(funcDef, call, compStmt, morpheuseus)) return null
+    private def inlineFuncDefInExprStmt(compStmt: CompoundStatement, morpheus: Morpheus,
+                                        call: Opt[AST], funcDef: Opt[FunctionDef], rename: Boolean): 
+    ExprStatement = {
+        if (!isValidFDef(funcDef, call, compStmt, morpheus)) return null
 
-        val compoundStmtExpr: CompoundStatementExpr = CompoundStatementExpr(inlineFuncDefInExpr(compStmt, funcDef, call, morpheuseus, rename))
+        val compoundStmtExpr: CompoundStatementExpr =
+            CompoundStatementExpr(inlineFuncDefInExpr(compStmt, funcDef, call, morpheus, rename))
 
         call.entry match {
-            case ExprStatement(p@PostfixExpr(pe, FunctionCall(_))) => ExprStatement(compoundStmtExpr)
-            case ExprStatement(AssignExpr(target, op, _)) => ExprStatement(AssignExpr(target, op, compoundStmtExpr))
+            case ExprStatement(PostfixExpr(pe, FunctionCall(_))) => ExprStatement(compoundStmtExpr)
+            case ExprStatement(AssignExpr(target, op, _)) =>
+                ExprStatement(AssignExpr(target, op, compoundStmtExpr))
             case _ =>
                 assert(false, "An error occured. Unable to assign return statements")
                 null
@@ -478,15 +492,17 @@ object CInlineFunction extends ASTSelection with CRefactor {
     }
 
 
-    def inlineFuncDefInExpr(compStmt: CompoundStatement, funcDef: Opt[FunctionDef], call: Opt[AST], morpheus: Morpheus, rename: Boolean): CompoundStatement = {
-        var workingStatement = compStmt
+    def inlineFuncDefInExpr(compoundStmt: CompoundStatement, fDef: Opt[FunctionDef], fCall: Opt[AST], 
+                            morpheus: Morpheus, rename: Boolean): CompoundStatement = {
+        var workingStatement = compoundStmt
 
-        val idsToRename = getIdentifierToRename(funcDef.entry, call.entry, workingStatement, morpheus)
-        if (!rename && !idsToRename.isEmpty) assert(false, "Inline function not possible - some variables need to be renamed")
+        val idsToRename = getIdsToRename(fDef.entry, fCall.entry, workingStatement, morpheus)
+        if (!rename && !idsToRename.isEmpty)
+            assert(false, "Inline function not possible - some variables need to be renamed")
 
-        val renamed = renameShadowedIds(idsToRename, funcDef, call, morpheus)
-        val initializer = getInitializers(call, renamed._2)
-        var statements = applyFeaturesOnInlineStmts(renamed._1, call, morpheus)
+        val renamed = renameShadowedIds(idsToRename, fDef, fCall, morpheus)
+        val initializer = getInitializers(fCall, renamed._2)
+        var statements = applyFeaturesOnInlineStmts(renamed._1, fCall, morpheus)
         val returnStmts = getReturnStmts(statements)
 
         // remove return statements
@@ -498,18 +514,20 @@ object CInlineFunction extends ASTSelection with CRefactor {
         CompoundStatement(initializer ::: statements)
     }
 
-    private def isDeclared(id: Id, env: Env, statement: CompoundStatement, morpheuseus: Morpheus): Boolean = {
+    private def isDeclared(id: Id, env: Env, statement: CompoundStatement, morpheus: Morpheus):
+    Boolean = {
 
-        def checkOne(one: Conditional[(CType, DeclarationKind, Int, Linkage)], recursive: Boolean = false): Boolean = {
+        def checkOne(one: Conditional[(CType, DeclarationKind, Int, Linkage)],
+                     recursive: Boolean = false): Boolean = {
             one match {
                 case One(x) =>
                     if (x._1.isUnknown) {
-                        if (!recursive) (false || checkConditional(morpheuseus.getEnv(statement.innerStatements.last.entry).varEnv.lookup(id.name), true))
+                        if (!recursive) (false || checkConditional(morpheus.getEnv(statement.innerStatements.last.entry).varEnv.lookup(id.name), true))
                         else false
                     } else if (x._1.isFunction) {
-                        parentAST(id, morpheuseus.getASTEnv) match {
+                        parentAST(id, morpheus.getASTEnv) match {
                             case PostfixExpr(_, FunctionCall(_)) => false
-                            case _ => parentOpt(id, morpheuseus.getASTEnv).entry match {
+                            case _ => parentOpt(id, morpheus.getASTEnv).entry match {
                                 case f: FunctionDef => false
                                 case _ => true
                             }
@@ -520,9 +538,11 @@ object CInlineFunction extends ASTSelection with CRefactor {
             }
         }
 
-        def checkConditional(conditional: Conditional[(CType, DeclarationKind, Int, Linkage)], recursive: Boolean = false): Boolean = {
+        def checkConditional(conditional: Conditional[(CType, DeclarationKind, Int, Linkage)],
+                             recursive: Boolean = false): Boolean = {
             conditional match {
-                case c@Choice(feature, then, elseB) => checkConditional(then, recursive) || checkConditional(elseB, recursive)
+                case c@Choice(feature, then, elseB) =>
+                    checkConditional(then, recursive) || checkConditional(elseB, recursive)
                 case o@One((_)) => checkOne(conditional, recursive)
             }
         }
@@ -531,18 +551,22 @@ object CInlineFunction extends ASTSelection with CRefactor {
 
     }
 
-    def isValidFuncDef(fDef: Opt[FunctionDef], call: Opt[_], ccStatement: CompoundStatement, morpheus: Morpheus): Boolean = {
-        if (!(fDef.feature.equivalentTo(FeatureExprFactory.True) || fDef.feature.implies(call.feature).isTautology())) return false
-        // stmt's feature does not imply funcDef's feature -> no need to inline this def at this position
+    private def isValidFDef(fDef: Opt[FunctionDef], call: Opt[_], ccStatement: CompoundStatement,
+                            morpheus: Morpheus): Boolean = {
+        if (!(fDef.feature.equivalentTo(FeatureExprFactory.True)
+            || fDef.feature.implies(call.feature).isTautology())) return false
+        // stmt's feature does not imply fDef's feature -> no need to inline this def at this position
         assert(!isRecursive(fDef.entry), "Can not inline - method is recursive.")
-        assert(!hasBadReturns(fDef.entry, morpheus), "Can not inline - method has bad return statements")
+        assert(!compatibleCFG(fDef.entry, morpheus), "Can not inline - method has bad return statements")
         true
     }
 
-    private def getIdentifierToRename(funcDef: FunctionDef, call: AST, compoundStmt: CompoundStatement, morpheus: Morpheus) = filterAllASTElems[Id](funcDef).filter(id => isDeclared(id, morpheus.getEnv(compoundStmt.innerStatements.last.entry).asInstanceOf[Env], compoundStmt: CompoundStatement, morpheus: Morpheus))
+    private def getIdsToRename(funcDef: FunctionDef, call: AST, compoundStmt: CompoundStatement, morpheus: Morpheus) = filterAllASTElems[Id](funcDef).filter(id => isDeclared(id, morpheus.getEnv(compoundStmt.innerStatements.last.entry).asInstanceOf[Env], compoundStmt: CompoundStatement, morpheus: Morpheus))
 
-    private def getInitializers(call: Opt[AST], parameters: List[Opt[DeclaratorExtension]]): List[Opt[DeclarationStatement]] = {
-        def generateInitializer(parameter: Opt[DeclaratorExtension], exprList: List[Opt[Expr]]): List[Opt[DeclarationStatement]] = {
+    private def getInitializers(call: Opt[AST], parameters: List[Opt[DeclaratorExtension]]): 
+    List[Opt[DeclarationStatement]] = {
+        def generateInitializer(parameter: Opt[DeclaratorExtension], exprList: List[Opt[Expr]]): 
+        List[Opt[DeclarationStatement]] = {
             var exprs = exprList
             parameter.entry match {
                 case p: DeclParameterDeclList =>
@@ -579,13 +603,16 @@ object CInlineFunction extends ASTSelection with CRefactor {
         }).foldLeft(List[Opt[DeclarationStatement]]())((result, entry) => result ::: entry)
     }
 
-    private def renameShadowedIds(idsToRename: List[Id], funcDef: Opt[FunctionDef], call: Opt[AST], morpheus: Morpheus): (List[Opt[Statement]], List[Opt[DeclaratorExtension]]) = {
+    private def renameShadowedIds(idsToRename: List[Id], funcDef: Opt[FunctionDef], call: Opt[AST],
+                                  morpheus: Morpheus): (List[Opt[Statement]],
+        List[Opt[DeclaratorExtension]]) = {
         val statements = idsToRename.foldLeft(funcDef.entry.stmt.innerStatements)((statement, id) => replaceInAST(statement, id, id.copy(name = generateValidNewName(id, call, morpheus))))
         val parameters = idsToRename.foldLeft(funcDef.entry.declarator.extensions)((extension, id) => replaceInAST(extension, id, id.copy(name = generateValidNewName(id, call, morpheus))))
         (statements, parameters)
     }
 
-    private def applyFeaturesOnInlineStmts(statements: List[Opt[Statement]], call: Opt[AST], morpheus: Morpheus): List[Opt[Statement]] = {
+    private def applyFeaturesOnInlineStmts(statements: List[Opt[Statement]], call: Opt[AST],
+                                           morpheus: Morpheus): List[Opt[Statement]] = {
         statements.flatMap(statement => {
             val feature = morpheus.getASTEnv.featureExpr(statement).and(call.feature)
             feature.isSatisfiable() match {
