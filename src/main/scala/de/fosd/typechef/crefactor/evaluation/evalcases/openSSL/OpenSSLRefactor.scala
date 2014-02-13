@@ -36,7 +36,7 @@ object OpenSSLRefactor extends OpenSSLEvaluation with Refactor {
                     write(result._2, morpheus.getFile.replace(".pi", ".c"))
                     val time = new StopClock
                     StatsJar.addStat(file, AffectedFeatures, result._2)
-                    OpenSSLVerification.verify(morpheus.getFile, morpheus.getFeatureModel, "first")
+                    OpenSSLVerification.verify(morpheus.getFile, morpheus.getFM, "first")
                     runScript("./clean.sh", sourcePath)
                     StatsJar.addStat(file, TestingTime, time.getTime)
                 } else writeError("Could not refactor file.", path)

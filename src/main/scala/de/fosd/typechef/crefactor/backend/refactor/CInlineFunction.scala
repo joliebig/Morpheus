@@ -179,7 +179,8 @@ object CInlineFunction extends ASTSelection with CRefactor {
             next match {
                 case null => false
                 case _ =>
-                    if (((feature.equivalentTo(FeatureExprFactory.True) || feature.implies(next.feature).isTautology()))) true
+                    if ((feature.equivalentTo(FeatureExprFactory.True)
+                        || feature.implies(next.feature).isTautology(morpheus.getFM))) true
                     else codeAfterStatement(feature, next)
             }
         }
@@ -522,7 +523,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
             one match {
                 case One(x) =>
                     if (x._1.isUnknown) {
-                        if (!recursive) (false || checkConditional(morpheus.getEnv(statement.innerStatements.last.entry).varEnv.lookup(id.name), true))
+                        if (!recursive) false || checkConditional(morpheus.getEnv(statement.innerStatements.last.entry).varEnv.lookup(id.name), true)
                         else false
                     } else if (x._1.isFunction) {
                         parentAST(id, morpheus.getASTEnv) match {
@@ -554,7 +555,9 @@ object CInlineFunction extends ASTSelection with CRefactor {
     private def isValidFDef(fDef: Opt[FunctionDef], call: Opt[_], ccStatement: CompoundStatement,
                             morpheus: Morpheus): Boolean = {
         if (!(fDef.feature.equivalentTo(FeatureExprFactory.True)
-            || fDef.feature.implies(call.feature).isTautology())) return false
+            || fDef.feature.implies(call.feature).isTautology(morpheus.getFM)))
+            return false
+
         // stmt's feature does not imply fDef's feature -> no need to inline this def at this position
         assert(!isRecursive(fDef.entry), "Can not inline - method is recursive.")
         assert(!compatibleCFG(fDef.entry, morpheus), "Can not inline - method has bad return statements")

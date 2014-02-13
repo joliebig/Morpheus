@@ -39,7 +39,7 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, file: String) extends O
 
     def getASTEnv = astEnvCached
 
-    def getFeatureModel = fm
+    def getFM = fm
 
     def getFile = file
 }
