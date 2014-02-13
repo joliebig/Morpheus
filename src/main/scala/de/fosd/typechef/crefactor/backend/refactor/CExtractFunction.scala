@@ -228,9 +228,14 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     private def extractStatements(morpheus: Morpheus, selection: List[AST], funcName: String):
     Either[String, TranslationUnit] = {
         try {
-            val parentFunction = getParentFunction(selection, morpheus)
+            val parentFunction = getFunction(selection, morpheus)
             val parentFunctionOpt: Opt[FunctionDef] = parentOpt(parentFunction, morpheus.getASTEnv).asInstanceOf[Opt[FunctionDef]]
-            val selectedOptStatements: List[Opt[Statement]] = selection.map(selected => parentOpt(selected, morpheus.getASTEnv)).asInstanceOf[List[Opt[Statement]]]
+            val selectedOptStatements: List[Opt[Statement]] =
+                selection.map {
+                    elem => {
+                        parentOpt(elem, morpheus.getASTEnv).asInstanceOf[Opt[Statement]]
+                    }
+                }
             val selectedIds = filterAllASTElems[Id](selection)
             val compStmt = getCompoundStatement(selectedOptStatements.head.entry, morpheus)
 
@@ -247,8 +252,11 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             val extRefIds = uniqueExtRefIds(externalDefs, externalUses)
             val toDeclare = getIdsToDeclare(externalUses)
 
-            // externalUses of selected Decls are currently refused
-            if (!toDeclare.isEmpty) return Left("Invalid selection, a declared variable in the selection gets used outside.")
+            // usages of declared variables outside the selection is not supported yet
+            // in case we reorder the elements it may be possible to apply the refactoring.
+            if (!toDeclare.isEmpty)
+                return Left("Invalid selection, a declared variable in the selection gets used outside.")
+
             val parameters = retrieveParameters(extRefIds, morpheus)
             val paramIds = getParamterIds(parameters)
 
@@ -257,22 +265,29 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             StatsJar.addStat(morpheus.getFile, ExternalDecls, externalDefs)
             StatsJar.addStat(morpheus.getFile, Parameters, paramIds)
 
+            // generate new function definition
             val specifiers = generateSpecifiers(parentFunction, morpheus)
             val parameterDecls = getParameterDecls(parameters, parentFunction, morpheus)
             val declarator = generateDeclarator(funcName, parameterDecls)
-            val compundStatement = generateCompoundStatement(selectedOptStatements, allExtRefIds, paramIds, morpheus)
-            val newFunc = generateFuncDef(specifiers, declarator, compundStatement)
-            val funcOpt = generateFuncOpt(parentFunction, newFunc, morpheus)
+            val compundStatement = generateCompoundStatement(selectedOptStatements,
+                allExtRefIds, paramIds, morpheus)
+            val newFDef = generateFuncDef(specifiers, declarator, compundStatement)
+            val newFDefOpt = generateFuncOpt(parentFunction, newFDef, morpheus)
 
+            // generate function call
             val callParameters = generateFuncCallParameter(parameters)
-            val functionCall = Opt[ExprStatement](funcOpt.feature, ExprStatement(PostfixExpr(Id(funcOpt.entry.getName), FunctionCall(ExprList(callParameters)))))
+            val functionCall = Opt[ExprStatement](newFDefOpt.feature,
+                ExprStatement(PostfixExpr(Id(newFDefOpt.entry.getName),
+                    FunctionCall(ExprList(callParameters)))))
 
             // Keep changes at the AST as local as possible
-            val insertedCall = insertBefore(compStmt.innerStatements, selectedOptStatements.head, functionCall)
-            val ccStmtWithRemovedStmts = eqRemove(insertedCall, selectedOptStatements)
-            val astWFunc = insertInAstBefore(morpheus.getTranslationUnit, parentFunctionOpt, funcOpt)
+            val tunitWithFCall = insertBefore(compStmt.innerStatements,
+                selectedOptStatements.head, functionCall)
+            val ccStmtWithRemovedStmts = eqRemove(tunitWithFCall, selectedOptStatements)
+            val tunitWithFDef = insertInAstBefore(morpheus.getTranslationUnit,
+                parentFunctionOpt, newFDefOpt)
 
-            val refAST = replaceCompoundStmt(astWFunc, compStmt, ccStmtWithRemovedStmts)
+            val refAST = replaceCompoundStmt(tunitWithFDef, compStmt, ccStmtWithRemovedStmts)
             Right(refAST)
         } catch {
             case r: RefactorException => Left(r.error)
@@ -288,7 +303,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         val externalUses = externalOccurrences(selectedIds, morpheus.getDeclUseMap, morpheus)
         val idsToDeclare = getIdsToDeclare(externalUses)
 
-        if (!idsToDeclare.isEmpty) logger.error("Invalid selection for: " + selection + " with follwoing ids to declare: " + idsToDeclare)
+        if (!idsToDeclare.isEmpty) logger.error("Invalid selection for: " + selection +
+            " with follwoing ids to declare: " + idsToDeclare)
 
         !idsToDeclare.isEmpty
     }
@@ -300,13 +316,23 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         List[Opt[DeclaratorExtension]](Opt(parentOpt(funcDef, morpheus.getASTEnv).feature, DeclParameterDeclList(decls)))
     }
 
-    private def retrieveParameters(liveParamIds: List[Id], morpheus: Morpheus): List[(Opt[ParameterDeclaration], Opt[Expr], Id)] = {
+    private def retrieveParameters(liveParamIds: List[Id], morpheus: Morpheus):
+    List[(Opt[ParameterDeclaration], Opt[Expr], Id)] = {
         val declIdMap: IdentityHashMap[Declaration, Id] = new IdentityHashMap
         val declFeatureMap: IdentityHashMap[Declaration, FeatureExpr] = new IdentityHashMap
         val declDeclPointerMap: IdentityHashMap[Declaration, Declarator] = new IdentityHashMap
-        def addTodeclIdMapMap(decl: Declaration, id: Id) = if (!declIdMap.containsKey(decl)) declIdMap.put(decl, id)
-        def addToDeclFeatureMap(decl: Declaration, declFeature: FeatureExpr) = if (declFeatureMap.containsKey(decl)) declFeatureMap.put(decl, declFeature.and(declFeatureMap.get(decl))) else declFeatureMap.put(decl, declFeature)
-        def addTodeclDeclPointerMap(decl: Declaration, declarator: Declarator) = if (!declDeclPointerMap.containsKey(decl)) declDeclPointerMap.put(decl, declarator)
+
+        def addTodeclIdMapMap(decl: Declaration, id: Id) =
+            if (!declIdMap.containsKey(decl)) declIdMap.put(decl, id)
+
+        def addToDeclFeatureMap(decl: Declaration, declFeature: FeatureExpr) =
+            if (declFeatureMap.containsKey(decl))
+                declFeatureMap.put(decl, declFeature.and(declFeatureMap.get(decl)))
+            else declFeatureMap.put(decl, declFeature)
+
+        def addTodeclDeclPointerMap(decl: Declaration, declarator: Declarator) =
+            if (!declDeclPointerMap.containsKey(decl))
+                declDeclPointerMap.put(decl, declarator)
 
         /**
          * Adds usual decls to possible parameters
@@ -563,7 +589,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     private def selectionIsConditional(selection: List[AST]) = selection.exists(isVariable)
     */
 
-    private def isBadExtractStatement(element: AST, selection: List[AST], morpheus: Morpheus): Boolean = {
+    private def isBadExtractStatement(element: AST, selection: List[AST], morpheus: Morpheus):
+    Boolean = {
 
         def filter[T <: AST](stmts: List[AST])(implicit m: ClassManifest[T]) = {
             stmts.exists(stmt => {
@@ -621,7 +648,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         false
     }
 
-    private def getParentFunction(selection: List[AST], morpheus: Morpheus): FunctionDef = {
+    private def getFunction(selection: List[AST], morpheus: Morpheus): FunctionDef = {
         findPriorASTElem[FunctionDef](selection.head, morpheus.getASTEnv) match {
             case Some(f) => f
             case _ => null
