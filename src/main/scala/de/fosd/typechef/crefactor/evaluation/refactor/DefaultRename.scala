@@ -100,7 +100,8 @@ trait DefaultRename extends Refactoring with Evaluation {
     }
 
 
-    private def getLinkedFilesToRefactor(linkInterface: CLinking, id: Id): List[(Morpheus, Position)] = {
+    private def getLinkedFilesToRefactor(linkInterface: CLinking, id: Id):
+    List[(Morpheus, Position)] = {
         val linked = linkInterface.getPositions(id.name)
         val affectedFiles = linked.foldLeft(new mutable.HashMap[String, Position])((map, pos) => map += (pos.getFile -> pos))
         val refactorChain = affectedFiles.foldLeft(List[(Morpheus, Position)]())((list, entry) => {

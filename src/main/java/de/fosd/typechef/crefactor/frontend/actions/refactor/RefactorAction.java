@@ -128,16 +128,21 @@ public class RefactorAction {
                     final long time = tb.getCurrentThreadCpuTime();
                     final Either<String, TranslationUnit> refactored =
                             CRenameIdentifier.rename(id, box.getInput(), morpheus);
-                    logger.info("Duration for transforming: " + (tb.getCurrentThreadCpuTime() - time) / 1000000 + "ms");
+                    logger.info("Duration for transforming: "
+                            + (tb.getCurrentThreadCpuTime() - time) / 1000000 + "ms");
                     if (refactored.isLeft()) {
-                        JOptionPane.showMessageDialog(null, Configuration.getInstance().getConfig("refactor.rename.failed"), Configuration.getInstance().getConfig("default.error"), JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(null,
+                                Configuration.getInstance().getConfig("refactor.rename.failed"),
+                                Configuration.getInstance().getConfig("default.error"),
+                                JOptionPane.ERROR_MESSAGE);
                     } else {
                         morpheus.update(refactored.right().get());
                     }
 
                 } catch (final AssertionError e) {
-                    JOptionPane.showMessageDialog(null, Configuration.getInstance().getConfig("refactor.rename.failed") + " "
-                            + e.getMessage(), Configuration.getInstance().getConfig("default.error"), JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null, Configuration.getInstance().getConfig("refactor.rename.failed") + " " + e.getMessage(),
+                            Configuration.getInstance().getConfig("default.error"),
+                            JOptionPane.ERROR_MESSAGE);
 
                 } catch (final Exception e) {
                     e.printStackTrace();
