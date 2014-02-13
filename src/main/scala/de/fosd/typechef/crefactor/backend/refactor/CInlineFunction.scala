@@ -33,10 +33,14 @@ object CInlineFunction extends ASTSelection with CRefactor {
         if (!isFunctionCall(morpheus, call)) return false
 
         val defs = divideCallDeclDef(call, morpheus)._3
-        if (defs.isEmpty) return false
-        // Bad return or recursive
-        if (defs.exists(func => compatibleCFG(func.entry, morpheus)
-            || isRecursive(func.entry))) return false
+        if (defs.isEmpty)
+            return false
+
+        // compatible control flow or recursive
+        if (defs.exists(func => badReturnStatement(func.entry, morpheus)
+            || isRecursive(func.entry)))
+            return false
+
         true
     }
 
@@ -141,7 +145,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
     /*
      * Retrieves if there are bad conditional return during control flow.
      */
-    private def compatibleCFG(func: FunctionDef, morpheus: Morpheus): Boolean = {
+    private def badReturnStatement(func: FunctionDef, morpheus: Morpheus): Boolean = {
 
         // TODO Optimize Runtime
         def codeAfterStatement(feature: FeatureExpr, opt: Opt[_]): Boolean = {
@@ -312,20 +316,24 @@ object CInlineFunction extends ASTSelection with CRefactor {
             replaceInAST(callCompStmt, morpheus.getASTEnv.parent(call.entry), buildChoice(inlineExprStatements)).asInstanceOf[CompoundStatement]
         }
 
-        def inlineCompStmt(funcDefs: List[Opt[_]], callCompStmt: CompoundStatement):
+        def inlineCompStmt(fDefs: List[Opt[_]], callCompStmt: CompoundStatement):
         CompoundStatement = {
-            val workingCallCompStmt = funcDefs.foldLeft(callCompStmt)((workingStatement, funcDef) => funcDef match {
-                case f: Opt[FunctionDef] => inlineFuncDefInCompStmt(workingStatement, morpheus, call, f, rename)
-                case _ =>
-                    println("Forgotten definition")
-                    workingStatement
+            val workingCallCompStmt = 
+                fDefs.foldLeft(callCompStmt)(
+                    (curStmt, fDef) => fDef match {
+                        case f: Opt[FunctionDef] =>
+                            inlineFuncDefInCompStmt(curStmt, morpheus, call, f, rename)
+                        case _ =>
+                            println("Forgotten definition")
+                            curStmt
             })
             // Remove stmt
             removeFromAST(workingCallCompStmt, call)
         }
 
         parentAST(call.entry, morpheus.getASTEnv) match {
-            case c: CompoundStatement => workingCallCompStmt = inlineCompStmt(funcDefs, workingCallCompStmt)
+            case c: CompoundStatement =>
+                workingCallCompStmt = inlineCompStmt(funcDefs, workingCallCompStmt)
             case i: IfStatement => workingCallCompStmt = inlineIfStmt(funcDefs, workingCallCompStmt)
             case e: ElifStatement => workingCallCompStmt = inlineIfStmt(funcDefs, workingCallCompStmt)
             case x => println("forgotten " + x)
@@ -340,17 +348,22 @@ object CInlineFunction extends ASTSelection with CRefactor {
             case _ => null
         }
 
-    private def assignReturnValue(statement: CompoundStatement, call: Opt[Statement], returnStmts: List[Opt[ReturnStatement]]): CompoundStatement = {
+    private def assignReturnValue(statement: CompoundStatement, call: Opt[Statement],
+                                  returnStmts: List[Opt[ReturnStatement]]): CompoundStatement = {
         // TODO deep inspect
         var workingStatement = statement
 
-        def initReturnStatement(decl: Declaration, statement: Opt[ReturnStatement], declStatement: DeclarationStatement, cStatement: CompoundStatement, call: Opt[Statement]): CompoundStatement = {
+        def initReturnStatement(decl: Declaration, statement: Opt[ReturnStatement],
+                                declStatement: DeclarationStatement, cStatement: CompoundStatement,
+                                call: Opt[Statement]): CompoundStatement = {
             var initDecls = List[Opt[InitDeclarator]]()
             decl.init.foreach(init => {
                 val feature = init.feature.and(statement.feature)
                 if (!feature.isSatisfiable()) return cStatement
                 init.entry match {
-                    case i@InitDeclaratorI(_, _, Some(Initializer(label, expr))) => initDecls ::= Opt(feature, i.copy(i = Some(Initializer(label, statement.entry.expr.get))))
+                    case i@InitDeclaratorI(_, _, Some(Initializer(label, expr))) =>
+                        initDecls ::= Opt(feature, i.copy(i = Some(Initializer(label,
+                            statement.entry.expr.get))))
                     case x =>
                         println("missed " + x)
                         assert(false, "Pattern matching not exhaustive")
@@ -530,7 +543,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
 
         // stmt's feature does not imply fDef's feature -> no need to inline this def at this position
         assert(!isRecursive(fDef.entry), "Can not inline - method is recursive.")
-        assert(!compatibleCFG(fDef.entry, morpheus), "Can not inline - method has bad return statements")
+        assert(!badReturnStatement(fDef.entry, morpheus), "Can not inline - method has bad return statements")
         true
     }
 
