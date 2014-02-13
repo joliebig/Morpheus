@@ -73,7 +73,7 @@ with CDeclUse with CTypeEnv with CEnvCache with CTypeCache with CTypeSystem with
         def addOccurrence(curId: Id) {
             if (!visited.contains(curId)) {
                 addToConnectedIdMap(curId)
-                if (!getDeclUseMap.containsKey(curId))
+                if (getDeclUseMap.containsKey(curId))
                     return getDeclUseMap.get(curId).foreach(use => {
                         addToConnectedIdMap(use)
                         if (getUseDeclMap.containsKey(use))
