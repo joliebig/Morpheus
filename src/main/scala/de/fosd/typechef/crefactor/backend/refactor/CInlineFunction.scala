@@ -349,37 +349,44 @@ object CInlineFunction extends ASTSelection with CRefactor {
         }
 
     private def assignReturnValue(statement: CompoundStatement, call: Opt[Statement],
-                                  returnStmts: List[Opt[ReturnStatement]]): CompoundStatement = {
+                                  returnStmts: List[Opt[ReturnStatement]], morpheus: Morpheus):
+    CompoundStatement = {
         // TODO deep inspect
         var workingStatement = statement
 
-        def initReturnStatement(decl: Declaration, statement: Opt[ReturnStatement],
-                                declStatement: DeclarationStatement, cStatement: CompoundStatement,
+        def initReturnStatement(decl: Declaration, returnStmt: Opt[ReturnStatement],
+                                declStmt: DeclarationStatement, compoundStmt: CompoundStatement,
                                 call: Opt[Statement]): CompoundStatement = {
             var initDecls = List[Opt[InitDeclarator]]()
             decl.init.foreach(init => {
-                val feature = init.feature.and(statement.feature)
-                if (!feature.isSatisfiable()) return cStatement
+                val feature = init.feature.and(returnStmt.feature)
+                if (feature.isContradiction(morpheus.getFM))
+                    return compoundStmt
                 init.entry match {
                     case i@InitDeclaratorI(_, _, Some(Initializer(label, expr))) =>
                         initDecls ::= Opt(feature, i.copy(i = Some(Initializer(label,
-                            statement.entry.expr.get))))
+                            returnStmt.entry.expr.get))))
                     case x =>
                         println("missed " + x)
                         assert(false, "Pattern matching not exhaustive")
                 }
             })
-            val declSpecs = decl.declSpecs.map(spec => {
-                val feature = spec.feature.and(statement.feature)
-                if (!feature.isSatisfiable()) return cStatement
-                spec.copy(feature = feature)
-            })
+            val declSpecs = decl.declSpecs.map(
+                spec => {
+                    val feature = spec.feature.and(returnStmt.feature)
+                    if (feature.isContradiction(morpheus.getFM))
+                        return compoundStmt
+                    spec.copy(feature = feature)}
+            )
 
-            val feature = call.feature.and(statement.feature)
-            if (!feature.isSatisfiable()) return cStatement
+            val feature = call.feature.and(returnStmt.feature)
+            if (feature.isContradiction(morpheus.getFM))
+                return compoundStmt
+
             val rDecl = decl.copy(declSpecs.reverse, initDecls.reverse)
             // TODO ReplaceStrategy
-            replaceInASTOnceTD(cStatement.asInstanceOf[AST], statement, call.copy(feature, declStatement.copy(rDecl))).asInstanceOf[CompoundStatement]
+            replaceInASTOnceTD(compoundStmt.asInstanceOf[AST], returnStmt,
+                call.copy(feature, declStmt.copy(rDecl))).asInstanceOf[CompoundStatement]
         }
 
         def assignStatement(stmt: Opt[Statement], compoundStmt: CompoundStatement,
@@ -388,7 +395,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
             call.entry match {
                 case ExprStatement(AssignExpr(t, o, _)) =>
                     val feature = stmt.feature.and(call.feature)
-                    if (feature.isSatisfiable())
+                    if (feature.isSatisfiable(morpheus.getFM))
                     // TODO Ask Jörg for better solution -> manybu/oncetd <- wtf!?!!?!
                         if (wStatement.innerStatements.exists(entry => entry.eq(statement)))
                             wStatement = replaceInASTOnceTD(wStatement, stmt,
@@ -407,8 +414,9 @@ object CInlineFunction extends ASTSelection with CRefactor {
                 case ReturnStatement(Some(entry)) =>
                     val feature = statement.feature.and(call.feature)
                     if (assign) wStatement = assignStatement(statement, wStatement, call, entry)
-                    else if (feature.isSatisfiable())
-                        wStatement = replaceInASTOnceTD(wStatement, statement, Opt(feature, ExprStatement(entry)))
+                    else if (feature.isSatisfiable(morpheus.getFM))
+                        wStatement = replaceInASTOnceTD(wStatement, statement,
+                            Opt(feature, ExprStatement(entry)))
                 case _ => assert(false, "Missed Pattern!")
             })
             wStatement
@@ -454,7 +462,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
         workingStatement = insertInAstBefore(workingStatement, fCall, statements)
 
         // insert return statements
-        assignReturnValue(workingStatement, fCall, returnStmts)
+        assignReturnValue(workingStatement, fCall, returnStmts, morpheus)
     }
 
     private def inlineFuncDefInExprStmt(compStmt: CompoundStatement, morpheus: Morpheus,
