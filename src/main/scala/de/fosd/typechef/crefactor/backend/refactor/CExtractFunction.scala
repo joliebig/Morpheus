@@ -347,10 +347,11 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
          * Generates the init declaration for variables declared in the method body.
          */
         def generateInit(decl: Declaration, param: Id, noPointer: Boolean = false): Declarator = {
-            def genPointer(entries: (List[Opt[Pointer]], List[FeatureExpr]), declSpec: Opt[Specifier]) = {
+
+            def genPointer(entries: (List[Opt[Pointer]], List[FeatureExpr]),
+                           declSpec: Opt[Specifier]) = {
                 val feature = declSpec.feature
-                var addedFeatures = entries._2
-                var pointers = entries._1
+                var (pointers, addedFeatures) = entries
 
                 if (addedFeatures.exists(ft => {
                     if (ft.equivalentTo(feature)) true
@@ -374,7 +375,9 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
             val resPointers = decl.init.foldLeft(genPointers)((currentPointers, declInit) => declInit.entry.declarator.pointers ::: currentPointers)
 
-            //if (array) AtomicNamedDeclarator(pointer, Id(param.name), List[Opt[DeclaratorExtension]](Opt(FeatureExprFactory.True, DeclArrayAccess(None))))
+            //if (array)
+            // AtomicNamedDeclarator(pointer, Id(param.name),
+            // List[Opt[DeclaratorExtension]](Opt(FeatureExprFactory.True, DeclArrayAccess(None))))
             AtomicNamedDeclarator(resPointers, Id(param.name), List[Opt[DeclaratorExtension]]())
         }
 
@@ -401,7 +404,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 case o@One((CUnknown(_), _, _)) =>
                 case o@One((CFunction(_, _), _, _)) =>
                 case o@One((_, KEnumVar, _, _)) =>
-                    // direct enum use -> check for visibility only as enums are constant - if not visible afterwards the refactoring can not be made.
+                    // direct enum use -> check for visibility only as enums are constant
+                    // if not visible afterwards the refactoring can not be made.
                     if (morpheus.getUseDeclMap.get(id).exists(t => findPriorASTElem[CompoundStatement](t, morpheus.getASTEnv) match {
                         case None => false
                         case _ => true
@@ -416,7 +420,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                         case x => logger.error("Missed parameter decl pattern" + x)
                     }
                 case _ =>
-                    // Declared in parent function or globally definied
+                    // Declared in parent function or globally defined
                     val decl = findPriorASTElem[Declaration](id, morpheus.getASTEnv)
                     decl match {
                         case Some(entry) => {
