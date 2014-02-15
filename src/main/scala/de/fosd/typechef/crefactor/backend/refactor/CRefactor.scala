@@ -6,7 +6,7 @@ import org.kiama.rewriting.Rewriter._
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.crefactor.frontend.util.Selection
 import de.fosd.typechef.conditional.Conditional
-import de.fosd.typechef.featureexpr.FeatureExpr
+import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 import de.fosd.typechef.parser.c.CompoundStatementExpr
 import scala.{Product, Some}
 import de.fosd.typechef.conditional.Choice
@@ -46,6 +46,18 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
      * @return <code>true</code> if language keyword
      */
     def isReservedLanguageKeyword(name: String) = LANGUAGE_KEYWORDS.contains(name)
+
+    def getOrFeatures(a: Any): FeatureExpr = {
+        var featureSet: Set[FeatureExpr] = Set()
+        val r = manytd(query {
+            case Opt(ft, entry) =>
+                featureSet += ft
+            case Choice(ft, a, b) =>
+                featureSet += ft
+        })
+        r(a).get
+        featureSet.foldRight(FeatureExprFactory.True)((fxpr, setEntry) => fxpr.or(setEntry))
+    }
 
     def buildChoice[T <: AST](attribute: List[(T, FeatureExpr)]): Conditional[T] = {
         if (attribute.isEmpty) One(null.asInstanceOf[T])

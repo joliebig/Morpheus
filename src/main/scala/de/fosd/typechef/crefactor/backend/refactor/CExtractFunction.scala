@@ -213,13 +213,13 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         if (selection.exists {
             case _: Expr => true
             case _ => false
-        } )
+        })
             return Left("This refactoring is not yet supported!")
 
         if (!selection.forall {
             case _: Statement => true
             case _ => false
-        } )
+        })
             return Left("Fatal error in selected elements!")
 
         extractStatements(morpheus, selection, funName)
@@ -343,6 +343,33 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             addTodeclIdMapMap(decl, id)
         }
 
+        def addParameterToGenerateFromParameter(id: Id, ft: FeatureExpr, featureExploit: Boolean = true) = {
+
+            def retrieveAllDeclParameterFeatures(paramDecl: Product, feature: FeatureExpr): FeatureExpr = {
+                // get up to DeclParameterDeclList to make sure ALL features are found
+                val parent = parentOpt(paramDecl, morpheus.getASTEnv)
+                parent.entry match {
+                    case d: DeclParameterDeclList => feature.and(parent.feature)
+                    case p: Product => retrieveAllDeclParameterFeatures(parent, feature.and(parent.feature))
+                    case x =>
+                        logger.error("Missed parent: " + x)
+                        feature
+                }
+            }
+
+            val decl = findPriorASTElem[ParameterDeclaration](id, morpheus.getASTEnv)
+            decl match {
+                case Some(p@ParameterDeclarationD(_, _, _)) =>
+                    val feature = {
+                        if (featureExploit) retrieveAllDeclParameterFeatures(p, ft)
+                        else ft
+                    }
+                    val genDeclFromPDecl = Declaration(p.specifiers, List(Opt(ft, InitDeclaratorI(p.decl, p.attr, None))))
+                    addDeclToDeclsToGenerate(feature, genDeclFromPDecl, id)
+                case x => logger.error("Missed parameter decl pattern" + x)
+            }
+        }
+
         /**
          * Generates the init declaration for variables declared in the method body.
          */
@@ -385,63 +412,78 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             c match {
                 case c@Choice(cft, o1@One(_), o2@One(_)) =>
                     addOne(o1, id)
-                    addOne(o2, id /*, cft.not()*/)
+                    addOne(o2, id, cft.not())
                 case c@Choice(cft, c1@Choice(_, _, _), o2@One(_)) =>
                     addChoice(c1, id)
-                    addOne(o2, id)
+                    addOne(o2, id, cft.not())
                 case c@Choice(cft, o1@One(_), c1@Choice(_, _, _)) =>
-                    addChoice(c1, id)
+                    addChoice(c1, id, cft.not())
                     addOne(o1, id)
                 case c@Choice(cft, c1@Choice(_, _, _), c2@Choice(_, _, _)) =>
                     addChoice(c1, id)
-                    addChoice(c2, id)
+                    addChoice(c2, id, cft.not())
             }
+        }
+
+        def addChoiceOne(c: Choice[_], id: Id, ft: FeatureExpr = FeatureExprFactory.True) = {
+            // TODO Verify only parameters end up here.
+            val orFeatures = getOrFeatures(c)
+            logger.info("OneChoiceFeature " + orFeatures)
+            val featureExpr = ft.and(orFeatures)
+            addParameterToGenerateFromParameter(id, featureExpr, false)
         }
 
         def addOne(o: One[_], id: Id, ft: FeatureExpr = FeatureExprFactory.True) = {
-            o match {
-                // only variables are interesting
-                case o@One((CUnknown(_), _, _)) =>
-                case o@One((CFunction(_, _), _, _)) =>
-                case o@One((_, KEnumVar, _, _)) =>
-                    // direct enum use -> check for visibility only as enums are constant
-                    // if not visible afterwards the refactoring can not be made.
-                    if (morpheus.getUseDeclMap.get(id).exists(t => findPriorASTElem[CompoundStatement](t, morpheus.getASTEnv) match {
-                        case None => false
-                        case _ => true
-                    })) throw new RefactorException("Type Declaration for " + id.name + " would be invisible after extraction!")
-                case o@One((CType(_, _, _, _), KParameter, _, _)) =>
-                    // Passed as parameter in parent function
-                    val decl = findPriorASTElem[ParameterDeclaration](id, morpheus.getASTEnv)
-                    decl match {
-                        case Some(p@ParameterDeclarationD(_, _, _)) =>
-                            val genDeclFromPDecl = Declaration(p.specifiers, List(Opt(ft, InitDeclaratorI(p.decl, p.attr, None))))
-                            addDeclToDeclsToGenerate(ft, genDeclFromPDecl, id)
-                        case x => logger.error("Missed parameter decl pattern" + x)
-                    }
-                case _ =>
-                    // Declared in parent function or globally defined
-                    val decl = findPriorASTElem[Declaration](id, morpheus.getASTEnv)
-                    decl match {
-                        case Some(entry) => {
-                            val feature = if (ft.equivalentTo(FeatureExprFactory.True)) parentOpt(entry, morpheus.getASTEnv).feature else ft
-                            // TODO Possible Scala Bug?
-                            // addDeclToDeclsToGenerate(feature, entry, id)
-                            addToDeclFeatureMap(entry, feature)
-                            addTodeclDeclPointerMap(entry, generateInit(entry, id))
-                            addTodeclIdMapMap(entry, id)
+            if (ft.isTautology(morpheus.getFM)) {
+                o match {
+                    // only variables are interesting
+                    case o@One((CUnknown(_), _, _)) =>
+                    case o@One((CFunction(_, _), _, _)) =>
+                    case o@One((_, KEnumVar, _, _)) =>
+                        // direct enum use -> check for visibility only as enums are constant
+                        // if not visible afterwards the refactoring can not be made.
+                        if (morpheus.getUseDeclMap.get(id).exists(t => findPriorASTElem[CompoundStatement](t, morpheus.getASTEnv) match {
+                            case None => false
+                            case _ => true
+                        })) throw new RefactorException("Type Declaration for " + id.name + " would be invisible after extraction!")
+                    case o@One((CType(_, _, _, _), KParameter, _, _)) =>
+                        // Passed as parameter in parent function
+                        addParameterToGenerateFromParameter(id, ft)
+                    case _ =>
+                        // Declared in parent function or globally defined
+                        val decl = findPriorASTElem[Declaration](id, morpheus.getASTEnv)
+                        decl match {
+                            case Some(entry) => {
+                                val feature = if (ft.equivalentTo(FeatureExprFactory.True)) parentOpt(entry, morpheus.getASTEnv).feature else ft
+                                // TODO Possible Scala Bug?
+                                // addDeclToDeclsToGenerate(feature, entry, id)
+                                addToDeclFeatureMap(entry, feature)
+                                addTodeclDeclPointerMap(entry, generateInit(entry, id))
+                                addTodeclIdMapMap(entry, id)
+                            }
+                            case none =>
+                                addParameterToGenerateFromParameter(id, ft)
+                                logger.warn("Passed as parameter and detected as declariation but not as parameter: " + id)
                         }
-                        case x => logger.error("Missed declaration: " + x)
-                    }
+                }
             }
         }
 
+        logger.info(liveParamIds)
         liveParamIds.foreach(liveId =>
             try {
                 // only lookup variables
+                logger.info(liveId + ": " + morpheus.getEnv(liveId).varEnv.lookup(liveId.name))
                 morpheus.getEnv(liveId).varEnv.lookup(liveId.name) match {
                     case o@One(_) => addOne(o, liveId)
-                    case c@Choice(_, _, _) => addChoice(c, liveId)
+                    case c@Choice(_, _, _) =>
+                        // retrieve if choice is only a fake choice, caused by the parser code duplication
+                        val singleChoice = liveParamIds.flatMap(id => {
+                            if (id.name.equals(liveId.name)) Some(liveId)
+                            else None
+                        })
+                        if (singleChoice.length < 2) addChoiceOne(c, liveId)
+                        else addChoice(c, liveId)
                     case x => logger.warn("Missed pattern choice? " + x)
                 }
             } catch {
@@ -476,7 +518,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
             // remove extern specifier in function argument.
             val filteredDeclSpecs = decl.declSpecs.filter(_.entry match {
-                case e: ExternSpecifier => false
+                case s: OtherSpecifier => false
                 case _ => true
             })
 

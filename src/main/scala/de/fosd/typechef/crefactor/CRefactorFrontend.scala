@@ -21,7 +21,7 @@ import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.SQLiteRefactor
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.BusyBoxRefactor
 import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.OpenSSLRefactor
 
-object CRefactorFrontend extends App with InterfaceWriter with BuildCondition with Logging {
+object CRefactorFrontend extends App with InterfaceWriter with BuildCondition with Logging with EnforceTreeHelper {
 
     private var command: Array[String] = Array()
 
@@ -99,6 +99,8 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
                 logger.error("... failed reading AST " + opt.getFile + "\nExiting.")
                 System.exit(-1)
             }
+
+            // val preparedTunit = prepareAST(tunit)
 
             if (opt.serializeAST) serializeAST(tunit, opt.getSerializedASTFilename)
 
