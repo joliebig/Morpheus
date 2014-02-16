@@ -6,6 +6,7 @@ import de.fosd.typechef.typesystem.linker.{EmptyInterface, CInterface, SystemLin
 import java.io.File
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.Logging
+import de.fosd.typechef.crefactor.backend.CLinking
 
 /**
  * Interface for generating linking informations of a whole given project

@@ -11,15 +11,16 @@ import de.fosd.typechef.parser.c.Id
 import scala.collection.mutable
 import de.fosd.typechef.error.Position
 import java.io.File
-import de.fosd.typechef.crefactor.evaluation.setup.CLinking
+import de.fosd.typechef.crefactor.backend.CLinking
 
 
 trait DefaultRename extends Refactoring with Evaluation {
 
     val REFACTOR_NAME = "refactoredID"
 
-    def refactor(morpheus: Morpheus, linkInterface: CLinking): (Boolean, AST, List[FeatureExpr], List[(String, AST)]) = {
+    def refactor(morpheus: Morpheus): (Boolean, AST, List[FeatureExpr], List[(String, AST)]) = {
         def findIdInAST(position: Position, id: Id, ast: AST) = filterASTElems[Id](ast).par.find(aId => (position.equals(aId.getPositionFrom) || position.equals(aId.getPositionTo)) && aId.name.equalsIgnoreCase(id.name))
+        val linkInterface = morpheus.getLinkInterface
 
         def getVariableIdToRename: (Id, Int, List[FeatureExpr]) = {
             def isValidId(id: Id): Boolean = !id.name.contains("_main") && {

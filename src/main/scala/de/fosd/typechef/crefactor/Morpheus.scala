@@ -9,13 +9,15 @@ import de.fosd.typechef.parser.c._
 import de.fosd.typechef.typesystem._
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.StatsJar
+import de.fosd.typechef.crefactor.backend.CLinking
 
-class Morpheus(tunit: TranslationUnit, fm: FeatureModel, file: String) extends Observable
+class Morpheus(tunit: TranslationUnit, fm: FeatureModel, linkInterface: CLinking, file: String) extends Observable
 with CDeclUse with CTypeEnv with CEnvCache with CTypeCache with CTypeSystem with Logging {
 
-    def this(tunit: TranslationUnit) = this(tunit, null, null)
-    def this(tunit: TranslationUnit, fm: FeatureModel) = this(tunit, fm, null)
-    def this(tunit: TranslationUnit, file: String) = this(tunit, null, file)
+    def this(tunit: TranslationUnit) = this(tunit, null, null, null)
+    def this(tunit: TranslationUnit, fm: FeatureModel) = this(tunit, fm, null, null)
+    def this(tunit: TranslationUnit, file: String) = this(tunit, null, null, file)
+    def this(tunit: TranslationUnit, fm: FeatureModel, file: String) = this(tunit, fm, null, file)
 
     private var tunitCached: TranslationUnit = tunit
     private var astEnvCached: ASTEnv = CASTEnv.createASTEnv(tunit)
@@ -111,4 +113,6 @@ with CDeclUse with CTypeEnv with CEnvCache with CTypeCache with CTypeSystem with
     def getFM = fm
 
     def getFile = file
+
+    def getLinkInterface = linkInterface
 }

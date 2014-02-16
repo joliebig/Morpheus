@@ -8,7 +8,6 @@ import de.fosd.typechef.crefactor.backend.refactor.CInlineFunction
 import scala.util.Random
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.Stats._
-import de.fosd.typechef.crefactor.evaluation.setup.CLinking
 
 trait DefaultInline extends Refactoring with Evaluation {
 
@@ -19,7 +18,7 @@ trait DefaultInline extends Refactoring with Evaluation {
         }
     }
 
-    def refactor(morpheus: Morpheus, linkInterface: CLinking): (Boolean, AST, List[FeatureExpr], List[(String, AST)]) = {
+    def refactor(morpheus: Morpheus): (Boolean, AST, List[FeatureExpr], List[(String, AST)]) = {
         val psExpr = filterAllASTElems[PostfixExpr](morpheus.getTranslationUnit)
         val funcCalls = psExpr.par.filter(isFunctionCall)
         val availableFuncCalls = funcCalls.par.filter(p => {

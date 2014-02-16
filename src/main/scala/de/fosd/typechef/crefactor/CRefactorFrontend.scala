@@ -11,7 +11,7 @@ import de.fosd.typechef.parser.TokenReader
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.typesystem.linker.InterfaceWriter
 import de.fosd.typechef.crefactor.evaluation.{Refactor, StatsJar}
-import de.fosd.typechef.crefactor.evaluation.setup.{CLinking, Building, BuildCondition}
+import de.fosd.typechef.crefactor.evaluation.setup.{Building, BuildCondition}
 import java.util.zip.{GZIPOutputStream, GZIPInputStream}
 import de.fosd.typechef.parser.c.CTypeContext
 import de.fosd.typechef.typesystem.{CDeclUse, CTypeCache, CTypeSystemFrontend}
@@ -20,6 +20,7 @@ import javax.swing.SwingUtilities
 import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.SQLiteRefactor
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.BusyBoxRefactor
 import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.OpenSSLRefactor
+import de.fosd.typechef.crefactor.backend.CLinking
 
 object CRefactorFrontend extends App with InterfaceWriter with BuildCondition with Logging with EnforceTreeHelper {
 
@@ -112,7 +113,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
 
             if (opt.canBuild) testBuildingAndTesting(tunit, fm, opt)
 
-            if (opt.showGui) createAndShowGui(tunit, fm, opt)
+            if (opt.showGui) createAndShowGui(tunit, fm, opt, linkInf)
         }
     }
 
@@ -206,8 +207,8 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         writer.close()
     }
 
-    private def createAndShowGui(tunit: TranslationUnit, fm: FeatureModel, opts: FrontendOptions) = {
-        val morpheus = new Morpheus(tunit, fm, opts.getFile)
+    private def createAndShowGui(tunit: TranslationUnit, fm: FeatureModel, opts: FrontendOptions, linkInf: CLinking) = {
+        val morpheus = new Morpheus(tunit, fm, linkInf, opts.getFile)
         SwingUtilities.invokeLater(new Runnable {
             def run() {
                 val editor = new Editor(morpheus)

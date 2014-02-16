@@ -1,19 +1,19 @@
 package de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5
 
 import de.fosd.typechef.crefactor.evaluation.{Refactoring, StatsJar, Refactor}
-import de.fosd.typechef.parser.c.{TranslationUnit, AST}
+import de.fosd.typechef.parser.c.TranslationUnit
 import de.fosd.typechef.featureexpr.FeatureModel
 import de.fosd.typechef.crefactor.Morpheus
 import java.io.File
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.refactor.{Rename, Inline, Extract}
-import de.fosd.typechef.crefactor.evaluation.setup.CLinking
+import de.fosd.typechef.crefactor.backend.CLinking
 
 
 object BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
 
-    def rename(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking) = 
+    def rename(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking) =
         evaluate(tunit, fm, file, linkInterface, Rename)
     def extract(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking) =
         evaluate(tunit, fm, file, linkInterface, Extract)
@@ -28,10 +28,10 @@ object BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
         else if (blackListFiles.exists(getFileName(file).equalsIgnoreCase)) println("+++ File is blacklisted and cannot be build +++")
         else {
             try {
-                val morpheus = new Morpheus(tunit, fm, file)
+                val morpheus = new Morpheus(tunit, fm, linkInterface, file)
                 // reset test environment
                 runScript("./cleanAndReset.sh", sourcePath)
-                val result = r.refactor(morpheus, linkInterface)
+                val result = r.refactor(morpheus)
                 if (result._1) {
                     write(result._2, morpheus.getFile)
                     PrepareASTforVerification.makeConfigs(result._2, morpheus.getFM, morpheus.getFile, result._3)

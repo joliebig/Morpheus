@@ -33,6 +33,9 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
     def isValidId(name: String): Boolean =
         name.matches(VALID_NAME_PATTERN) && !name.startsWith("__") && !isReservedLanguageKeyword(name)
 
+    def isLinked(name: String, morpheus: Morpheus): Boolean =
+        (morpheus.getLinkInterface != null) && morpheus.getLinkInterface.isListed(name)
+
     def generateValidNewName(id: Id, stmt: Opt[AST], morph: Morpheus, appendix: Int = 1): String = {
         val newName = id.name + "_" + appendix
         if (isShadowed(newName, stmt.entry, morph)) generateValidNewName(id, stmt, morph, appendix + 1)

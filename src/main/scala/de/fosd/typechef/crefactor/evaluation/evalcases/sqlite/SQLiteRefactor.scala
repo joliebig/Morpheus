@@ -9,18 +9,18 @@ import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.refactor.{Extract, Inline, Rename}
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.Stats._
-import de.fosd.typechef.crefactor.evaluation.setup.CLinking
+import de.fosd.typechef.crefactor.backend.CLinking
 
 
 object SQLiteRefactor extends SQLiteEvaluation with Refactor {
     def rename(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking) =
-        evaluate(tunit, fm, file, Rename)
+        evaluate(tunit, fm, file, linkInterface, Rename)
     def inline(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking) =
-        evaluate(tunit, fm, file, Inline)
+        evaluate(tunit, fm, file, linkInterface, Inline)
     def extract(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking) =
-        evaluate(tunit, fm, file, Extract)
+        evaluate(tunit, fm, file, linkInterface, Extract)
 
-    private def evaluate(tunit: TranslationUnit, fm: FeatureModel, file: String, r: Refactoring): Unit = {
+    private def evaluate(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking, r: Refactoring): Unit = {
         println("+++ File to refactor: " + getFileName(file) + " +++")
         val resultDir = getResultDir(file)
         val path = resultDir.getCanonicalPath + File.separatorChar
@@ -30,7 +30,7 @@ object SQLiteRefactor extends SQLiteEvaluation with Refactor {
         else if (blackListFiles.exists(getFileName(file).equalsIgnoreCase)) println("+++ File is blacklisted and cannot be build +++")
         else {
             try {
-                val morpheus = new Morpheus(tunit, fm, file)
+                val morpheus = new Morpheus(tunit, fm, linkInterface, file)
                 // reset test environment
                 runScript("./clean.sh", sourcePath)
                 val result = r.refactor(morpheus)

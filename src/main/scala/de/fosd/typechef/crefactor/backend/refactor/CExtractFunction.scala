@@ -205,6 +205,9 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         if (!isValidId(funName))
             return Left(Configuration.getInstance().getConfig("refactor.extractFunction.failed.shadowing"))
 
+        if (isLinked(funName, morpheus))
+            return Left(Configuration.getInstance().getConfig("default.error.invalidName"))
+
         // we check binding and visibility using the last element in the translation unit
         if (isShadowed(funName, morpheus.getTranslationUnit.defs.last.entry, morpheus))
             return Left(Configuration.getInstance().getConfig("default.error.invalidName"))

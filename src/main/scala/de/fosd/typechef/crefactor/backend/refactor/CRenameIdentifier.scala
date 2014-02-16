@@ -26,8 +26,12 @@ object CRenameIdentifier extends ASTSelection with CRefactor {
 
     def rename(id: Id, nid: String, morpheus: Morpheus): Either[String, TranslationUnit] = {
         val lid = morpheus.linkage(id)
+
         StatsJar.addStat(morpheus.getFile, Amount, lid.size)
+
         if (!isValidId(nid))
+            Left(Configuration.getInstance().getConfig("default.error.invalidName"))
+        else if (isLinked(nid, morpheus))
             Left(Configuration.getInstance().getConfig("default.error.invalidName"))
         else if (lid.exists(isShadowed(nid, _, morpheus)))
             Left(Configuration.getInstance().getConfig("refactor.rename.failed.shadowing"))

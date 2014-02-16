@@ -9,7 +9,6 @@ import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.parser.c.CompoundStatement
 import de.fosd.typechef.conditional.Opt
-import de.fosd.typechef.crefactor.evaluation.setup.CLinking
 import java.io.File
 
 trait DefaultExtract extends Refactoring with Evaluation {
@@ -21,11 +20,11 @@ trait DefaultExtract extends Refactoring with Evaluation {
     val NAME = "refactored_func"
 
 
-    def refactor(morpheus: Morpheus, linkInterface: CLinking): (Boolean, AST, List[FeatureExpr], List[(String, AST)]) = {
+    def refactor(morpheus: Morpheus): (Boolean, AST, List[FeatureExpr], List[(String, AST)]) = {
         val resultDir = getResultDir(morpheus.getFile)
         val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(morpheus.getFile)
 
-        def refactor(morpheus: Morpheus, linkInterface: CLinking, depth: Int): (Boolean, AST, List[FeatureExpr], List[(String, AST)]) = {
+        def refactor(morpheus: Morpheus, depth: Int): (Boolean, AST, List[FeatureExpr], List[(String, AST)]) = {
             val compStmts = filterAllASTElems[CompoundStatement](morpheus.getTranslationUnit)
 
             // Real random approach
@@ -100,14 +99,14 @@ trait DefaultExtract extends Refactoring with Evaluation {
                     // TODO Correct Error Handling
                     logger.error(s)
                     writeError("Refactor Error:\n" + s, path + "ref")
-                    if (depth < RETRIES) refactor(morpheus, linkInterface, depth + 1)
+                    if (depth < RETRIES) refactor(morpheus, depth + 1)
                     else (false, null, List(), List())
                 }
 
             }
         }
 
-        refactor(morpheus, linkInterface, 0)
+        refactor(morpheus, 0)
     }
 
 }
