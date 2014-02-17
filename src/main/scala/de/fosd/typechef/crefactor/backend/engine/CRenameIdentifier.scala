@@ -1,6 +1,6 @@
-package de.fosd.typechef.crefactor.backend.refactor
+package de.fosd.typechef.crefactor.backend.engine
 
-import de.fosd.typechef.crefactor.backend.ASTSelection
+import de.fosd.typechef.crefactor.backend.{CRefactor, ASTSelection}
 import de.fosd.typechef.parser.c.{TranslationUnit, AST, Id}
 import de.fosd.typechef.crefactor.frontend.util.Selection
 import de.fosd.typechef.crefactor.Morpheus
@@ -33,9 +33,9 @@ object CRenameIdentifier extends ASTSelection with CRefactor {
         else if (isLinked(nid, morpheus))
             Left(Configuration.getInstance().getConfig("default.error.invalidName"))
         else if (lid.exists(isShadowed(nid, _, morpheus)))
-            Left(Configuration.getInstance().getConfig("refactor.rename.failed.shadowing"))
+            Left(Configuration.getInstance().getConfig("engine.rename.failed.shadowing"))
         else if (!lid.par.forall(id => new File(id.getFile.get.replaceFirst("file ", "")).canWrite))
-            Left(Configuration.getInstance().getConfig("refactor.rename.failed.rename"))
+            Left(Configuration.getInstance().getConfig("engine.rename.failed.rename"))
         else
             Right(replaceIds(morpheus.getTranslationUnit, lid, nid))
     }

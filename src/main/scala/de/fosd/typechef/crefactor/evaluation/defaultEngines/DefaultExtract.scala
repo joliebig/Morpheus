@@ -1,10 +1,10 @@
-package de.fosd.typechef.crefactor.evaluation.refactor
+package de.fosd.typechef.crefactor.evaluation.defaultEngines
 
 import de.fosd.typechef.crefactor.evaluation.{StatsJar, Evaluation, Refactoring}
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.parser.c.{Statement, AST}
 import de.fosd.typechef.featureexpr.FeatureExpr
-import de.fosd.typechef.crefactor.backend.refactor.CExtractFunction
+import de.fosd.typechef.crefactor.backend.engine.CExtractFunction
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.parser.c.CompoundStatement

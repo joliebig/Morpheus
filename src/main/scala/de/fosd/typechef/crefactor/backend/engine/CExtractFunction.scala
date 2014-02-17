@@ -1,6 +1,6 @@
-package de.fosd.typechef.crefactor.backend.refactor
+package de.fosd.typechef.crefactor.backend.engine
 
-import de.fosd.typechef.crefactor.backend.ASTSelection
+import de.fosd.typechef.crefactor.backend.{RefactorException, CRefactor, ASTSelection}
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.crefactor.frontend.util.Selection
 import java.util
@@ -203,7 +203,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     Either[String, TranslationUnit] = {
 
         if (!isValidId(funName))
-            return Left(Configuration.getInstance().getConfig("refactor.extractFunction.failed.shadowing"))
+            return Left(Configuration.getInstance().getConfig("engine.extractFunction.failed.shadowing"))
 
         if (isLinked(funName, morpheus))
             return Left(Configuration.getInstance().getConfig("default.error.invalidName"))

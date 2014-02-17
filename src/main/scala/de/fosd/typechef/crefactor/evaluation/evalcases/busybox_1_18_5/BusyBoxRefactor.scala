@@ -21,7 +21,7 @@ object BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
         evaluate(tunit, fm, file, linkInterface, Inline)
 
     private def evaluate(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking, r: Refactoring): Unit = {
-        logger.info("File to refactor: " + getFileName(file) + " +++")
+        logger.info("File to engine: " + getFileName(file) + " +++")
         val resultDir = getResultDir(file)
         val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(file)
         if (tunit == null) logger.error("+++ AST is null! +++")
@@ -43,7 +43,7 @@ object BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
                     BusyBoxVerification.verify(file, fm, "_org")
                     runScript("./cleanAndReset.sh", sourcePath)
                     StatsJar.addStat(file, TestingTime, time.getTime)
-                } else writeError("Could not refactor file.", path)
+                } else writeError("Could not engine file.", path)
                 StatsJar.write(path + ".stats")
             } catch {
                 case e: Exception => {

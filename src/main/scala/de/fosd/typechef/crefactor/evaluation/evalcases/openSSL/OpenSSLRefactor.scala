@@ -19,7 +19,7 @@ object OpenSSLRefactor extends OpenSSLEvaluation with Refactor {
         evaluate(tunit, fm, file, linkInterface, Inline)
 
     private def evaluate(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking, r: Refactoring): Unit = {
-        println("+++ File to refactor: " + getFileName(file) + " +++")
+        println("+++ File to engine: " + getFileName(file) + " +++")
         val resultDir = getResultDir(file)
         val path = resultDir.getCanonicalPath + File.separatorChar
         val resDir = new File(path)
@@ -39,7 +39,7 @@ object OpenSSLRefactor extends OpenSSLEvaluation with Refactor {
                     OpenSSLVerification.verify(morpheus.getFile, morpheus.getFM, "first")
                     runScript("./clean.sh", sourcePath)
                     StatsJar.addStat(file, TestingTime, time.getTime)
-                } else writeError("Could not refactor file.", path)
+                } else writeError("Could not engine file.", path)
                 StatsJar.write(path + ".stats")
             } catch {
                 case e: Exception => {
