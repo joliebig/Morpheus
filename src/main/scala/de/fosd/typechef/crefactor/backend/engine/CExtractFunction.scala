@@ -226,8 +226,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             if (!toDeclare.isEmpty)
                 return Left("Invalid selection, a declared variable in the selection gets used outside.")
 
-            val parameters = retrieveParameters(extRefIds, morpheus)
-            val paramIds = getParamterIds(parameters)
+            val params = retrieveParameters(extRefIds, morpheus)
+            val paramIds = getParamterIds(params)
 
             StatsJar.addStat(morpheus.getFile, Liveness, startTime.getTime)
             StatsJar.addStat(morpheus.getFile, ExternalUses, externalUses)
@@ -236,15 +236,15 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
             // generate new function definition
             val specifiers = generateSpecifiers(parentFunction, morpheus)
-            val parameterDecls = getParameterDecls(parameters, parentFunction, morpheus)
+            val parameterDecls = getParameterDecls(params, parentFunction, morpheus)
             val declarator = generateDeclarator(funcName, parameterDecls)
             val compundStatement = generateCompoundStatement(selectedOptStatements,
                 allExtRefIds, paramIds, morpheus)
-            val newFDef = generateFuncDef(specifiers, declarator, compundStatement)
-            val newFDefOpt = generateFuncOpt(parentFunction, newFDef, morpheus)
+            val newFDef = genFDef(specifiers, declarator, compundStatement)
+            val newFDefOpt = genFDefExternal(parentFunction, newFDef, morpheus)
 
             // generate function fCall
-            val callParameters = generateFuncCallParameter(parameters)
+            val callParameters = genFCallParams(params)
             val functionCall = Opt[ExprStatement](newFDefOpt.feature,
                 ExprStatement(PostfixExpr(Id(newFDefOpt.entry.getName),
                     FunctionCall(ExprList(callParameters)))))
@@ -510,7 +510,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     /**
      * Generates the parameters requiered in the function stmt.
      */
-    private def generateFuncCallParameter(parameters: List[(Opt[ParameterDeclaration], Opt[Expr], Id)]) = parameters.flatMap(entry => Some(entry._2))
+    private def genFCallParams(parameters: List[(Opt[ParameterDeclaration], Opt[Expr], Id)]) = parameters.flatMap(entry => Some(entry._2))
 
 
     private def uniqueExtRefIds(defs: List[(Id, List[Id])], uses: List[(Id, List[Id])]) = {
@@ -687,12 +687,12 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     /**
      * Generates the function definition.
      */
-    private def generateFuncDef(specs: List[Opt[Specifier]], decl: Declarator, stmts: CompoundStatement, oldStyleParameters: List[Opt[OldParameterDeclaration]] = List[Opt[OldParameterDeclaration]]()) = FunctionDef(specs, decl, oldStyleParameters, stmts)
+    private def genFDef(specs: List[Opt[Specifier]], decl: Declarator, stmts: CompoundStatement, oldStyleParameters: List[Opt[OldParameterDeclaration]] = List[Opt[OldParameterDeclaration]]()) = FunctionDef(specs, decl, oldStyleParameters, stmts)
 
     /**
      * Generates the opt node for the tunit.
      */
-    private def generateFuncOpt(oldFunc: FunctionDef, newFunc: FunctionDef, morpheus: Morpheus, feature: FeatureExpr = FeatureExprFactory.True) = Opt[FunctionDef](parentOpt(oldFunc, morpheus.getASTEnv).feature.and(feature), newFunc)
+    private def genFDefExternal(oldFunc: FunctionDef, newFunc: FunctionDef, morpheus: Morpheus, feature: FeatureExpr = FeatureExprFactory.True) = Opt[FunctionDef](parentOpt(oldFunc, morpheus.getASTEnv).feature.and(feature), newFunc)
 
     /**
      * Generates the decl.
