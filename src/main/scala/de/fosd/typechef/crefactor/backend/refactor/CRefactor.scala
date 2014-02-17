@@ -62,6 +62,8 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         featureSet.foldRight(FeatureExprFactory.True)((fxpr, setEntry) => fxpr.or(setEntry))
     }
 
+
+    // TODO maybe replace with conditionalFoldRight see ConditionalLib
     def buildChoice[T <: AST](attribute: List[(T, FeatureExpr)]): Conditional[T] = {
         if (attribute.isEmpty) One(null.asInstanceOf[T])
         else if (attribute.length == 1) One(attribute.head._1)
