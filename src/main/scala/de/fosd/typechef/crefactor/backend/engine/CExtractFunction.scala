@@ -193,7 +193,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         else if (!filterAllASTElems[ReturnStatement](selection).isEmpty) false
         else if (!selection.par.forall(!isBadExtractStatement(_, selection, morpheus))) false
         else if (hasVarsToDefinedExternal(selection, morpheus)) false
-        else if (hasInvisibleEnumerations(selection, morpheus)) false
+        // else if (hasInvisibleEnumerations(selection, morpheus)) false
         // else if (!isConditionalComplete(selection, getParentFunction(selection, morpheus), morpheus)) false // Not Relevant?
         else true
     }
@@ -483,38 +483,39 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         }
 
         def addOne(o: One[_], id: Id, ft: FeatureExpr = FeatureExprFactory.True) = {
-            if (ft.isTautology(morpheus.getFM)) {
-                o match {
-                    // only variables are interesting
-                    case o@One((CUnknown(_), _, _)) =>
-                    case o@One((CFunction(_, _), _, _)) =>
-                    case o@One((_, KEnumVar, _, _)) =>
-                        // direct enum use -> check for visibility only as enums are constant
-                        // if not visible afterwards the refactoring can not be made.
-                        if (morpheus.getUseDeclMap.get(id).exists(t => findPriorASTElem[CompoundStatement](t, morpheus.getASTEnv) match {
-                            case None => false
-                            case _ => true
-                        })) throw new RefactorException("Type Declaration for " + id.name + " would be invisible after extraction!")
-                    case o@One((CType(_, _, _, _), KParameter, _, _)) =>
-                        // Passed as parameter in parent function
-                        addParameterToGenerateFromParameter(id, ft)
-                    case _ =>
-                        // Declared in parent function or globally defined
-                        val decl = findPriorASTElem[Declaration](id, morpheus.getASTEnv)
-                        decl match {
-                            case Some(entry) => {
-                                val feature = if (ft.equivalentTo(FeatureExprFactory.True)) parentOpt(entry, morpheus.getASTEnv).feature else ft
-                                // TODO Possible Scala Bug?
-                                // addDeclToDeclsToGenerate(feature, entry, id)
-                                addToDeclFeatureMap(entry, feature)
-                                addTodeclDeclPointerMap(entry, generateInit(entry, id))
-                                addTodeclIdMapMap(entry, id)
-                            }
-                            case none =>
-                                addParameterToGenerateFromParameter(id, ft)
-                                logger.warn("Passed as parameter and detected as declariation but not as parameter: " + id)
+            if (ft.isTautology(morpheus.getFM)) o match {
+                // only variables are interesting
+                case o@One((CUnknown(_), _, _)) =>
+                case o@One((CFunction(_, _), _, _, _)) =>
+                // Linked function pointers does need to passed as parameter
+                case o@One((CType(CFunction(_, _), _, _, _), _, _, ExternalLinkage)) =>
+                case o@One((CType(CFunction(_, _), _, _, _), _, _, InternalLinkage)) =>
+                case o@One((_, KEnumVar, _, _)) =>
+                    // direct enum use -> check for visibility only as enums are constant
+                    // if not visible afterwards the refactoring can not be made.
+                    if (morpheus.getUseDeclMap.get(id).exists(t => findPriorASTElem[CompoundStatement](t, morpheus.getASTEnv) match {
+                        case None => false
+                        case _ => true
+                    })) throw new RefactorException("Type Declaration for " + id.name + " would be invisible after extraction!")
+                case o@One((CType(_, _, _, _), KParameter, _, _)) =>
+                    // Passed as parameter in parent function
+                    addParameterToGenerateFromParameter(id, ft)
+                case _ =>
+                    // Declared in parent function or globally defined
+                    val decl = findPriorASTElem[Declaration](id, morpheus.getASTEnv)
+                    decl match {
+                        case Some(entry) => {
+                            val feature = if (ft.equivalentTo(FeatureExprFactory.True)) parentOpt(entry, morpheus.getASTEnv).feature else ft
+                            // TODO Possible Scala Bug?
+                            // addDeclToDeclsToGenerate(feature, entry, id)
+                            addToDeclFeatureMap(entry, feature)
+                            addTodeclDeclPointerMap(entry, generateInit(entry, id))
+                            addTodeclIdMapMap(entry, id)
                         }
-                }
+                        case none =>
+                            addParameterToGenerateFromParameter(id, ft)
+                            logger.warn("Passed as parameter and detected as declariation but not as parameter: " + id)
+                    }
             }
         }
 
