@@ -486,9 +486,6 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                                 addParameterToGenerateFromParameter(id, ft)
                                 logger.warn("Passed as parameter and detected as declaration but not as parameter: " + id)
                         }
-                        case none =>
-                            addParameterToGenerateFromParameter(id, ft)
-                            logger.warn("Passed as parameter and detected as declariation but not as parameter: " + id)
                     }
             }
         }
