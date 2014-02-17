@@ -103,10 +103,10 @@ object Builder extends OpenSSLEvaluation with Building {
         runScript("./clean.sh", sourcePath)
 
         // write AST in current result dir
-        printAndWriteAST(ast, refFile.getCanonicalPath)
+        printAndWriteTUnit(ast, refFile.getCanonicalPath)
         println("+++ Saving result to: " + refFile.getPath)
         println("+++ Updating file: " + currentFile.getCanonicalPath.replace(".pi", ".c"))
-        printAndWriteAST(ast, currentFile.getCanonicalPath.replace(".pi", ".c"))
+        printAndWriteTUnit(ast, currentFile.getCanonicalPath.replace(".pi", ".c"))
 
         val ppp = buildAndTest(currentFile, "_ppp")
 

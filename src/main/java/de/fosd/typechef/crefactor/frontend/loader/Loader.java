@@ -10,7 +10,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 
 /**
- * Loader class to display a window for choosing the file to refactor and the required include directories.
+ * Loader class to display a window for choosing the file to engine and the required include directories.
  *
  * @author Andreas Janker
  */

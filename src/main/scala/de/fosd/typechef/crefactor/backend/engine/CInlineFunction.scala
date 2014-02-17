@@ -1,4 +1,4 @@
-package de.fosd.typechef.crefactor.backend.refactor
+package de.fosd.typechef.crefactor.backend.engine
 
 import de.fosd.typechef.crefactor._
 import backend.ASTSelection
@@ -62,14 +62,14 @@ object CInlineFunction extends ASTSelection with CRefactor {
     def inline(morpheus: Morpheus, id: Id, rename: Boolean, evalMode: Boolean, once: Boolean = false):
     TranslationUnit = {
         val (calls, decl, fDefs, callExpr) = divideCallDeclDef(id, morpheus)
-        
+
         // TODO rewrite to Either[String, TranslationUnit]; similar to the other refactorings!
         if (fDefs.isEmpty)
             assert(false, "Inlining of external function definitions is not supported.")
 
-        var tunitRefactored = calls.foldLeft(morpheus.getTranslationUnit)((curTunit, call) => 
+        var tunitRefactored = calls.foldLeft(morpheus.getTranslationUnit)((curTunit, call) =>
             inlineFuncCall(curTunit, new Morpheus(curTunit), call, fDefs, rename))
-        tunitRefactored = 
+        tunitRefactored =
             callExpr.foldLeft(tunitRefactored)(
                 (workingAST, expr) => inlineFuncCallExpr(workingAST, new Morpheus(workingAST),
                     expr, fDefs, rename))
@@ -319,7 +319,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
 
         def inlineCompStmt(fDefs: List[Opt[_]], callCompStmt: CompoundStatement):
         CompoundStatement = {
-            val workingCallCompStmt = 
+            val workingCallCompStmt =
                 fDefs.foldLeft(callCompStmt)(
                     (curStmt, fDef) => fDef match {
                         case f: Opt[FunctionDef] =>
@@ -327,7 +327,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
                         case _ =>
                             println("Forgotten definition")
                             curStmt
-            })
+                    })
             // Remove stmt
             removeFromAST(workingCallCompStmt, call)
         }
@@ -377,7 +377,8 @@ object CInlineFunction extends ASTSelection with CRefactor {
                     val feature = spec.feature.and(returnStmt.feature)
                     if (feature.isContradiction(morpheus.getFM))
                         return compoundStmt
-                    spec.copy(feature = feature)}
+                    spec.copy(feature = feature)
+                }
             )
 
             val feature = call.feature.and(returnStmt.feature)
@@ -563,7 +564,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
     private def getIdsToRename(funcDef: FunctionDef, call: AST, compoundStmt: CompoundStatement, morpheus: Morpheus) = filterAllASTElems[Id](funcDef).filter(id => isDeclared(id, morpheus.getEnv(compoundStmt.innerStatements.last.entry).asInstanceOf[Env], compoundStmt: CompoundStatement, morpheus: Morpheus))
 
     private def getInitializers(call: Opt[AST], parameters: List[Opt[DeclaratorExtension]],
-                                   morpheus: Morpheus):
+                                morpheus: Morpheus):
     List[Opt[DeclarationStatement]] = {
 
         def generateInitializer(parameter: Opt[DeclaratorExtension], exprList: List[Opt[Expr]]):

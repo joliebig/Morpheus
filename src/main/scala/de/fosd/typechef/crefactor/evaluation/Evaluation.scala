@@ -286,11 +286,11 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
 
     def write(ast: AST, filePath: String, orgFile: String = null) = {
         val refFile = if (orgFile != null) orgFile else filePath
-        printAndWriteAST(ast, filePath)
+        printAndWriteTUnit(ast, filePath)
         val resultDir = getResultDir(refFile)
         val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(filePath)
-        printAndWriteAST(ast, path)
-        writePlainAST(ast, path + ".tunit")
+        printAndWriteTUnit(ast, path)
+        writePlainTUnit(ast, path + ".tunit_plain")
     }
 
     def writeResult(result: String, file: String) = {
@@ -303,7 +303,7 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
         out.close()
     }
 
-    def printAndWriteAST(ast: AST, filePath: String) {
+    def printAndWriteTUnit(ast: AST, filePath: String) {
         val file = new File(filePath)
         val prettyPrinted = PrettyPrinter.print(ast).replace("definedEx", "defined")
         val writer = new FileWriter(file, false)
@@ -312,7 +312,7 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
         writer.close()
     }
 
-    def writePlainAST(ast: AST, filePath: String) {
+    def writePlainTUnit(ast: AST, filePath: String) {
         val writer = new FileWriter(filePath)
         writer.write(ast.toString)
         writer.flush()

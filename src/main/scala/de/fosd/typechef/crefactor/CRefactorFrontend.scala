@@ -60,8 +60,8 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         opt.setFeatureModel(fm) //otherwise the lexer does not get the updated feature model with file presence conditions
 
         val tunit = {
-            if (runOpt.reuseAST && new File(opt.getSerializedASTFilename).exists())
-                loadSerializedAST(opt.getSerializedASTFilename)
+            if (runOpt.reuseAST && new File(opt.getSerializedTUnitFilename).exists())
+                loadSerializedAST(opt.getSerializedTUnitFilename)
             else parseAST(fm, opt)
         }
 
@@ -90,8 +90,8 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         if (opt.parse) {
 
             val tunit = {
-                if (opt.reuseAST && new File(opt.getSerializedASTFilename).exists())
-                    loadSerializedAST(opt.getSerializedASTFilename)
+                if (opt.reuseAST && new File(opt.getSerializedTUnitFilename).exists())
+                    loadSerializedAST(opt.getSerializedTUnitFilename)
                 else parseAST(fm, opt)
             }
 
@@ -103,7 +103,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
 
             // val preparedTunit = prepareAST(tunit)
 
-            if (opt.serializeAST) serializeAST(tunit, opt.getSerializedASTFilename)
+            if (opt.serializeAST) serializeTUnit(tunit, opt.getSerializedTUnitFilename)
 
             if (opt.writeInterface) writeInterface(tunit, fm, opt, errorXML)
 
@@ -176,12 +176,12 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
             case RefactorType.RENAME => caseStudy.rename(tunit, fm, opt.getFile, linkInf)
             case RefactorType.EXTRACT => caseStudy.extract(tunit, fm, opt.getFile, linkInf)
             case RefactorType.INLINE => caseStudy.inline(tunit, fm, opt.getFile, linkInf)
-            case RefactorType.NONE => println("No refactor type defined")
+            case RefactorType.NONE => println("No engine type defined")
         }
     }
     private def lex(opt: FrontendOptions): TokenReader[CToken, CTypeContext] = CLexer.prepareTokens(new lexer.Main().run(opt, opt.parse))
 
-    private def serializeAST(ast: AST, filename: String) {
+    private def serializeTUnit(ast: AST, filename: String) {
         val fw = new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(filename)))
         fw.writeObject(ast)
         fw.close()

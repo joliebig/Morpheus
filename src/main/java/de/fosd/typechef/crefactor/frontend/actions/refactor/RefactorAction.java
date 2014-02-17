@@ -2,9 +2,9 @@ package de.fosd.typechef.crefactor.frontend.actions.refactor;
 
 
 import de.fosd.typechef.crefactor.Morpheus;
-import de.fosd.typechef.crefactor.backend.refactor.CExtractFunction;
-import de.fosd.typechef.crefactor.backend.refactor.CInlineFunction;
-import de.fosd.typechef.crefactor.backend.refactor.CRenameIdentifier;
+import de.fosd.typechef.crefactor.backend.engine.CExtractFunction;
+import de.fosd.typechef.crefactor.backend.engine.CInlineFunction;
+import de.fosd.typechef.crefactor.backend.engine.CRenameIdentifier;
 import de.fosd.typechef.crefactor.evaluation_utils.Configuration;
 import de.fosd.typechef.crefactor.frontend.util.RefactorNameInputBox;
 import de.fosd.typechef.crefactor.frontend.util.Test2000;
@@ -118,7 +118,7 @@ public class RefactorAction {
             public void actionPerformed(ActionEvent actionEvent) {
                 final RefactorNameInputBox box = new RefactorNameInputBox();
                 box.createAndShowInputBox(Configuration.getInstance().getConfig("refactor.rename.name"),
-                        Configuration.getInstance().getConfig("refactor.rename.newName"), id.name());
+                        Configuration.getInstance().getConfig("engine.rename.newName"), id.name());
                 if (box.getInput() == null) {
                     return;
                 }

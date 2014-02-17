@@ -30,10 +30,10 @@ object Builder extends SQLiteEvaluation with Building {
         runScript("./clean.sh", sourcePath)
 
         // write AST in current result dir
-        printAndWriteAST(ast, refFile.getCanonicalPath)
+        printAndWriteTUnit(ast, refFile.getCanonicalPath)
         println("+++ Saving result to: " + refFile.getPath)
         println("+++ Updating file: " + currentFile.getCanonicalPath)
-        printAndWriteAST(ast, currentFile.getCanonicalPath)
+        printAndWriteTUnit(ast, currentFile.getCanonicalPath)
 
         val ppp = buildAndTest(currentFile, "_ppp")
 
