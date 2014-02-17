@@ -191,7 +191,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         }) false
         else if (!isPartOfSameCompStmt(selection, morpheus)) false
         else if (!filterAllASTElems[ReturnStatement](selection).isEmpty) false
-        else if (!selection.par.forall(!isBadExtractStatement(_, selection, morpheus))) false
+        else if (selection.par.forall(compatibleCFG(_, selection, morpheus))) false
         else if (hasVarsToDefinedExternal(selection, morpheus)) false
         // else if (!isConditionalComplete(selection, getParentFunction(selection, morpheus), morpheus)) false // Not Relevant?
         else true
@@ -638,63 +638,51 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     private def selectionIsConditional(selection: List[AST]) = selection.exists(isVariable)
     */
 
-    private def isBadExtractStatement(element: AST, selection: List[AST], morpheus: Morpheus):
+    private def compatibleCFG(element: AST, selection: List[AST], morpheus: Morpheus):
     Boolean = {
+        
+        // determine all continue statements and check whether their jump targets
+        // are part of the selection
+        val cStmts = filterAllASTElems[ContinueStatement](element)
+        val succsCStmts = cStmts.flatMap(succ(_, morpheus.getASTEnv))
+        val filteredCStmtsSuccs = succsCStmts.filter(_.feature isSatisfiable morpheus.getFM)
+        
+        if (! filteredCStmtsSuccs.forall(isPartOf(_, selection)))
+            return false
 
-        def filter[T <: AST](stmts: List[AST])(implicit m: ClassManifest[T]) = {
-            stmts.exists(stmt => {
-                findPriorASTElem[T](stmt, morpheus.getASTEnv) match {
-                    case None => false
-                    case Some(x) =>
-                        selection.exists(s =>
-                            if (s.eq(x)) true
-                            else filterAllASTElems[T](s, morpheus.getASTEnv).par.exists(fs => fs.eq(x)))
-                }
-            })
-        }
+        // determine all break statements and check whether their jump targers
+        // are part of the selection
+        val bStmts = filterAllASTElems[BreakStatement](element)
+        val succsBStmts = bStmts.flatMap(succ(_, morpheus.getASTEnv))
+        val filteredBStmtsSuccs = succsBStmts.filter(_.feature isSatisfiable morpheus.getFM)
 
-        val cStmt = filterAllASTElems[ContinueStatement](element)
-        cStmt.isEmpty match {
-            case true =>
-            case _ =>
-                if (filter[ForStatement](cStmt)) return false
-                if (filter[DoStatement](cStmt)) return false
-                if (filter[WhileStatement](cStmt)) return false
-                return true
-        }
-        val bStmt = filterAllASTElems[BreakStatement](element)
-        bStmt.isEmpty match {
-            case true =>
-            case _ =>
-                if (filter[DoStatement](bStmt)) return false
-                if (filter[WhileStatement](bStmt)) return false
-                if (filter[ForStatement](bStmt)) return false
-                if (filter[SwitchStatement](bStmt)) return false
-                return true
-        }
-        val caStmt = filterAllASTElems[CaseStatement](element)
-        caStmt.isEmpty match {
-            case true =>
-            case _ =>
-                if (filter[SwitchStatement](caStmt)) return false
-                return true
-        }
-        val gotoS = filterAllASTElems[GotoStatement](element)
-        gotoS.isEmpty match {
-            case true =>
-            case _ => return !gotoS.exists(goto => {
-                goto.target match {
-                    case i: Id => morpheus.getUseDeclMap.get(i).exists(labels => filter[Id](gotoS))
-                    case _ => true
-                }
-            })
-        }
-        val labels = filterAllASTElems[LabelStatement](element)
-        labels.isEmpty match {
-            case true =>
-            case _ => return !labels.exists(label => morpheus.getDeclUseMap.get(label.id).exists(goto => filter[Id](labels)))
-        }
-        false
+        if (! filteredBStmtsSuccs.par.forall(isPartOf(_, selection)))
+            return false
+
+        // determine all case statements and check whether their predecessor elements, in particular,
+        // the entire switch statement is part of the selection
+        val caStmts = filterAllASTElems[CaseStatement](element)
+        val predsCaStmts = caStmts.flatMap(pred(_, morpheus.getASTEnv))
+        val filteredCaStmts = predsCaStmts.filter(_.feature isSatisfiable morpheus.getFM)
+
+        if (! filteredCaStmts.par.forall(isPartOf(_, selection)))
+            return false
+
+        val gotoStmts = filterAllASTElems[GotoStatement](element)
+        val succsGotoStmts = gotoStmts.flatMap(succ(_, morpheus.getASTEnv))
+        val filteredGotoStmts = succsGotoStmts.filter(_.feature isSatisfiable morpheus.getFM)
+        
+        if (! filteredGotoStmts.par.forall(isPartOf(_, selection)))
+            return false
+
+        val labelStmts = filterAllASTElems[LabelStatement](element)
+        val predsLabelStmts = labelStmts.flatMap(pred(_, morpheus.getASTEnv))
+        val filteredLabelStmts = predsLabelStmts.filter(_.feature isSatisfiable morpheus.getFM)
+        
+        if (! filteredLabelStmts.par.forall(isPartOf(_, selection)))
+            return false
+
+        true
     }
 
     private def getFunction(selection: List[AST], morpheus: Morpheus): FunctionDef = {
