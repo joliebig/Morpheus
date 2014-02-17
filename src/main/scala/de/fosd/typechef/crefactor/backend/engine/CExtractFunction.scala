@@ -193,6 +193,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         else if (!filterAllASTElems[ReturnStatement](selection).isEmpty) false
         else if (!selection.par.forall(!isBadExtractStatement(_, selection, morpheus))) false
         else if (hasVarsToDefinedExternal(selection, morpheus)) false
+        else if (hasInvisibleEnumerations(selection, morpheus)) false
         // else if (!isConditionalComplete(selection, getParentFunction(selection, morpheus), morpheus)) false // Not Relevant?
         else true
     }
@@ -299,6 +300,51 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 Left(x.getMessage)
             }
         }
+    }
+
+    private def hasInvisibleEnumerations(selection: List[AST], morpheus: Morpheus): Boolean = {
+        def choiceIsInvisibleOutsideCCStmt(c: Choice[_], liveId: Id): Boolean = {
+            c match {
+                case c@Choice(cft, o1@One(_), o2@One(_)) => enumIsInvisibleOutsideCCStmt(o1, liveId) || enumIsInvisibleOutsideCCStmt(o2, liveId)
+                case c@Choice(cft, c1@Choice(_, _, _), o2@One(_)) => choiceIsInvisibleOutsideCCStmt(c1, liveId) || enumIsInvisibleOutsideCCStmt(o2, liveId)
+                case c@Choice(cft, o1@One(_), c1@Choice(_, _, _)) => choiceIsInvisibleOutsideCCStmt(c1, liveId) || enumIsInvisibleOutsideCCStmt(o1, liveId)
+                case c@Choice(cft, c1@Choice(_, _, _), c2@Choice(_, _, _)) => choiceIsInvisibleOutsideCCStmt(c1, liveId) || choiceIsInvisibleOutsideCCStmt(c2, liveId)
+            }
+        }
+
+        def enumIsInvisibleOutsideCCStmt(o: One[_], liveId: Id): Boolean = {
+            o match {
+                case o@One((_, KEnumVar, 1, _)) =>
+                    logger.info(liveId + " is invisible after extraction")
+                    true
+                case _ => false
+            }
+        }
+
+        val selectedIds = filterAllASTElems[Id](selection)
+        val externalUses = externalOccurrences(selectedIds, morpheus.getDeclUseMap, morpheus)
+        val externalDefs = externalOccurrences(selectedIds, morpheus.getUseDeclMap, morpheus)
+        val liveIds = uniqueExtRefIds(externalDefs, externalUses)
+
+        val invisibleEnums = liveIds.exists(liveId => {
+            try {
+                morpheus.getEnv(liveId).varEnv.lookup(liveId.name) match {
+                    case o@One(_) => enumIsInvisibleOutsideCCStmt(o, liveId)
+                    case c@Choice(_, _, _) => choiceIsInvisibleOutsideCCStmt(c, liveId)
+                    case x =>
+                        logger.warn("Missed pattern choice? " + x)
+                        false
+                }
+            } catch {
+                case _: Throwable =>
+                    logger.warn("No entry found for: " + liveId)
+                    false
+            }
+        })
+
+        if (invisibleEnums) logger.info("Not available for extract - has invisible enums.")
+
+        invisibleEnums
     }
 
     private def hasVarsToDefinedExternal(selection: List[AST], morpheus: Morpheus): Boolean = {
@@ -490,7 +536,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                     case x => logger.warn("Missed pattern choice? " + x)
                 }
             } catch {
-                case _: Throwable => // logger.warn("No entry found for: " + param)
+                case _: Throwable => logger.warn("No entry found for: " + liveId)
             })
 
         val decls = declFeatureMap.keySet().toArray(Array[Declaration]()).toList
