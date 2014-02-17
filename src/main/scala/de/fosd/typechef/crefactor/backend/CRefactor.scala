@@ -7,20 +7,6 @@ import de.fosd.typechef.parser.c._
 import de.fosd.typechef.crefactor.frontend.util.Selection
 import de.fosd.typechef.conditional._
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
-import de.fosd.typechef.parser.c.CompoundStatementExpr
-import scala.{Product, Some}
-import de.fosd.typechef.parser.c.Id
-import de.fosd.typechef.parser.c.FunctionDef
-import de.fosd.typechef.parser.c.CompoundStatement
-import de.fosd.typechef.parser.c.CompoundStatementExpr
-import scala.Some
-import de.fosd.typechef.conditional.Choice
-import de.fosd.typechef.parser.c.TranslationUnit
-import de.fosd.typechef.conditional.One
-import de.fosd.typechef.parser.c.Id
-import de.fosd.typechef.parser.c.FunctionDef
-import de.fosd.typechef.parser.c.CompoundStatement
-import de.fosd.typechef.conditional.Opt
 
 trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation {
 
