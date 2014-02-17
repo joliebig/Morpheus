@@ -88,13 +88,14 @@ object CInlineFunction extends ASTSelection with CRefactor {
         astWoDeclDef
     }
 
-    def divideCallDeclDef(callId: Id, morpheus: Morpheus): (List[Opt[Statement]], List[Opt[AST]], List[Opt[FunctionDef]], List[Opt[AST]]) = {
+    def divideCallDeclDef(callId: Id, morpheus: Morpheus): (List[Opt[Statement]], List[Opt[AST]],
+        List[Opt[FunctionDef]], List[Opt[AST]]) = {
         var callStmt = List[Opt[Statement]]()
         var decl = List[Opt[AST]]()
         var defs = List[Opt[FunctionDef]]()
         var callExpr = List[Opt[AST]]()
 
-        morpheus.linkage(callId).foreach(id => {
+        morpheus.linkage(callId).map(_.entry).foreach(id => {
             val parent = parentOpt(id, morpheus.getASTEnv)
             parent.entry match {
                 case w: WhileStatement => callExpr ::= parent.asInstanceOf[Opt[AST]]
@@ -314,7 +315,8 @@ object CInlineFunction extends ASTSelection with CRefactor {
                     None
             })
             // Remove fCall and inline function
-            replaceInAST(callCompStmt, morpheus.getASTEnv.parent(call.entry), buildChoice(inlineExprStatements)).asInstanceOf[CompoundStatement]
+            replaceInAST(callCompStmt, morpheus.getASTEnv.parent(call.entry),
+                buildChoice(inlineExprStatements)).asInstanceOf[CompoundStatement]
         }
 
         def inlineCompStmt(fDefs: List[Opt[_]], callCompStmt: CompoundStatement):

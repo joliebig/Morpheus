@@ -10,6 +10,7 @@ import de.fosd.typechef.typesystem._
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.StatsJar
 import de.fosd.typechef.crefactor.backend.CLinking
+import de.fosd.typechef.conditional.Opt
 
 class Morpheus(tunit: TranslationUnit, fm: FeatureModel, linkInterface: CLinking, file: String) extends Observable
 with CDeclUse with CTypeEnv with CEnvCache with CTypeCache with CTypeSystem with Logging {
@@ -27,13 +28,13 @@ with CDeclUse with CTypeEnv with CEnvCache with CTypeCache with CTypeSystem with
     if (file != null)
         StatsJar.addStat(file, TypeCheck, typeCheck.getTime)
 
-    private val connectedIds: java.util.IdentityHashMap[Id, List[Id]] = new java.util.IdentityHashMap()
+    private val connectedIds: java.util.IdentityHashMap[Id, List[Opt[Id]]] = new java.util.IdentityHashMap()
 
     // determines linkage information between identifier uses and declares and vice versa
     //
     // decl-use information in typesystem are determined without the feature model
     // solely on the basis of annotations in the source code
-    def linkage(id: Id): List[Id] = {
+    def linkage(id: Id): List[Opt[Id]] = {
 
         val fExpId = astEnvCached.featureExpr(id)
 
@@ -63,8 +64,9 @@ with CDeclUse with CTypeEnv with CEnvCache with CTypeCache with CTypeSystem with
             val fExpConn = astEnvCached.featureExpr(conn)
 
             if (fExpId and fExpConn isSatisfiable fm) {
-                if (connectedIds.containsKey(id)) connectedIds.put(id, conn :: connectedIds.get(id))
-                else connectedIds.put(id, List(conn))
+                if (connectedIds.containsKey(id))
+                    connectedIds.put(id, Opt(fExpConn, conn) :: connectedIds.get(id))
+                else connectedIds.put(id, List(Opt(fExpConn, conn)))
             } else {
                 connectedIds.get(id)
             }

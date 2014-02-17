@@ -1,20 +1,12 @@
 package de.fosd.typechef.crefactor.backend
 
-import de.fosd.typechef.typesystem.CEnvCache
+import de.fosd.typechef.typesystem.{CType, CEnvCache}
 import de.fosd.typechef.crefactor.Morpheus
 import org.kiama.rewriting.Rewriter._
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.crefactor.frontend.util.Selection
-import de.fosd.typechef.conditional.Conditional
+import de.fosd.typechef.conditional._
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
-import de.fosd.typechef.parser.c.CompoundStatementExpr
-import scala.{Product, Some}
-import de.fosd.typechef.conditional.Choice
-import de.fosd.typechef.conditional.One
-import de.fosd.typechef.parser.c.Id
-import de.fosd.typechef.parser.c.FunctionDef
-import de.fosd.typechef.parser.c.CompoundStatement
-import de.fosd.typechef.conditional.Opt
 
 trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation {
 
@@ -53,15 +45,15 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
     def getOrFeatures(a: Any): FeatureExpr = {
         var featureSet: Set[FeatureExpr] = Set()
         val r = manytd(query {
-            case Opt(ft, entry) =>
-                featureSet += ft
-            case Choice(ft, a, b) =>
-                featureSet += ft
+            case Opt(ft, _) => featureSet += ft
+            case Choice(ft, _, _) => featureSet += ft
         })
         r(a).get
         featureSet.foldRight(FeatureExprFactory.True)((fxpr, setEntry) => fxpr.or(setEntry))
     }
 
+
+    // TODO maybe replace with conditionalFoldRight see ConditionalLib
     def buildChoice[T <: AST](attribute: List[(T, FeatureExpr)]): Conditional[T] = {
         if (attribute.isEmpty) One(null.asInstanceOf[T])
         else if (attribute.length == 1) One(attribute.head._1)
@@ -80,25 +72,27 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
 
     def isShadowed(name: String, element: AST, morpheus: Morpheus): Boolean = {
         val lookupValue = findPriorASTElem[CompoundStatement](element, morpheus.getASTEnv) match {
-            case s@Some(x) => x.innerStatements.last.entry
+            case Some(x) => x.innerStatements.last.entry
             case _ => morpheus.getTranslationUnit.defs.last.entry
         }
 
-        val env = morpheus.getEnv(lookupValue)
+        val env = morpheus.getEnv(lookupValue).asInstanceOf[Env]
+        val ctx = morpheus.getASTEnv.featureExpr(element)
 
-        isDeclaredVarInEnv(name, env.asInstanceOf[Env]) || isDeclaredStructOrUnionInEnv(name, env.asInstanceOf[Env]) || isDeclaredTypeDefInEnv(name, env.asInstanceOf[Env])
+        (isDeclaredInEnv(env.varEnv(name), ctx, morpheus)
+            || isDeclaredStructOrUnionInEnv(name, env)
+            || isDeclaredInEnv(env.typedefEnv(name), ctx, morpheus))
     }
 
-    def isDeclaredVarInEnv(name: String, env: Env) = env.varEnv(name) match {
-        case One(x) => !x.isUnknown
-        case _ => true
+    private def isDeclaredInEnv(env: Conditional[CType], ctx: FeatureExpr, morpheus: Morpheus):
+    Boolean = {
+        !ConditionalLib.items(env).forall {
+            x => x._2.isUnknown || (ctx and x._1 isContradiction morpheus.getFM)
+        }
     }
 
-    def isDeclaredStructOrUnionInEnv(name: String, env: Env) = env.structEnv.someDefinition(name, false) || env.structEnv.someDefinition(name, true)
-
-    def isDeclaredTypeDefInEnv(name: String, env: Env) = env.typedefEnv(name) match {
-        case One(x) => !x.isUnknown
-        case _ => true
+    private def isDeclaredStructOrUnionInEnv(name: String, env: Env): Boolean = {
+        env.structEnv.someDefinition(name, false) || env.structEnv.someDefinition(name, true)
     }
 
     /**
