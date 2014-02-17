@@ -157,13 +157,14 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         }) false
         else if (!isPartOfSameCompStmt(selection, morpheus)) false
         else if (!filterAllASTElems[ReturnStatement](selection).isEmpty) false
-        else if (selection.par.forall(compatibleCFG(_, selection, morpheus))) false
+        else if (selection.par.forall(isValidSelection(_, selection, morpheus))) false
         else if (hasVarsToDefinedExternal(selection, morpheus)) false
         // else if (!isConditionalComplete(selection, getParentFunction(selection, morpheus), morpheus)) false // Not Relevant?
         else true
     }
 
-    def isAvailable(morpheus: Morpheus, selection: Selection): Boolean = isAvailable(morpheus, getSelectedElements(morpheus, selection))
+    def isAvailable(morpheus: Morpheus, selection: Selection): Boolean =
+        isAvailable(morpheus, getSelectedElements(morpheus, selection))
 
     def extract(morpheus: Morpheus, selection: List[AST], funName: String):
     Either[String, TranslationUnit] = {
@@ -235,10 +236,10 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             StatsJar.addStat(morpheus.getFile, Parameters, paramIds)
 
             // generate new function definition
-            val specifiers = generateSpecifiers(parentFunction, morpheus)
+            val specifiers = genSpecifiers(parentFunction, morpheus)
             val parameterDecls = getParameterDecls(params, parentFunction, morpheus)
-            val declarator = generateDeclarator(funcName, parameterDecls)
-            val compundStatement = generateCompoundStatement(selectedOptStatements,
+            val declarator = genDeclarator(funcName, parameterDecls)
+            val compundStatement = genCompoundStatement(selectedOptStatements,
                 allExtRefIds, paramIds, morpheus)
             val newFDef = genFDef(specifiers, declarator, compundStatement)
             val newFDefOpt = genFDefExternal(parentFunction, newFDef, morpheus)
@@ -527,7 +528,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     }
 
 
-    private def generateCompoundStatement(statements: List[Opt[Statement]], externalRef: List[Id], parameters: List[Id], morpheus: Morpheus): CompoundStatement = {
+    private def genCompoundStatement(statements: List[Opt[Statement]], externalRef: List[Id], parameters: List[Id], morpheus: Morpheus): CompoundStatement = {
         def isPartOfParameter(id: Id, params: List[Id], morpheus: Morpheus): Boolean = {
             if (!morpheus.getUseDeclMap.containsKey(id)) false
             morpheus.getUseDeclMap.get(id).exists(decl => params.exists(param => param.eq(decl)))
@@ -607,7 +608,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     private def selectionIsConditional(selection: List[AST]) = selection.exists(isVariable)
     */
 
-    private def compatibleCFG(element: AST, selection: List[AST], morpheus: Morpheus):
+    private def isValidSelection(element: AST, selection: List[AST], morpheus: Morpheus):
     Boolean = {
         
         // determine all continue statements and check whether their jump targets
@@ -664,8 +665,11 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     /**
      * Generates the required specifiers.
      */
-    private def generateSpecifiers(funcDef: FunctionDef, morpheus: Morpheus /* , typeSpecifier: Opt[Specifier] = Opt(FeatureExprFactory.True, VoidSpecifier()) */): List[Opt[Specifier]] = {
-        var specifiers: List[Opt[Specifier]] = List(Opt(parentOpt(funcDef, morpheus.getASTEnv).feature, VoidSpecifier()))
+    private def genSpecifiers(funcDef: FunctionDef, morpheus: Morpheus
+    /* , typeSpecifier: Opt[Specifier] = Opt(FeatureExprFactory.True, VoidSpecifier()) */): 
+    List[Opt[Specifier]] = {
+        var specifiers: List[Opt[Specifier]] = 
+            List(Opt(parentOpt(funcDef, morpheus.getASTEnv).feature, VoidSpecifier()))
 
         // preserv specifiers from function definition except type specifiers
         funcDef.specifiers.foreach(specifier => {
@@ -697,5 +701,5 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     /**
      * Generates the decl.
      */
-    private def generateDeclarator(name: String /*, pointer: List[Opt[Pointer]] = List[Opt[Pointer]]()*/ , extensions: List[Opt[DeclaratorExtension]] = List[Opt[DeclaratorExtension]]()) = AtomicNamedDeclarator(List[Opt[Pointer]](), Id(name), extensions)
+    private def genDeclarator(name: String /*, pointer: List[Opt[Pointer]] = List[Opt[Pointer]]()*/ , extensions: List[Opt[DeclaratorExtension]] = List[Opt[DeclaratorExtension]]()) = AtomicNamedDeclarator(List[Opt[Pointer]](), Id(name), extensions)
 }
