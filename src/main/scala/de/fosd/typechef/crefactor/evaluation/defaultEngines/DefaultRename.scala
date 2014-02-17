@@ -29,7 +29,7 @@ trait DefaultRename extends Refactoring with Evaluation {
             }
 
             // TODO Fix Bug in OpenSSL for functions without body
-            def isWritable(id: Id): Boolean = morpheus.linkage(id).forall(i =>
+            def isWritable(id: Id): Boolean = morpheus.linkage(id).map(_.entry).forall(i =>
                 isValidId(i) && (i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) || new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
 
             val allIds = morpheus.getUseDeclMap.keys

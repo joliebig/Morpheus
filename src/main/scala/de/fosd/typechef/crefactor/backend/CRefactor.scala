@@ -5,11 +5,17 @@ import de.fosd.typechef.crefactor.Morpheus
 import org.kiama.rewriting.Rewriter._
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.crefactor.frontend.util.Selection
-import de.fosd.typechef.conditional.Conditional
+import de.fosd.typechef.conditional._
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 import de.fosd.typechef.parser.c.CompoundStatementExpr
 import scala.{Product, Some}
+import de.fosd.typechef.parser.c.Id
+import de.fosd.typechef.parser.c.FunctionDef
+import de.fosd.typechef.parser.c.CompoundStatement
+import de.fosd.typechef.parser.c.CompoundStatementExpr
+import scala.Some
 import de.fosd.typechef.conditional.Choice
+import de.fosd.typechef.parser.c.TranslationUnit
 import de.fosd.typechef.conditional.One
 import de.fosd.typechef.parser.c.Id
 import de.fosd.typechef.parser.c.FunctionDef
@@ -86,21 +92,30 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
             case _ => morpheus.getTranslationUnit.defs.last.entry
         }
 
-        val env = morpheus.getEnv(lookupValue)
+        val env = morpheus.getEnv(lookupValue).asInstanceOf[Env]
+        val ctx = morpheus.getASTEnv.featureExpr(element)
 
-        isDeclaredVarInEnv(name, env.asInstanceOf[Env]) || isDeclaredStructOrUnionInEnv(name, env.asInstanceOf[Env]) || isDeclaredTypeDefInEnv(name, env.asInstanceOf[Env])
+        (isDeclaredVarInEnv(name, env, ctx, morpheus) || isDeclaredStructOrUnionInEnv(name, env)
+            || isDeclaredTypeDefInEnv(name, env))
     }
 
-    def isDeclaredVarInEnv(name: String, env: Env) = env.varEnv(name) match {
-        case One(x) => !x.isUnknown
-        case _ => true
+    def isDeclaredVarInEnv(name: String, env: Env, ctx: FeatureExpr, morpheus: Morpheus): Boolean = {
+        val nEnv = env.varEnv(name)
+
+        !ConditionalLib.items(nEnv).forall {
+            x => x._2.isUnknown || (ctx and x._1 isContradiction morpheus.getFM)
+        }
     }
 
-    def isDeclaredStructOrUnionInEnv(name: String, env: Env) = env.structEnv.someDefinition(name, false) || env.structEnv.someDefinition(name, true)
 
-    def isDeclaredTypeDefInEnv(name: String, env: Env) = env.typedefEnv(name) match {
-        case One(x) => !x.isUnknown
-        case _ => true
+    def isDeclaredStructOrUnionInEnv(name: String, env: Env): Boolean = {
+        env.structEnv.someDefinition(name, false) || env.structEnv.someDefinition(name, true)
+    }
+
+    def isDeclaredTypeDefInEnv(name: String, env: Env): Boolean = {
+        val tEnv = env.typedefEnv(name)
+
+        !ConditionalLib.items(tEnv).forall(x => x._2.isUnknown)
     }
 
     /**
