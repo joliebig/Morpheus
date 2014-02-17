@@ -1,48 +1,14 @@
 package de.fosd.typechef.crefactor.backend.engine
 
+import java.util.Collections
+
 import de.fosd.typechef.crefactor.backend.{RefactorException, CRefactor, ASTSelection}
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.crefactor.frontend.util.Selection
-import java.util
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.evaluation_utils.Configuration
-import util.{IdentityHashMap, Collections}
 import de.fosd.typechef.typesystem._
-import de.fosd.typechef.parser.c.PostfixExpr
-import de.fosd.typechef.parser.c.ReturnStatement
-import de.fosd.typechef.parser.c.SwitchStatement
-import de.fosd.typechef.parser.c.AtomicNamedDeclarator
-import de.fosd.typechef.parser.c.InlineSpecifier
-import de.fosd.typechef.parser.c.VolatileSpecifier
-import scala.Some
-import de.fosd.typechef.parser.c.DoStatement
-import de.fosd.typechef.parser.c.ExternSpecifier
-import de.fosd.typechef.parser.c.PointerCreationExpr
-import de.fosd.typechef.parser.c.VoidSpecifier
-import de.fosd.typechef.parser.c.FunctionCall
 import de.fosd.typechef.conditional.{Choice, One, Opt}
-import de.fosd.typechef.parser.c.RestrictSpecifier
-import de.fosd.typechef.parser.c.ForStatement
-import de.fosd.typechef.parser.c.DeclParameterDeclList
-import de.fosd.typechef.parser.c.WhileStatement
-import de.fosd.typechef.parser.c.Pointer
-import de.fosd.typechef.parser.c.Declaration
-import de.fosd.typechef.parser.c.ExprStatement
-import de.fosd.typechef.parser.c.Id
-import de.fosd.typechef.parser.c.AutoSpecifier
-import de.fosd.typechef.parser.c.PointerDerefExpr
-import de.fosd.typechef.parser.c.GotoStatement
-import de.fosd.typechef.parser.c.ExprList
-import de.fosd.typechef.parser.c.FunctionDef
-import de.fosd.typechef.parser.c.NestedFunctionDef
-import de.fosd.typechef.parser.c.BreakStatement
-import de.fosd.typechef.parser.c.ContinueStatement
-import de.fosd.typechef.parser.c.ParameterDeclarationD
-import de.fosd.typechef.parser.c.CompoundStatement
-import de.fosd.typechef.parser.c.CaseStatement
-import de.fosd.typechef.parser.c.RegisterSpecifier
-import de.fosd.typechef.parser.c.StaticSpecifier
-import de.fosd.typechef.parser.c.ConstSpecifier
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.StatsJar
@@ -148,8 +114,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 case _: Throwable => statement
             }
         }
-        val uniqueSelectedStatements = Collections.newSetFromMap[Statement](new util.IdentityHashMap())
-        val uniqueSelectedExpressions = Collections.newSetFromMap[Expr](new util.IdentityHashMap())
+        val uniqueSelectedStatements = Collections.newSetFromMap[Statement](new java.util.IdentityHashMap())
+        val uniqueSelectedExpressions = Collections.newSetFromMap[Expr](new java.util.IdentityHashMap())
 
         ids.foreach(id => {
             val parent = findParent(id)
@@ -321,9 +287,12 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
     private def retrieveParameters(liveParamIds: List[Id], morpheus: Morpheus):
     List[(Opt[ParameterDeclaration], Opt[Expr], Id)] = {
-        val declIdMap: IdentityHashMap[Declaration, Id] = new IdentityHashMap
-        val declFeatureMap: IdentityHashMap[Declaration, FeatureExpr] = new IdentityHashMap
-        val declDeclPointerMap: IdentityHashMap[Declaration, Declarator] = new IdentityHashMap
+        val declIdMap: java.util.IdentityHashMap[Declaration, Id] =
+            new java.util.IdentityHashMap
+        val declFeatureMap: java.util.IdentityHashMap[Declaration, FeatureExpr] =
+            new java.util.IdentityHashMap
+        val declDeclPointerMap: java.util.IdentityHashMap[Declaration, Declarator] =
+            new java.util.IdentityHashMap
 
         def addTodeclIdMapMap(decl: Declaration, id: Id) =
             if (!declIdMap.containsKey(decl)) declIdMap.put(decl, id)
@@ -545,14 +514,14 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
 
     private def uniqueExtRefIds(defs: List[(Id, List[Id])], uses: List[(Id, List[Id])]) = {
-        val parameterIds = Collections.newSetFromMap[Id](new util.IdentityHashMap())
+        val parameterIds = Collections.newSetFromMap[Id](new java.util.IdentityHashMap())
         defs.foreach(x => x._2.foreach(entry => parameterIds.add(entry)))
         uses.foreach(x => parameterIds.add(x._1))
         parameterIds.toArray(Array[Id]()).toList.sortWith(compareByName)
     }
 
     private def getIdsToDeclare(uses: List[(Id, List[Id])]) = {
-        val declarationIds = Collections.newSetFromMap[Id](new util.IdentityHashMap())
+        val declarationIds = Collections.newSetFromMap[Id](new java.util.IdentityHashMap())
         uses.foreach(id => declarationIds.add(id._1))
         declarationIds.toArray(Array[Id]()).toList.sortWith(compareByName)
     }
