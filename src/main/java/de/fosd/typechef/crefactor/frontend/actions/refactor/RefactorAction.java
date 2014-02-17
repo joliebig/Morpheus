@@ -132,9 +132,8 @@ public class RefactorAction {
                             + (tb.getCurrentThreadCpuTime() - time) / 1000000 + "ms");
                     if (refactored.isLeft()) {
                         JOptionPane.showMessageDialog(null,
-                                Configuration.getInstance().getConfig("refactor.rename.failed"),
-                                Configuration.getInstance().getConfig("default.error"),
-                                JOptionPane.ERROR_MESSAGE);
+                                Configuration.getInstance().getConfig("refactor.rename.failed") + " "
+                                + refactored.left().get(), Configuration.getInstance().getConfig("default.error"), JOptionPane.ERROR_MESSAGE);
                     } else {
                         morpheus.update(refactored.right().get());
                     }
