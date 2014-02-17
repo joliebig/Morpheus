@@ -1,6 +1,6 @@
 package de.fosd.typechef.crefactor.backend.engine
 
-import de.fosd.typechef.crefactor.backend.ASTSelection
+import de.fosd.typechef.crefactor.backend.{CRefactor, ASTSelection}
 import de.fosd.typechef.parser.c.{TranslationUnit, AST, Id}
 import de.fosd.typechef.crefactor.frontend.util.Selection
 import de.fosd.typechef.crefactor.Morpheus

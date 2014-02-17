@@ -1,7 +1,7 @@
 package de.fosd.typechef.crefactor.backend.engine
 
 import de.fosd.typechef.crefactor._
-import backend.ASTSelection
+import de.fosd.typechef.crefactor.backend.{CRefactor, ASTSelection}
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureExprFactory}
 import de.fosd.typechef.typesystem._

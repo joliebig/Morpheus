@@ -1,6 +1,6 @@
 package de.fosd.typechef.crefactor.backend.engine
 
-import de.fosd.typechef.crefactor.backend.ASTSelection
+import de.fosd.typechef.crefactor.backend.{RefactorException, CRefactor, ASTSelection}
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.crefactor.frontend.util.Selection
 import java.util

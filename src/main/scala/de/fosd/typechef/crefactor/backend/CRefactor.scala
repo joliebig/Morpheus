@@ -1,4 +1,4 @@
-package de.fosd.typechef.crefactor.backend.engine
+package de.fosd.typechef.crefactor.backend
 
 import de.fosd.typechef.typesystem.CEnvCache
 import de.fosd.typechef.crefactor.Morpheus
