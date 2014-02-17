@@ -3,7 +3,6 @@ package de.fosd.typechef.crefactor.evaluation.evalcases.openSSL
 import de.fosd.typechef.crefactor.evaluation.Evaluation
 import de.fosd.typechef.parser.c.{ConditionalNavigation, ASTNavigation}
 import java.io.File
-import scala.io.Source
 
 
 trait OpenSSLEvaluation extends Evaluation with ASTNavigation with ConditionalNavigation {
@@ -13,7 +12,8 @@ trait OpenSSLEvaluation extends Evaluation with ASTNavigation with ConditionalNa
     val completePath = new File(caseStudyPath).getCanonicalPath
     val filesToEval: String = completePath + "/openssl_files"
     val blackListFiles: List[String] = List()
-    val blackListIds: List[String] = Source.fromFile(getClass.getResource("/openssl_id_blacklist").getFile).getLines().toList
+    val blackListIds: List[String] = List()
+    //Source.fromFile(getClass.getResource("/openssl_id_blacklist").getFile).getLines().toList
     //Source.fromFile(getClass.getResource("/openssl_blacklist").getFile).getLines().toList
     val sourcePath = completePath + "/" + evalName + "/"
     val testPath = completePath + "/" + evalName + "/"

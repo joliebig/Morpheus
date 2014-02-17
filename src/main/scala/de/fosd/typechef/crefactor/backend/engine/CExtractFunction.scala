@@ -477,7 +477,6 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         def addChoiceOne(c: Choice[_], id: Id, ft: FeatureExpr = FeatureExprFactory.True) = {
             // TODO Verify only parameters end up here.
             val orFeatures = getOrFeatures(c)
-            logger.info("OneChoiceFeature " + orFeatures)
             val featureExpr = ft.and(orFeatures)
             addParameterToGenerateFromParameter(id, featureExpr, false)
         }
@@ -519,11 +518,9 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             }
         }
 
-        logger.info(liveParamIds)
         liveParamIds.foreach(liveId =>
             try {
                 // only lookup variables
-                logger.info(liveId + ": " + morpheus.getEnv(liveId).varEnv.lookup(liveId.name))
                 morpheus.getEnv(liveId).varEnv.lookup(liveId.name) match {
                     case o@One(_) => addOne(o, liveId)
                     case c@Choice(_, _, _) =>
