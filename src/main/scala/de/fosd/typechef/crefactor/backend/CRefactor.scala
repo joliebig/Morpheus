@@ -96,7 +96,7 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         val ctx = morpheus.getASTEnv.featureExpr(element)
 
         (isDeclaredVarInEnv(name, env, ctx, morpheus) || isDeclaredStructOrUnionInEnv(name, env)
-            || isDeclaredTypeDefInEnv(name, env))
+            || isDeclaredTypeDefInEnv(name, env, ctx, morpheus))
     }
 
     def isDeclaredVarInEnv(name: String, env: Env, ctx: FeatureExpr, morpheus: Morpheus): Boolean = {
@@ -112,10 +112,12 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         env.structEnv.someDefinition(name, false) || env.structEnv.someDefinition(name, true)
     }
 
-    def isDeclaredTypeDefInEnv(name: String, env: Env): Boolean = {
+    def isDeclaredTypeDefInEnv(name: String, env: Env, ctx: FeatureExpr, morpheus: Morpheus): Boolean = {
         val tEnv = env.typedefEnv(name)
 
-        !ConditionalLib.items(tEnv).forall(x => x._2.isUnknown)
+        !ConditionalLib.items(tEnv).forall {
+            x => x._2.isUnknown || (ctx and x._1 isContradiction morpheus.getFM)
+        }
     }
 
     /**
