@@ -1,6 +1,6 @@
 package de.fosd.typechef.crefactor.backend
 
-import de.fosd.typechef.typesystem.CEnvCache
+import de.fosd.typechef.typesystem.{CType, CEnvCache}
 import de.fosd.typechef.crefactor.Morpheus
 import org.kiama.rewriting.Rewriter._
 import de.fosd.typechef.parser.c._
@@ -59,10 +59,8 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
     def getOrFeatures(a: Any): FeatureExpr = {
         var featureSet: Set[FeatureExpr] = Set()
         val r = manytd(query {
-            case Opt(ft, entry) =>
-                featureSet += ft
-            case Choice(ft, a, b) =>
-                featureSet += ft
+            case Opt(ft, _) => featureSet += ft
+            case Choice(ft, _, _) => featureSet += ft
         })
         r(a).get
         featureSet.foldRight(FeatureExprFactory.True)((fxpr, setEntry) => fxpr.or(setEntry))
@@ -88,36 +86,27 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
 
     def isShadowed(name: String, element: AST, morpheus: Morpheus): Boolean = {
         val lookupValue = findPriorASTElem[CompoundStatement](element, morpheus.getASTEnv) match {
-            case s@Some(x) => x.innerStatements.last.entry
+            case Some(x) => x.innerStatements.last.entry
             case _ => morpheus.getTranslationUnit.defs.last.entry
         }
 
         val env = morpheus.getEnv(lookupValue).asInstanceOf[Env]
         val ctx = morpheus.getASTEnv.featureExpr(element)
 
-        (isDeclaredVarInEnv(name, env, ctx, morpheus) || isDeclaredStructOrUnionInEnv(name, env)
-            || isDeclaredTypeDefInEnv(name, env, ctx, morpheus))
+        (isDeclaredInEnv(env.varEnv(name), ctx, morpheus)
+            || isDeclaredStructOrUnionInEnv(name, env)
+            || isDeclaredInEnv(env.typedefEnv(name), ctx, morpheus))
     }
 
-    def isDeclaredVarInEnv(name: String, env: Env, ctx: FeatureExpr, morpheus: Morpheus): Boolean = {
-        val nEnv = env.varEnv(name)
-
-        !ConditionalLib.items(nEnv).forall {
+    private def isDeclaredInEnv(env: Conditional[CType], ctx: FeatureExpr, morpheus: Morpheus):
+    Boolean = {
+        !ConditionalLib.items(env).forall {
             x => x._2.isUnknown || (ctx and x._1 isContradiction morpheus.getFM)
         }
     }
 
-
-    def isDeclaredStructOrUnionInEnv(name: String, env: Env): Boolean = {
+    private def isDeclaredStructOrUnionInEnv(name: String, env: Env): Boolean = {
         env.structEnv.someDefinition(name, false) || env.structEnv.someDefinition(name, true)
-    }
-
-    def isDeclaredTypeDefInEnv(name: String, env: Env, ctx: FeatureExpr, morpheus: Morpheus): Boolean = {
-        val tEnv = env.typedefEnv(name)
-
-        !ConditionalLib.items(tEnv).forall {
-            x => x._2.isUnknown || (ctx and x._1 isContradiction morpheus.getFM)
-        }
     }
 
     /**
