@@ -272,8 +272,10 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     private def hasInvisibleEnumerations(selection: List[AST], morpheus: Morpheus): Boolean = {
         def enumChoiceIsInvisibleOutsideCCStmt(c: Choice[_], liveId: Id): Boolean = {
             c match {
-                case c@Choice(_, o1@One(_), o2@One(_)) => enumIsInvisibleOutsideCCStmt(o1, liveId) || enumIsInvisibleOutsideCCStmt(o2, liveId)
-                case c@Choice(_, c1@Choice(_, _, _), o2@One(_)) => enumIsInvisibleOutsideCCStmt(o2, liveId) || enumChoiceIsInvisibleOutsideCCStmt(c1, liveId)
+                case c@Choice(_, o1@One(_), o2@One(_)) =>
+                    enumIsInvisibleOutsideCCStmt(o1, liveId) || enumIsInvisibleOutsideCCStmt(o2, liveId)
+                case c@Choice(_, c1@Choice(_, _, _), o2@One(_)) =>
+                    enumIsInvisibleOutsideCCStmt(o2, liveId) || enumChoiceIsInvisibleOutsideCCStmt(c1, liveId)
                 case c@Choice(_, o1@One(_), c1@Choice(_, _, _)) => enumIsInvisibleOutsideCCStmt(o1, liveId) || enumChoiceIsInvisibleOutsideCCStmt(c1, liveId)
                 case c@Choice(_, c1@Choice(_, _, _), c2@Choice(_, _, _)) => enumChoiceIsInvisibleOutsideCCStmt(c1, liveId) || enumChoiceIsInvisibleOutsideCCStmt(c2, liveId)
             }

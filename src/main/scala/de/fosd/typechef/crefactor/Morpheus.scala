@@ -28,7 +28,8 @@ with CDeclUse with CTypeEnv with CEnvCache with CTypeCache with CTypeSystem with
     if (file != null)
         StatsJar.addStat(file, TypeCheck, typeCheck.getTime)
 
-    private val connectedIds: java.util.IdentityHashMap[Id, List[Opt[Id]]] = new java.util.IdentityHashMap()
+    private val connectedIds: java.util.IdentityHashMap[Id, List[Opt[Id]]] =
+        new java.util.IdentityHashMap()
 
     // determines linkage information between identifier uses and declares and vice versa
     //
@@ -77,12 +78,14 @@ with CDeclUse with CTypeEnv with CEnvCache with CTypeCache with CTypeSystem with
         def addOccurrence(curId: Id) {
             if (!visited.contains(curId)) {
                 addToConnectedIdMap(curId)
-                if (getDeclUseMap.containsKey(curId))
-                    return getDeclUseMap.get(curId).foreach(use => {
+                if (getDeclUseMap.containsKey(curId)) {
+                    getDeclUseMap.get(curId).foreach(use => {
                         addToConnectedIdMap(use)
                         if (getUseDeclMap.containsKey(use))
                             getUseDeclMap.get(use).foreach(entry => addOccurrence(entry))
                     })
+                    return
+                }
             }
         }
 
