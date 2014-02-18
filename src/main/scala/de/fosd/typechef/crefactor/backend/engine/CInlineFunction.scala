@@ -175,10 +175,9 @@ object CInlineFunction extends ASTSelection with CRefactor {
             result
         }
 
-        filterASTElems[ReturnStatement](func).exists(statement =>
-            statement match {
+        filterASTElems[ReturnStatement](func).exists({
                 case r: ReturnStatement =>
-                    val parent = parentOpt(statement, morpheus.getASTEnv)
+                    val parent = parentOpt(r, morpheus.getASTEnv)
                     val outerStatement = getStatementOpt(parent, func.stmt.innerStatements)
                     getStatementOpts(parent, outerStatement, List(outerStatement)).exists(statement => codeAfterStatement(parent.feature, statement))
                 case _ => false
@@ -186,30 +185,32 @@ object CInlineFunction extends ASTSelection with CRefactor {
     }
 
     private def isRecursive(funcDef: FunctionDef): Boolean = {
-        filterASTElems[PostfixExpr](funcDef).exists(expr => expr match {
+        filterASTElems[PostfixExpr](funcDef).exists({
             case PostfixExpr(Id(name), FunctionCall(_)) => name.equals(funcDef.getName)
             case _ => false
         })
     }
 
+    /*
     private def isRecursive(funcDef: NestedFunctionDef): Boolean = {
-        filterASTElems[PostfixExpr](funcDef).exists(expr => expr match {
+        filterASTElems[PostfixExpr](funcDef).exists({
             case PostfixExpr(Id(name), FunctionCall(_)) => name.equals(funcDef.getName)
             case _ => false
         })
     }
+    */
 
     private def inlineFuncCallExpr(ast: AST, morpheus: Morpheus, call: Opt[AST],
                                    funcDefs: List[Opt[_]], rename: Boolean): TranslationUnit = {
         val workingCallCompStmt = getCallCompStatement(call, morpheus.getASTEnv)
 
         def generateInlineExprStmts: List[(CompoundStatementExpr, FeatureExpr)] = {
-            funcDefs.flatMap(funcDef => funcDef match {
+            funcDefs.flatMap({
                 case f: Opt[FunctionDef] =>
                     val inlineExpr = inlineFuncDefInExpr(workingCallCompStmt, f, call, morpheus, rename)
                     inlineExpr match {
                         case null => None
-                        case _ => Some(CompoundStatementExpr(inlineExpr), funcDef.feature.and(call.feature))
+                        case _ => Some(CompoundStatementExpr(inlineExpr), f.feature.and(call.feature))
                     }
             })
         }
@@ -303,12 +304,12 @@ object CInlineFunction extends ASTSelection with CRefactor {
         var workingCallCompStmt = getCallCompStatement(call, morpheus.getASTEnv)
 
         def inlineIfStmt(funcDefs: List[Opt[_]], callCompStmt: CompoundStatement): CompoundStatement = {
-            val inlineExprStatements = funcDefs.flatMap(funcDef => funcDef match {
+            val inlineExprStatements = funcDefs.flatMap({
                 case f: Opt[FunctionDef] =>
                     val inlineStmt = inlineFuncDefInExprStmt(callCompStmt, morpheus, call, f, rename)
                     inlineStmt match {
                         case null => None
-                        case _ => Some(inlineStmt, funcDef.feature.and(call.feature))
+                        case _ => Some(inlineStmt, f.feature.and(call.feature))
                     }
                 case _ =>
                     println("Forgotten definition")
