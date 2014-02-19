@@ -171,27 +171,28 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     Either[String, TranslationUnit] = {
 
         if (!isValidId(funName))
-            return Left(Configuration.getInstance().getConfig("engine.extractFunction.failed.shadowing"))
+            return Left(Configuration.getInstance().getConfig("default.error.invalidName"))
 
         if (isValidInProgram(funName, morpheus))
-            return Left(Configuration.getInstance().getConfig("default.error.invalidName"))
+            return Left(Configuration.getInstance().getConfig(
+                "default.error.isInConflictWithSymbolInModuleInterface"))
 
         // we check binding and visibility using the last element in the translation unit
         if (isValidInModule(funName, morpheus.getTranslationUnit.defs.last.entry, morpheus))
-            return Left(Configuration.getInstance().getConfig("default.error.invalidName"))
+            return Left(Configuration.getInstance().getConfig("default.error.isInConflictWithSymbolInModule"))
 
         // we can only handle statements. report error otherwise.
         if (selection.exists {
             case _: Expr => true
             case _ => false
         })
-            return Left("This refactoring is not yet supported!")
+            return Left(Configuration.getInstance().getConfig("refactor.extractFunction.failed.unsupported"))
 
         if (!selection.forall {
             case _: Statement => true
             case _ => false
         })
-            return Left("Fatal error in selected elements!")
+            return Left(Configuration.getInstance().getConfig("refactor.extractFunction.failed.invalidSelection"))
 
         extractStatements(morpheus, selection, funName)
     }
