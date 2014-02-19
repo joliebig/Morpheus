@@ -32,9 +32,9 @@ object CRenameIdentifier extends ASTSelection with CRefactor {
         if (!isValidId(nid))
             Left(Configuration.getInstance().getConfig("default.error.invalidName"))
         else if (isValidInProgram(nid, morpheus))
-            Left(Configuration.getInstance().getConfig("default.error.invalidName"))
+            Left(Configuration.getInstance().getConfig("default.error.isInConflictWithSymbolInModuleInterface"))
         else if (lid.exists(isValidInModule(nid, _, morpheus)))
-            Left(Configuration.getInstance().getConfig("refactor.rename.failed.shadowing"))
+            Left(Configuration.getInstance().getConfig("default.error.isInConflictWithSymbolInModule"))
         else if (!lid.par.forall(id => new File(id.getFile.get.replaceFirst("file ", "")).canWrite))
             Left(Configuration.getInstance().getConfig("refactor.rename.failed.writing"))
         else
