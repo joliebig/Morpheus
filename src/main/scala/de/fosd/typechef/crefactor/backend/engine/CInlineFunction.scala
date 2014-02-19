@@ -74,6 +74,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
                 (workingAST, expr) => inlineFuncCallExpr(workingAST, new Morpheus(workingAST),
                     expr, fDefs, rename))
 
+        // TODO: can be removed. Should be part of a different refactoring. Remove unnecessary symbols.
         // Remove inlined function stmt's declaration and definitions
         if (!evalMode)
             tunitRefactored = removeFuncDeclDefsFromAST(tunitRefactored, decl, fDefs)
@@ -95,7 +96,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
         var defs = List[Opt[FunctionDef]]()
         var callExpr = List[Opt[AST]]()
 
-        morpheus.linkage(callId).map(_.entry).foreach(id => {
+        morpheus.getReferences(callId).map(_.entry).foreach(id => {
             val parent = parentOpt(id, morpheus.getASTEnv)
             parent.entry match {
                 case w: WhileStatement => callExpr ::= parent.asInstanceOf[Opt[AST]]

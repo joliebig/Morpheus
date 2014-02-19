@@ -31,11 +31,11 @@ with CDeclUse with CTypeEnv with CEnvCache with CTypeCache with CTypeSystem with
     private val connectedIds: java.util.IdentityHashMap[Id, List[Opt[Id]]] =
         new java.util.IdentityHashMap()
 
-    // determines linkage information between identifier uses and declares and vice versa
+    // determines reference information between identifier uses and declares and vice versa
     //
     // decl-use information in typesystem are determined without the feature model
     // solely on the basis of annotations in the source code
-    def linkage(id: Id): List[Opt[Id]] = {
+    def getReferences(id: Id): List[Opt[Id]] = {
 
         val fExpId = astEnvCached.featureExpr(id)
 
@@ -78,11 +78,16 @@ with CDeclUse with CTypeEnv with CEnvCache with CTypeCache with CTypeSystem with
         def addOccurrence(curId: Id) {
             if (!visited.contains(curId)) {
                 addToConnectedIdMap(curId)
+
+                // TODO: the check is not necessary, as curId is always a declaration
                 if (getDeclUseMap.containsKey(curId)) {
                     getDeclUseMap.get(curId).foreach(use => {
                         addToConnectedIdMap(use)
+
+                        // TODO: the check is not necessary either, as Id use should be always
+                        //       part of this map
                         if (getUseDeclMap.containsKey(use))
-                            getUseDeclMap.get(use).foreach(entry => addOccurrence(entry))
+                            getUseDeclMap.get(use).foreach(addOccurrence)
                     })
                     return
                 }

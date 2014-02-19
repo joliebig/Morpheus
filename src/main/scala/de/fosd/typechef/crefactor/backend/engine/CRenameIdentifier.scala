@@ -25,7 +25,7 @@ object CRenameIdentifier extends ASTSelection with CRefactor {
         !getAvailableIdentifiers(morpheus, selection).isEmpty
 
     def rename(id: Id, nid: String, morpheus: Morpheus): Either[String, TranslationUnit] = {
-        val lid = morpheus.linkage(id).map(_.entry)
+        val lid = morpheus.getReferences(id).map(_.entry)
         StatsJar.addStat(morpheus.getFile, Amount, lid.size)
 
         if (!isValidId(nid))
