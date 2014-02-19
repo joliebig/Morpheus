@@ -69,10 +69,11 @@ object CInlineFunction extends ASTSelection with CRefactor {
 
         var tunitRefactored = calls.foldLeft(morpheus.getTranslationUnit)((curTunit, call) =>
             inlineFuncCall(curTunit, new Morpheus(curTunit), call, fDefs, rename))
+
         tunitRefactored =
             callExpr.foldLeft(tunitRefactored)(
-                (workingAST, expr) => inlineFuncCallExpr(workingAST, new Morpheus(workingAST),
-                    expr, fDefs, rename))
+                (workingAST, expr) => inlineFuncCallExpr(workingAST,
+                    new Morpheus(workingAST), expr, fDefs, rename))
 
         // TODO: can be removed. Should be part of a different refactoring. Remove unnecessary symbols.
         // Remove inlined function stmt's declaration and definitions
@@ -102,7 +103,8 @@ object CInlineFunction extends ASTSelection with CRefactor {
                 case w: WhileStatement => callExpr ::= parent.asInstanceOf[Opt[AST]]
                 case p: Statement => callStmt ::= parent.asInstanceOf[Opt[Statement]]
                 case f: FunctionDef => defs ::= parent.asInstanceOf[Opt[FunctionDef]]
-                // case n: NestedFunctionDef => defs = n :: defs // TODO Nested FunctionDefs => Can this happen?
+                // TODO Nested FunctionDefs => Can this happen?
+                // case n: NestedFunctionDef => defs = n :: defs
                 case iI: InitDeclaratorI =>
                     iI.i match {
                         case None => decl ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[AST]]
@@ -180,7 +182,8 @@ object CInlineFunction extends ASTSelection with CRefactor {
                 case r: ReturnStatement =>
                     val parent = parentOpt(r, morpheus.getASTEnv)
                     val outerStatement = getStatementOpt(parent, func.stmt.innerStatements)
-                    getStatementOpts(parent, outerStatement, List(outerStatement)).exists(statement => codeAfterStatement(parent.feature, statement))
+                    getStatementOpts(parent, outerStatement,
+                        List(outerStatement)).exists(statement => codeAfterStatement(parent.feature, statement))
                 case _ => false
             })
     }
@@ -216,9 +219,11 @@ object CInlineFunction extends ASTSelection with CRefactor {
             })
         }
 
-        def inlineInCorrectConditionalStmt(current: Conditional[Expr], call: AST, expr: AST, inlineChoice: CompoundStatementExpr): Conditional[Expr] = {
+        def inlineInCorrectConditionalStmt(current: Conditional[Expr], call: AST, expr: AST,
+                                           inlineChoice: CompoundStatementExpr): Conditional[Expr] = {
 
-            def inlineInOne(entry: Expr, expr: AST, o: One[Expr], call: AST, inlineChoice: CompoundStatementExpr): Conditional[Expr] = {
+            def inlineInOne(entry: Expr, expr: AST, o: One[Expr], call: AST, inlineChoice: CompoundStatementExpr):
+            Conditional[Expr] = {
                 if (!entry.eq(expr)) return o
                 expr match {
                     case NAryExpr(e, others) =>
@@ -242,34 +247,40 @@ object CInlineFunction extends ASTSelection with CRefactor {
                 case o@One(entry) =>
                     inlineInOne(entry, expr, o, call, inlineChoice)
                 case c@Choice(_, c1@Choice(_, _, _), c2@Choice(_, _, _)) =>
-                    c.copy(thenBranch = inlineInCorrectConditionalStmt(c1, call, expr, inlineChoice), elseBranch = inlineInCorrectConditionalStmt(c2, call, expr, inlineChoice))
+                    c.copy(thenBranch = inlineInCorrectConditionalStmt(c1, call, expr, inlineChoice),
+                        elseBranch = inlineInCorrectConditionalStmt(c2, call, expr, inlineChoice))
                 case c@Choice(_, o1@One(_), c2@Choice(_, _, _)) =>
-                    c.copy(thenBranch = inlineInCorrectConditionalStmt(o1, call, expr, inlineChoice), elseBranch = inlineInCorrectConditionalStmt(c2, call, expr, inlineChoice))
+                    c.copy(thenBranch = inlineInCorrectConditionalStmt(o1, call, expr, inlineChoice),
+                        elseBranch = inlineInCorrectConditionalStmt(c2, call, expr, inlineChoice))
                 case c@Choice(_, c1@Choice(_, _, _), o2@One(_)) =>
-                    c.copy(thenBranch = inlineInCorrectConditionalStmt(c1, call, expr, inlineChoice), elseBranch = inlineInCorrectConditionalStmt(o2, call, expr, inlineChoice))
+                    c.copy(thenBranch = inlineInCorrectConditionalStmt(c1, call, expr, inlineChoice),
+                        elseBranch = inlineInCorrectConditionalStmt(o2, call, expr, inlineChoice))
                 case c@Choice(_, o1@One(_), o2@One(_)) =>
-                    c.copy(thenBranch = inlineInCorrectConditionalStmt(o1, call, expr, inlineChoice), elseBranch = inlineInCorrectConditionalStmt(o2, call, expr, inlineChoice))
+                    c.copy(thenBranch = inlineInCorrectConditionalStmt(o1, call, expr, inlineChoice),
+                        elseBranch = inlineInCorrectConditionalStmt(o2, call, expr, inlineChoice))
                 case _ => current
             }
         }
 
-        def inlineInExpr(expr: Expr, inlineExprStatements: List[(CompoundStatementExpr, FeatureExpr)]) = replaceInAST(expr, call.entry, buildVariableCompoundStatement(inlineExprStatements)).asInstanceOf[Expr]
+        def inlineInExpr(expr: Expr, inlineExprStatements: List[(CompoundStatementExpr, FeatureExpr)])
+        = replaceInAST(expr, call.entry, buildVariableCompoundStatement(inlineExprStatements)).asInstanceOf[Expr]
 
         findPriorASTElem[Statement](call.entry, morpheus.getASTEnv) match {
             case None =>
                 assert(false, "This should not have happend!")
                 null
-            case entry =>
+            case Some(entry) =>
                 val inlineExprStatements = generateInlineExprStmts
-                val parent = parentOpt(entry.get, morpheus.getASTEnv)
+                val parent = parentOpt(entry, morpheus.getASTEnv)
                 var replaceStmt: CompoundStatement = null
                 var callParent = parentAST(call.entry, morpheus.getASTEnv)
-                entry.get match {
+                entry match {
                     case i@IfStatement(c@condition, _, e@elifs, _) =>
                         // TODO Refactor for performance
                         if (callParent.eq(i)) callParent = call.entry
                         val cond = inlineInCorrectConditionalStmt(condition, call.entry, callParent, buildVariableCompoundStatement(inlineExprStatements))
-                        if (!cond.eq(i.condition)) replaceStmt = replaceInASTOnceTD(workingCallCompStmt, parent, parent.copy(entry = i.copy(condition = cond)))
+                        if (!cond.eq(i.condition)) replaceStmt = replaceInASTOnceTD(workingCallCompStmt, parent,
+                            parent.copy(entry = i.copy(condition = cond)))
                         else {
                             val refactoredElifs = elifs.map(elif => {
                                 if (parentAST(call.entry, morpheus.getASTEnv).eq(elif.entry)) callParent = call.entry
@@ -279,18 +290,24 @@ object CInlineFunction extends ASTSelection with CRefactor {
                                     elif.copy(entry = elif.entry.copy(condition = cond))
                                 else elif
                             })
-                            replaceStmt = replaceInASTOnceTD(workingCallCompStmt, parent, parent.copy(entry = i.copy(elifs = refactoredElifs)))
+                            replaceStmt = replaceInASTOnceTD(workingCallCompStmt, parent,
+                                parent.copy(entry = i.copy(elifs = refactoredElifs)))
                         }
                     case w: WhileStatement =>
-                        replaceStmt = replaceInASTOnceTD(workingCallCompStmt, parent, parent.copy(entry = w.copy(expr = inlineInExpr(w.expr, inlineExprStatements))))
+                        replaceStmt = replaceInASTOnceTD(workingCallCompStmt, parent,
+                            parent.copy(entry = w.copy(expr = inlineInExpr(w.expr, inlineExprStatements))))
                     case s: SwitchStatement =>
-                        replaceStmt = replaceInASTOnceTD(workingCallCompStmt, parent, parent.copy(entry = s.copy(expr = inlineInExpr(s.expr, inlineExprStatements))))
+                        replaceStmt = replaceInASTOnceTD(workingCallCompStmt, parent,
+                            parent.copy(entry = s.copy(expr = inlineInExpr(s.expr, inlineExprStatements))))
                     case d: DoStatement =>
-                        replaceStmt = replaceInASTOnceTD(workingCallCompStmt, parent, parent.copy(entry = d.copy(expr = inlineInExpr(d.expr, inlineExprStatements))))
+                        replaceStmt = replaceInASTOnceTD(workingCallCompStmt, parent,
+                            parent.copy(entry = d.copy(expr = inlineInExpr(d.expr, inlineExprStatements))))
                     case e: ExprStatement =>
-                        replaceStmt = replaceInASTOnceTD(workingCallCompStmt, parent, parent.copy(entry = e.copy(expr = inlineInExpr(e.expr, inlineExprStatements))))
+                        replaceStmt = replaceInASTOnceTD(workingCallCompStmt, parent,
+                            parent.copy(entry = e.copy(expr = inlineInExpr(e.expr, inlineExprStatements))))
                     case c: CaseStatement =>
-                        replaceStmt = replaceInASTOnceTD(workingCallCompStmt, parent, parent.copy(entry = c.copy(c = inlineInExpr(c.c, inlineExprStatements))))
+                        replaceStmt = replaceInASTOnceTD(workingCallCompStmt, parent,
+                            parent.copy(entry = c.copy(c = inlineInExpr(c.c, inlineExprStatements))))
                     case x =>
                         println("Missed InlineStatementExpr" + x)
                         assert(false, "Refactoring failed - missed InlineStatementExpr")
@@ -337,8 +354,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
         }
 
         parentAST(call.entry, morpheus.getASTEnv) match {
-            case c: CompoundStatement =>
-                workingCallCompStmt = inlineCompStmt(funcDefs, workingCallCompStmt)
+            case c: CompoundStatement => workingCallCompStmt = inlineCompStmt(funcDefs, workingCallCompStmt)
             case i: IfStatement => workingCallCompStmt = inlineIfStmt(funcDefs, workingCallCompStmt)
             case e: ElifStatement => workingCallCompStmt = inlineIfStmt(funcDefs, workingCallCompStmt)
             case x => println("forgotten " + x)
@@ -495,24 +511,24 @@ object CInlineFunction extends ASTSelection with CRefactor {
     private def inlineFuncDefInExpr(compoundStmt: CompoundStatement, fDef: Opt[FunctionDef],
                                     fCall: Opt[AST], morpheus: Morpheus, rename: Boolean):
     CompoundStatement = {
-        var workingStatement = compoundStmt
+        val workingStmt = compoundStmt
 
-        val idsToRename = getIdsToRename(fDef.entry, fCall.entry, workingStatement, morpheus)
+        val idsToRename = getIdsToRename(fDef.entry, fCall.entry, workingStmt, morpheus)
         if (!rename && !idsToRename.isEmpty)
             assert(false, "Inline function not possible - some variables need to be renamed")
 
         val renamed = renameShadowedIds(idsToRename, fDef, fCall, morpheus)
         val initializer = getInitializers(fCall, renamed._2, morpheus)
-        var statements = applyFeaturesOnInlineStmts(renamed._1, fCall, morpheus)
-        val returnStmts = getReturnStmts(statements)
+        var stmts = applyFeaturesOnInlineStmts(renamed._1, fCall, morpheus)
+        val returnStmts = getReturnStmts(stmts)
 
         // remove return statements
-        statements = returnStmts.foldLeft(statements)((stmts, returnStmt) =>
+        stmts = returnStmts.foldLeft(stmts)((stmts, returnStmt) =>
             returnStmt.entry.expr match {
                 case None => removeFromAST(stmts, returnStmt)
                 case Some(_) => replaceInAST(stmts, returnStmt, Opt(returnStmt.feature, ExprStatement(returnStmt.entry.expr.get)))
             })
-        CompoundStatement(initializer ::: statements)
+        CompoundStatement(initializer ::: stmts)
     }
 
     private def isDeclared(id: Id, env: Env, statement: CompoundStatement, morpheus: Morpheus):
