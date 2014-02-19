@@ -14,7 +14,8 @@ import java.io.File
  */
 object CRenameIdentifier extends ASTSelection with CRefactor {
 
-    def getSelectedElements(morpheus: Morpheus, selection: Selection): List[AST] = getAvailableIdentifiers(morpheus, selection)
+    def getSelectedElements(morpheus: Morpheus, selection: Selection): List[AST]
+    = getAvailableIdentifiers(morpheus, selection)
 
     def getAvailableIdentifiers(morpheus: Morpheus, selection: Selection): List[Id] =
         filterASTElems[Id](morpheus.getTranslationUnit).
