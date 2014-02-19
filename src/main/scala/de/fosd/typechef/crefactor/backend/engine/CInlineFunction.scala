@@ -36,8 +36,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
         if (defs.isEmpty)
             return false
 
-        // compatible control flow or recursive
-        if (defs.exists(func => badReturnStatement(func.entry, morpheus)
+        if (defs.exists(func => hasIncompatibleCFG(func.entry, morpheus)
             || isRecursive(func.entry)))
             return false
 
@@ -150,7 +149,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
     /*
      * Retrieves if there are bad conditional return during control flow.
      */
-    private def badReturnStatement(func: FunctionDef, morpheus: Morpheus): Boolean = {
+    private def hasIncompatibleCFG(func: FunctionDef, morpheus: Morpheus): Boolean = {
 
         // TODO Optimize Runtime
         def codeAfterStatement(feature: FeatureExpr, opt: Opt[_]): Boolean = {
@@ -577,7 +576,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
 
         // stmt's feature does not imply fDef's feature -> no need to inline this def at this position
         assert(!isRecursive(fDef.entry), "Can not inline - method is recursive.")
-        assert(!badReturnStatement(fDef.entry, morpheus), "Can not inline - method has bad return statements")
+        assert(!hasIncompatibleCFG(fDef.entry, morpheus), "Can not inline - method has bad return statements")
         true
     }
 
