@@ -99,11 +99,20 @@ public class RefactorAction {
                 try {
                     final ThreadMXBean tb = ManagementFactory.getThreadMXBean();
                     final long startTime = tb.getCurrentThreadCpuTime();
-                    final TranslationUnit refactored = CInlineFunction.inline(morpheus, id,
+                    final Either<String, TranslationUnit> inlineResult = CInlineFunction.inline(morpheus, id,
                             dialog.isRename(), false, dialog.isOnce());
                     logger.info("Duration for transforming: "
                             + ((tb.getCurrentThreadCpuTime() - startTime) / 1000000) + "ms");
-                    morpheus.update(refactored);
+
+                    if (inlineResult.isLeft()) {
+                        JOptionPane.showMessageDialog(null,
+                                Configuration.getInstance().getConfig("refactor.inline.failed")
+                                        + " " + inlineResult.left().get(),
+                                Configuration.getInstance().getConfig("default.error"),
+                                JOptionPane.ERROR_MESSAGE);
+                    } else {
+                        morpheus.update(inlineResult.right().get());
+                    }
                 } catch (final AssertionError e) {
                     JOptionPane.showMessageDialog(null,
                             Configuration.getInstance().getConfig("refactor.inline.failed")

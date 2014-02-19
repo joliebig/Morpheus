@@ -39,22 +39,30 @@ trait DefaultInline extends Refactoring with Evaluation {
         try {
             val refTime = new StopClock
             val refAST = CInlineFunction.inline(morpheus, callIdToInline, true, true)
-            StatsJar.addStat(morpheus.getFile, RefactorTime, refTime.getTime)
-            val callDeclDef = CInlineFunction.divideCallDeclDef(callIdToInline, morpheus)
 
-            val callFeatures = callDeclDef._1.map(_.feature)
-            val declFeatures = callDeclDef._2.flatMap(filterAllFeatureExpr(_))
-            val defFeatures = callDeclDef._3.flatMap(filterAllFeatureExpr(_))
+            refAST match {
+                case Left(errmsg) => {
+                    logger.error("Inlining failed! " + errmsg)
+                    (false, null, List(), List())
+                }
+                case Right(tunit) => {
+                    StatsJar.addStat(morpheus.getFile, RefactorTime, refTime.getTime)
+                    val callDeclDef = CInlineFunction.divideCallDeclDef(callIdToInline, morpheus)
 
-            val features = (callFeatures ::: declFeatures ::: defFeatures).distinct
+                    val callFeatures = callDeclDef._1.map(_.feature)
+                    val declFeatures = callDeclDef._2.flatMap(filterAllFeatureExpr(_))
+                    val defFeatures = callDeclDef._3.flatMap(filterAllFeatureExpr(_))
 
-            StatsJar.addStat(morpheus.getFile, Amount, callDeclDef._1.size)
-            StatsJar.addStat(morpheus.getFile, InlinedFunction, callIdToInline)
+                    val features = (callFeatures ::: declFeatures ::: defFeatures).distinct
 
-            logger.info("Affected features: " + features)
+                    StatsJar.addStat(morpheus.getFile, Amount, callDeclDef._1.size)
+                    StatsJar.addStat(morpheus.getFile, InlinedFunction, callIdToInline)
 
-            (true, refAST, features, List())
+                    logger.info("Affected features: " + features)
 
+                    (true, tunit, features, List())
+                }
+            }
         } catch {
             case e: Exception => {
                 logger.error("Inlining failed!")
