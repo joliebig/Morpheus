@@ -11,7 +11,7 @@ import de.fosd.typechef.parser.c.Id
 import scala.collection.mutable
 import de.fosd.typechef.error.Position
 import java.io.File
-import de.fosd.typechef.crefactor.backend.CLinking
+import de.fosd.typechef.crefactor.backend.CModuleInterface
 
 
 trait DefaultRename extends Refactoring with Evaluation {
@@ -20,7 +20,7 @@ trait DefaultRename extends Refactoring with Evaluation {
 
     def refactor(morpheus: Morpheus): (Boolean, AST, List[FeatureExpr], List[(String, AST)]) = {
         def findIdInAST(position: Position, id: Id, ast: AST) = filterASTElems[Id](ast).par.find(aId => (position.equals(aId.getPositionFrom) || position.equals(aId.getPositionTo)) && aId.name.equalsIgnoreCase(id.name))
-        val linkInterface = morpheus.getLinkInterface
+        val linkInterface = morpheus.getModuleInterface
 
         def getVariableIdToRename: (Id, Int, List[FeatureExpr]) = {
             def isValidId(id: Id): Boolean = !id.name.contains("_main") && {
@@ -101,7 +101,7 @@ trait DefaultRename extends Refactoring with Evaluation {
     }
 
 
-    private def getLinkedFilesToRefactor(linkInterface: CLinking, id: Id):
+    private def getLinkedFilesToRefactor(linkInterface: CModuleInterface, id: Id):
     List[(Morpheus, Position)] = {
         val linked = linkInterface.getPositions(id.name)
         val affectedFiles = linked.foldLeft(new mutable.HashMap[String, Position])((map, pos) => map += (pos.getFile -> pos))

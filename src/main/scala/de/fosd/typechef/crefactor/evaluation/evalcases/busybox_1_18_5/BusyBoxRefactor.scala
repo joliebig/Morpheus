@@ -8,19 +8,19 @@ import java.io.File
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.refactor.{Rename, Inline, Extract}
-import de.fosd.typechef.crefactor.backend.CLinking
+import de.fosd.typechef.crefactor.backend.CModuleInterface
 
 
 object BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
 
-    def rename(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking) =
+    def rename(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
         evaluate(tunit, fm, file, linkInterface, Rename)
-    def extract(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking) =
+    def extract(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
         evaluate(tunit, fm, file, linkInterface, Extract)
-    def inline(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking) =
+    def inline(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
         evaluate(tunit, fm, file, linkInterface, Inline)
 
-    private def evaluate(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking, r: Refactoring): Unit = {
+    private def evaluate(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface, r: Refactoring): Unit = {
         logger.info("File to engine: " + getFileName(file) + " +++")
         val resultDir = getResultDir(file)
         val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(file)

@@ -9,11 +9,11 @@ import de.fosd.typechef.parser.c._
 import de.fosd.typechef.typesystem._
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.StatsJar
-import de.fosd.typechef.crefactor.backend.CLinking
+import de.fosd.typechef.crefactor.backend.CModuleInterface
 import de.fosd.typechef.conditional.Opt
 
-class Morpheus(tunit: TranslationUnit, fm: FeatureModel, linkInterface: CLinking, file: String) extends Observable
-with CDeclUse with CTypeEnv with CEnvCache with CTypeCache with CTypeSystem with Logging {
+class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModuleInterface, file: String)
+    extends Observable with CDeclUse with CTypeEnv with CEnvCache with CTypeCache with CTypeSystem with Logging {
 
     def this(tunit: TranslationUnit) = this(tunit, null, null, null)
     def this(tunit: TranslationUnit, fm: FeatureModel) = this(tunit, fm, null, null)
@@ -124,5 +124,5 @@ with CDeclUse with CTypeEnv with CEnvCache with CTypeCache with CTypeSystem with
 
     def getFile = file
 
-    def getLinkInterface = linkInterface
+    def getModuleInterface = moduleInterface
 }

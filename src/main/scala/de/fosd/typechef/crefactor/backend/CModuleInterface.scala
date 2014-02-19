@@ -7,7 +7,7 @@ import de.fosd.typechef.error.Position
 import scala.collection.parallel.mutable
 import de.fosd.typechef.crefactor.Logging
 
-class CLinking(linkPath: String) extends Logging {
+class CModuleInterface(linkPath: String) extends Logging {
 
     val reader = new InterfaceWriter {}
     val linkFile = new File(linkPath)
