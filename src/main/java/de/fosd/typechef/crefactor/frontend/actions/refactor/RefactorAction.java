@@ -49,15 +49,22 @@ public class RefactorAction {
                     final Either<String, TranslationUnit> refactored =
                             CExtractFunction.extract(morpheus, selection, box.getInput());
                     if (refactored.isLeft()) {
-                        JOptionPane.showMessageDialog(null, Configuration.getInstance().getConfig("refactor.extractFunction.failed") + " "
-                                + refactored.left().get(), Configuration.getInstance().getConfig("default.error"), JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(null,
+                                Configuration.getInstance().getConfig("refactor.extractFunction.failed")
+                                        + " " + refactored.left().get(),
+                                Configuration.getInstance().getConfig("default.error"),
+                                JOptionPane.ERROR_MESSAGE);
                     } else {
                         morpheus.update(refactored.right().get());
                     }
-                    logger.info("Duration for transforming: " + (tb.getCurrentThreadCpuTime() - startTime) / 1000000 + "ms");
+                    logger.info("Duration for transforming: "
+                            + (tb.getCurrentThreadCpuTime() - startTime) / 1000000 + "ms");
                 } catch (final AssertionError e) {
-                    JOptionPane.showMessageDialog(null, Configuration.getInstance().getConfig("refactor.extractFunction.failed") + " "
-                            + e.getMessage(), Configuration.getInstance().getConfig("default.error"), JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null,
+                            Configuration.getInstance().getConfig("refactor.extractFunction.failed")
+                                    + " " + e.getMessage(),
+                            Configuration.getInstance().getConfig("default.error"),
+                            JOptionPane.ERROR_MESSAGE);
 
                 } catch (final Exception e) {
                     e.printStackTrace();
@@ -72,7 +79,8 @@ public class RefactorAction {
         return new AbstractAction() {
 
             {
-                putValue(Action.NAME, Configuration.getInstance().getConfig("refactor.inline") + " " + id.name());
+                putValue(Action.NAME, Configuration.getInstance().getConfig("refactor.inline")
+                        + " " + id.name());
             }
 
             @Override
@@ -93,11 +101,15 @@ public class RefactorAction {
                     final long startTime = tb.getCurrentThreadCpuTime();
                     final TranslationUnit refactored = CInlineFunction.inline(morpheus, id,
                             dialog.isRename(), false, dialog.isOnce());
-                    logger.info("Duration for transforming: " + ((tb.getCurrentThreadCpuTime() - startTime) / 1000000) + "ms");
+                    logger.info("Duration for transforming: "
+                            + ((tb.getCurrentThreadCpuTime() - startTime) / 1000000) + "ms");
                     morpheus.update(refactored);
                 } catch (final AssertionError e) {
-                    JOptionPane.showMessageDialog(null, Configuration.getInstance().getConfig("refactor.inline.failed") + " "
-                            + e.getMessage(), Configuration.getInstance().getConfig("default.error"), JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null,
+                            Configuration.getInstance().getConfig("refactor.inline.failed")
+                                    + " " + e.getMessage(),
+                            Configuration.getInstance().getConfig("default.error"),
+                            JOptionPane.ERROR_MESSAGE);
 
                 } catch (final Exception e) {
                     e.printStackTrace();
@@ -111,7 +123,8 @@ public class RefactorAction {
         return new AbstractAction() {
 
             {
-                putValue(Action.NAME, Configuration.getInstance().getConfig("refactor.rename") + " \"" + id.name() + "\"");
+                putValue(Action.NAME, Configuration.getInstance().getConfig("refactor.rename")
+                        + " \"" + id.name() + "\"");
             }
 
             @Override
@@ -132,14 +145,18 @@ public class RefactorAction {
                             + (tb.getCurrentThreadCpuTime() - time) / 1000000 + "ms");
                     if (refactored.isLeft()) {
                         JOptionPane.showMessageDialog(null,
-                                Configuration.getInstance().getConfig("refactor.rename.failed") + " "
-                                + refactored.left().get(), Configuration.getInstance().getConfig("default.error"), JOptionPane.ERROR_MESSAGE);
+                                Configuration.getInstance().getConfig("refactor.rename.failed")
+                                        + " " + refactored.left().get(),
+                                Configuration.getInstance().getConfig("default.error"),
+                                JOptionPane.ERROR_MESSAGE);
                     } else {
                         morpheus.update(refactored.right().get());
                     }
 
                 } catch (final AssertionError e) {
-                    JOptionPane.showMessageDialog(null, Configuration.getInstance().getConfig("refactor.rename.failed") + " " + e.getMessage(),
+                    JOptionPane.showMessageDialog(null,
+                            Configuration.getInstance().getConfig("refactor.rename.failed")
+                                    + " " + e.getMessage(),
                             Configuration.getInstance().getConfig("default.error"),
                             JOptionPane.ERROR_MESSAGE);
 
