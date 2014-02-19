@@ -59,12 +59,11 @@ object CInlineFunction extends ASTSelection with CRefactor {
      * @return the refactored tunit
      */
     def inline(morpheus: Morpheus, id: Id, rename: Boolean, evalMode: Boolean, once: Boolean = false):
-    TranslationUnit = {
+    Either[String, TranslationUnit] = {
         val (calls, decl, fDefs, callExpr) = divideCallDeclDef(id, morpheus)
 
-        // TODO rewrite to Either[String, TranslationUnit]; similar to the other refactorings!
         if (fDefs.isEmpty)
-            assert(false, "Inlining of external function definitions is not supported.")
+            Left("Inlining of external function definitions is not supported.")
 
         var tunitRefactored = calls.foldLeft(morpheus.getTranslationUnit)((curTunit, call) =>
             inlineFuncCall(curTunit, new Morpheus(curTunit), call, fDefs, rename))
@@ -78,7 +77,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
         // Remove inlined function stmt's declaration and definitions
         if (!evalMode)
             tunitRefactored = removeFuncDeclDefsFromAST(tunitRefactored, decl, fDefs)
-        tunitRefactored
+        Right(tunitRefactored)
     }
 
 
