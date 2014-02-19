@@ -12,6 +12,7 @@ import scala.collection.mutable
 import de.fosd.typechef.error.Position
 import java.io.File
 import de.fosd.typechef.crefactor.backend.CLinking
+import de.fosd.typechef.conditional.Opt
 
 
 trait DefaultRename extends Refactoring with Evaluation {
@@ -33,7 +34,7 @@ trait DefaultRename extends Refactoring with Evaluation {
                 isValidId(i) && (i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) || new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
 
             val allIds = morpheus.getUseDeclMap.keys
-            val linkedIds = if (FORCE_LINKING && linkInterface != null) allIds.par.filter(id => linkInterface.isListed(id.name)) else allIds
+            val linkedIds = if (FORCE_LINKING && linkInterface != null) allIds.par.filter(id => linkInterface.isListed(Opt(parentOpt(id, morpheus.getASTEnv).feature, id.name), morpheus.getFM)) else allIds
             val ids = if (linkedIds.isEmpty) allIds else linkedIds
 
             logger.info("IDs found: " + ids.size)

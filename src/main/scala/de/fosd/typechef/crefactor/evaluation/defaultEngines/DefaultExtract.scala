@@ -43,7 +43,7 @@ trait DefaultExtract extends Refactoring with Evaluation {
 
             def getRandomVariableStatements(depth: Int = 0): List[AST] = {
                 val statements = getRandomStatements()
-                if ((statements.isEmpty /*|| !statements.par.exists(isVariable(_)) */) && (depth < MAX_REC_DEPTH)) getRandomVariableStatements(depth + 1)
+                if ((statements.isEmpty || !statements.par.exists(isVariable(_))) && (depth < MAX_REC_DEPTH)) getRandomVariableStatements(depth + 1)
                 else statements
             }
             // End real random approach

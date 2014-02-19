@@ -173,8 +173,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         if (!isValidId(funName))
             return Left(Configuration.getInstance().getConfig("engine.extractFunction.failed.shadowing"))
 
-        if (isLinked(funName, morpheus))
-            return Left(Configuration.getInstance().getConfig("default.error.invalidName"))
+        // Linking check is performed as soon as we know the featureExpr which will have the introduced function.
 
         // we check binding and visibility using the last element in the translation unit
         if (isShadowed(funName, morpheus.getTranslationUnit.defs.last.entry, morpheus))
@@ -244,6 +243,9 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 allExtRefIds, paramIds, morpheus)
             val newFDef = genFDef(specifiers, declarator, compundStatement)
             val newFDefOpt = genFDefExternal(parentFunction, newFDef, morpheus)
+
+            if (isLinked(Opt(newFDefOpt.feature, funcName), morpheus))
+                return Left(Configuration.getInstance().getConfig("default.error.invalidName"))
 
             // generate function fCall
             val callParameters = genFCallParams(params)

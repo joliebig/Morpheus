@@ -8,6 +8,7 @@ import de.fosd.typechef.crefactor.evaluation_utils.Configuration
 import de.fosd.typechef.crefactor.evaluation.StatsJar
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import java.io.File
+import de.fosd.typechef.conditional.Opt
 
 /**
  * Implements the technique of correctly renaming an identifier.
@@ -30,7 +31,7 @@ object CRenameIdentifier extends ASTSelection with CRefactor {
 
         if (!isValidId(nid))
             Left(Configuration.getInstance().getConfig("default.error.invalidName"))
-        else if (isLinked(nid, morpheus))
+        else if (lid.exists(cid => isLinked(Opt(parentOpt(cid, morpheus.getASTEnv).feature, nid), morpheus)))
             Left(Configuration.getInstance().getConfig("default.error.invalidName"))
         else if (lid.exists(isShadowed(nid, _, morpheus)))
             Left(Configuration.getInstance().getConfig("engine.rename.failed.shadowing"))
