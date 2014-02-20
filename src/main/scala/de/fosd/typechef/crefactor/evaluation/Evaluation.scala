@@ -13,6 +13,7 @@ import de.fosd.typechef.parser.c.GnuAsmExpr
 import de.fosd.typechef.conditional.Choice
 import de.fosd.typechef.parser.c.Id
 import de.fosd.typechef.conditional.Opt
+import de.fosd.typechef.typesystem.linker.SystemLinker
 
 trait Evaluation extends Logging with BuildCondition with ASTNavigation with ConditionalNavigation {
 
@@ -602,4 +603,6 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
 
         arg + " " + filterArgs + dFeatures.map(feature => "-D" + feature).mkString(" ")
     }
+
+    def isSystemLinkedName(name : String) = SystemLinker.allLibs.par.contains(name)
 }

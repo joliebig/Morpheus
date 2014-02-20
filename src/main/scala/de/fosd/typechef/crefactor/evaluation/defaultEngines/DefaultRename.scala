@@ -55,7 +55,7 @@ trait DefaultRename extends Refactoring with Evaluation {
         logger.info("+++ Start run: " + run)
 
         def getVariableIdToRename: (Id, Int, List[FeatureExpr]) = {
-            def isValidId(id: Id): Boolean = !id.name.contains("_main") && isSystemLinkedName(id.name) && {
+            def isValidId(id: Id): Boolean = !id.name.contains("_main") && !isSystemLinkedName(id.name) && {
                 if (linkInterface != null) !(linkInterface.isBlackListed(id.name) || renameLink.contains(id.name))
                 else true
             }

@@ -46,8 +46,6 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
      */
     def isReservedLanguageKeyword(name: String) = LANGUAGE_KEYWORDS.contains(name)
 
-    def isSystemLinkedName(name : String) = SystemLinker.allLibs.par.contains(name)
-
     def getOrFeatures(a: Any): FeatureExpr = {
         var featureSet: Set[FeatureExpr] = Set()
         val r = manytd(query {
