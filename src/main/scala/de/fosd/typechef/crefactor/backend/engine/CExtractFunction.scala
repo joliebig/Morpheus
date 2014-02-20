@@ -729,8 +729,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     /**
      * Generates the opt node for the tunit.
      */
-    private def genFDefExternal(oldFunc: FunctionDef, newFunc: FunctionDef, morpheus: Morpheus) =
-        Opt[FunctionDef](morpheus.getASTEnv.featureExpr(oldFunc), newFunc)
+    private def genFDefExternal(oldFDef: FunctionDef, newFDef: FunctionDef, morpheus: Morpheus) =
+        Opt[FunctionDef](morpheus.getASTEnv.featureExpr(oldFDef), newFDef)
 
     /**
      * Generates the decl.
