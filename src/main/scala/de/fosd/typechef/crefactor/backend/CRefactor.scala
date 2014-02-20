@@ -8,7 +8,7 @@ import de.fosd.typechef.crefactor.frontend.util.Selection
 import de.fosd.typechef.conditional._
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 
-trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation {
+trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation with EnforceTreeHelper {
 
     private val VALID_NAME_PATTERN = "[a-zA-Z_][a-zA-Z0-9_]*"
 
@@ -100,7 +100,11 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
      */
     def replaceIds[T <: Product](t: T, ids: List[Id], newName: String): T = {
         val r = manybu(rule {
-            case id: Id => if (ids.exists(isPartOf(id, _))) id.copy(name = newName) else id
+            case id: Id => if (ids.exists(isPartOf(id, _))) {
+                val copiedId = id.copy(name = newName)
+                copyPositions(id, copiedId)
+                copiedId
+            } else id
             case x => x
         })
         r(t).get.asInstanceOf[T]
@@ -164,7 +168,6 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
     // TODO toRemove; I'm not sure whether the function signature reflects its purpose!
     //                Second and third T should be different!
     def replaceInAST[T <: Product](t: T, e: T, n: T)(implicit m: Manifest[T]): T = {
-        println("start replace")
         val r = manybu(rule {
             case i: T => if (isPartOf(i, e)) n else i
         })
