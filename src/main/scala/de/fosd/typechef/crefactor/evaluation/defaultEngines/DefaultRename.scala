@@ -10,13 +10,7 @@ import scala.collection.mutable
 import de.fosd.typechef.error.Position
 import java.io.File
 import de.fosd.typechef.crefactor.backend.CLinking
-import de.fosd.typechef.conditional.One
 import de.fosd.typechef.typesystem._
-import de.fosd.typechef.conditional.One
-import de.fosd.typechef.conditional.One
-import de.fosd.typechef.conditional.Choice
-import de.fosd.typechef.conditional.Opt
-import scala.Some
 import scala.Some
 import de.fosd.typechef.conditional.Choice
 import de.fosd.typechef.parser.c.TranslationUnit
@@ -24,7 +18,6 @@ import de.fosd.typechef.typesystem.CUnknown
 import de.fosd.typechef.typesystem.CFunction
 import de.fosd.typechef.conditional.One
 import de.fosd.typechef.parser.c.Id
-import de.fosd.typechef.parser.c.CompoundStatement
 import de.fosd.typechef.conditional.Opt
 
 
@@ -92,6 +85,7 @@ trait DefaultRename extends Refactoring with Evaluation {
             addType(associatedIds, morpheus, run)
             logger.info("Run " + run + ": Found Id: " + id)
             logger.info("Run " + run + ": Associated Ids: " + associatedIds.size)
+            logger.debug(morpheus.getASTEnv == null)
             (id, associatedIds.length, associatedIds.map(morpheus.getASTEnv.featureExpr).distinct)
         }
 
