@@ -27,26 +27,26 @@ trait DefaultRename extends Refactoring with Evaluation {
 
     val REFACTOR_AMOUNT = 50
 
-    private val renameLink = Set[String]()
+    private val renameLink = mutable.HashSet[String]()
 
     private val linkedRenamedFiles = mutable.HashMap[String, Morpheus]()
 
     def refactor(morpheus: Morpheus): (Boolean, TranslationUnit, List[FeatureExpr], List[(String, TranslationUnit)]) = {
 
         var runMorpheus = morpheus
-        val affectedFeatures = Set[FeatureExpr]()
+        var affectedFeatures = List[FeatureExpr]()
 
         for (run <- 1 to REFACTOR_AMOUNT) {
             val refactoredRun = singleRefactor(runMorpheus, run)
             StatsCan.addStat(morpheus.getFile, run, AffectedFeatures, refactoredRun._3)
             if (!refactoredRun._1) return (false, null, List(), List())
-            refactoredRun._3.foreach(affectedFeatures + _)
+            affectedFeatures = affectedFeatures ::: refactoredRun._3
             runMorpheus = new Morpheus(refactoredRun._2, morpheus.getFM, morpheus.getLinkInterface, morpheus.getFile)
             writeRunResult(run, runMorpheus, refactoredRun._4)
             logger.info("Run " + run + " affected features: " + refactoredRun._3)
         }
         logger.info(affectedFeatures)
-        (true, runMorpheus.getTranslationUnit, affectedFeatures.toList, linkedRenamedFiles.toList.map(entry => (entry._1, entry._2.getTranslationUnit)))
+        (true, runMorpheus.getTranslationUnit, affectedFeatures.distinct, linkedRenamedFiles.toList.map(entry => (entry._1, entry._2.getTranslationUnit)))
     }
 
     private def singleRefactor(morpheus: Morpheus, run: Int): (Boolean, TranslationUnit, List[FeatureExpr], List[(String, TranslationUnit)]) = {
