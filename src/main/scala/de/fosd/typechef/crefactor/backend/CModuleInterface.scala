@@ -6,6 +6,8 @@ import java.util
 import de.fosd.typechef.error.Position
 import scala.collection.parallel.mutable
 import de.fosd.typechef.crefactor.Logging
+import de.fosd.typechef.conditional.Opt
+import de.fosd.typechef.featureexpr.FeatureModel
 
 class CModuleInterface(linkPath: String) extends Logging {
 
@@ -23,7 +25,7 @@ class CModuleInterface(linkPath: String) extends Logging {
     if (interface != null) {
         interface.exports.foreach(addToMaps)
         interface.imports.foreach(expr =>
-            if (isListed(expr.name)) addToMaps(expr)
+            if (nameIsListed(expr.name)) addToMaps(expr)
             else blackList += expr.name
         )
     } else logger.info("No linking interface loaded!")
@@ -41,7 +43,13 @@ class CModuleInterface(linkPath: String) extends Logging {
         if (idLinkPosMap.containsKey(key)) idLinkPosMap.put(key, value ::: idLinkPosMap.get(key))
         else idLinkPosMap.put(key, value)
 
-    def isListed(id: String) = idLinkExpMap.containsKey(id) || idLinkPosMap.containsKey(id)
+    private def nameIsListed(name: String) = idLinkExpMap.containsKey(name) || idLinkPosMap.containsKey(name)
+
+    def isListed(id: Opt[String], fm: FeatureModel): Boolean = {
+        if (idLinkExpMap.containsKey(id.entry))
+            idLinkExpMap.get(id.entry).exists(sig => sig.fexpr.and(id.feature).isTautology(fm))
+        else false
+    }
 
     def isBlackListed(id: String) = blackList.contains(id)
 

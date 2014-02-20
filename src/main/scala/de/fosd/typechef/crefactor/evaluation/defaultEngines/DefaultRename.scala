@@ -11,6 +11,10 @@ import de.fosd.typechef.parser.c.Id
 import scala.collection.mutable
 import de.fosd.typechef.error.Position
 import java.io.File
+<<<<<<< HEAD
+=======
+import de.fosd.typechef.conditional.Opt
+>>>>>>> jl_preserve
 import de.fosd.typechef.crefactor.backend.CModuleInterface
 
 
@@ -29,11 +33,12 @@ trait DefaultRename extends Refactoring with Evaluation {
             }
 
             // TODO Fix Bug in OpenSSL for functions without body
-            def isWritable(id: Id): Boolean = morpheus.linkage(id).map(_.entry).forall(i =>
+            def isWritable(id: Id): Boolean = morpheus.getReferences(id).map(_.entry).forall(i =>
                 isValidId(i) && (i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) || new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
 
             val allIds = morpheus.getUseDeclMap.keys
-            val linkedIds = if (FORCE_LINKING && linkInterface != null) allIds.par.filter(id => linkInterface.isListed(id.name)) else allIds
+            val linkedIds = if (FORCE_LINKING && linkInterface != null)
+                allIds.par.filter(id => linkInterface.isListed(Opt(parentOpt(id, morpheus.getASTEnv).feature, id.name), morpheus.getFM)) else allIds
             val ids = if (linkedIds.isEmpty) allIds else linkedIds
 
             logger.info("IDs found: " + ids.size)
@@ -56,7 +61,7 @@ trait DefaultRename extends Refactoring with Evaluation {
             }
 
             val id = getRandomID
-            val associatedIds = morpheus.linkage(id)
+            val associatedIds = morpheus.getReferences(id)
             println("+++ Found Id: " + id)
             println("+++ Associated Ids: " + associatedIds.size)
             (id, associatedIds.length, associatedIds.map(morpheus.getASTEnv.featureExpr).distinct)

@@ -8,6 +8,7 @@ import de.fosd.typechef.crefactor.evaluation_utils.Configuration
 import de.fosd.typechef.crefactor.evaluation.StatsJar
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import java.io.File
+import de.fosd.typechef.conditional.Opt
 
 /**
  * Implements the technique of correctly renaming an identifier.
@@ -31,10 +32,17 @@ object CRenameIdentifier extends ASTSelection with CRefactor {
 
         if (!isValidId(nid))
             Left(Configuration.getInstance().getConfig("default.error.invalidName"))
+<<<<<<< HEAD
         else if (isValidInProgram(nid, morpheus))
             Left(Configuration.getInstance().getConfig("default.error.isInConflictWithSymbolInModuleInterface"))
         else if (lid.exists(isValidInModule(nid, _, morpheus)))
             Left(Configuration.getInstance().getConfig("default.error.isInConflictWithSymbolInModule"))
+=======
+        else if (isValidInProgram(Opt(parentOpt(id, morpheus.getASTEnv).feature, nid), morpheus))
+            Left(Configuration.getInstance().getConfig("default.error.invalidName"))
+        else if (lid.exists(isValidInModule(nid, _, morpheus)))
+            Left(Configuration.getInstance().getConfig("refactor.rename.failed.shadowing"))
+>>>>>>> jl_preserve
         else if (!lid.par.forall(id => new File(id.getFile.get.replaceFirst("file ", "")).canWrite))
             Left(Configuration.getInstance().getConfig("refactor.rename.failed.writing"))
         else

@@ -25,8 +25,13 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
     def isValidId(name: String): Boolean =
         name.matches(VALID_NAME_PATTERN) && !name.startsWith("__") && !isReservedLanguageKeyword(name)
 
+<<<<<<< HEAD
     def isValidInProgram(name: String, morpheus: Morpheus): Boolean =
         (morpheus.getModuleInterface != null) && morpheus.getModuleInterface.isListed(name)
+=======
+    def isValidInProgram(name: Opt[String], morpheus: Morpheus): Boolean =
+        (morpheus.getModuleInterface != null) && morpheus.getModuleInterface.isListed(name, morpheus.getFM)
+>>>>>>> jl_preserve
 
     def generateValidNewName(id: Id, stmt: Opt[AST], morpheus: Morpheus, appendix: Int = 1): String = {
         val newName = id.name + "_" + appendix
