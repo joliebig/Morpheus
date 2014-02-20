@@ -8,7 +8,7 @@ import de.fosd.typechef.featureexpr.FeatureModel
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.typesystem._
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
-import de.fosd.typechef.crefactor.evaluation.StatsJar
+import de.fosd.typechef.crefactor.evaluation.StatsCan
 import de.fosd.typechef.crefactor.backend.CLinking
 import de.fosd.typechef.conditional.Opt
 
@@ -26,7 +26,7 @@ with CDeclUse with CTypeEnv with CEnvCache with CTypeCache with CTypeSystem with
 
     typecheckTranslationUnit(tunit.asInstanceOf[TranslationUnit])
     if (file != null)
-        StatsJar.addStat(file, TypeCheck, typeCheck.getTime)
+        StatsCan.addStat(file, TypeCheck, typeCheck.getTime)
 
     private val connectedIds: java.util.IdentityHashMap[Id, List[Opt[Id]]] = new java.util.IdentityHashMap()
 
@@ -51,8 +51,8 @@ with CDeclUse with CTypeEnv with CEnvCache with CTypeCache with CTypeSystem with
         }
 
         if (connectedIds.containsKey(id)
-            || isAlreadyConnected(getUseDeclMap)      // use -> decl
-            || isAlreadyConnected(getDeclUseMap))     // decl -> use
+            || isAlreadyConnected(getUseDeclMap) // use -> decl
+            || isAlreadyConnected(getDeclUseMap)) // decl -> use
             return connectedIds.get(id)
 
         val visited = Collections.newSetFromMap[Id](new java.util.IdentityHashMap())

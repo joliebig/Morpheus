@@ -8,7 +8,7 @@ import de.fosd.typechef.crefactor.backend.CLinking
 trait Refactoring {
 
     def refactor(morpheus: Morpheus):
-    (Boolean, AST, List[FeatureExpr], List[(String, AST)])
+    (Boolean, AST, List[FeatureExpr], List[(String, TranslationUnit)])
 
 }
 

@@ -11,7 +11,7 @@ import de.fosd.typechef.typesystem._
 import de.fosd.typechef.conditional.{Choice, One, Opt}
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
-import de.fosd.typechef.crefactor.evaluation.StatsJar
+import de.fosd.typechef.crefactor.evaluation.StatsCan
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.crewrite.IntraCFG
 
@@ -230,10 +230,10 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             val params = retrieveParameters(extRefIds, morpheus)
             val paramIds = getParamterIds(params)
 
-            StatsJar.addStat(morpheus.getFile, Liveness, startTime.getTime)
-            StatsJar.addStat(morpheus.getFile, ExternalUses, externalUses)
-            StatsJar.addStat(morpheus.getFile, ExternalDecls, externalDefs)
-            StatsJar.addStat(morpheus.getFile, Parameters, paramIds)
+            StatsCan.addStat(morpheus.getFile, Liveness, startTime.getTime)
+            StatsCan.addStat(morpheus.getFile, ExternalUses, externalUses)
+            StatsCan.addStat(morpheus.getFile, ExternalDecls, externalDefs)
+            StatsCan.addStat(morpheus.getFile, Parameters, paramIds)
 
             // generate new function definition
             val specifiers = genSpecifiers(parentFunction, morpheus)

@@ -10,7 +10,7 @@ import java.io._
 import de.fosd.typechef.parser.TokenReader
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.typesystem.linker.InterfaceWriter
-import de.fosd.typechef.crefactor.evaluation.{Refactor, StatsJar}
+import de.fosd.typechef.crefactor.evaluation.{Refactor, StatsCan}
 import de.fosd.typechef.crefactor.evaluation.setup.{Building, BuildCondition}
 import java.util.zip.{GZIPOutputStream, GZIPInputStream}
 import de.fosd.typechef.parser.c.CTypeContext
@@ -52,7 +52,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         processFile(runOpt)
     }
 
-    def parseOrLoadAST(file: String): (TranslationUnit, FeatureModel) = {
+    def parseOrLoadTUnit(file: String): (TranslationUnit, FeatureModel) = {
         val opt = new FrontendOptionsWithConfigFiles()
         opt.parseOptions(file +: command)
 
@@ -148,7 +148,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         val parsingTime = new StopClock
         val parserMain = new ParserMain(new CParser(fm))
         val ast = parserMain.parserMain(lex(opt), opt)
-        StatsJar.addStat(opt.getFile, Parsing, parsingTime.getTime)
+        StatsCan.addStat(opt.getFile, Parsing, parsingTime.getTime)
 
         ast
     }

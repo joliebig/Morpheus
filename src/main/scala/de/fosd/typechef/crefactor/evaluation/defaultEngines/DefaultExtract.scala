@@ -1,13 +1,12 @@
 package de.fosd.typechef.crefactor.evaluation.defaultEngines
 
-import de.fosd.typechef.crefactor.evaluation.{StatsJar, Evaluation, Refactoring}
+import de.fosd.typechef.crefactor.evaluation.{StatsCan, Evaluation, Refactoring}
 import de.fosd.typechef.crefactor.Morpheus
-import de.fosd.typechef.parser.c.{Statement, AST}
+import de.fosd.typechef.parser.c.{TranslationUnit, Statement, AST, CompoundStatement}
 import de.fosd.typechef.featureexpr.FeatureExpr
 import de.fosd.typechef.crefactor.backend.engine.CExtractFunction
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.Stats._
-import de.fosd.typechef.parser.c.CompoundStatement
 import de.fosd.typechef.conditional.Opt
 import java.io.File
 
@@ -20,11 +19,11 @@ trait DefaultExtract extends Refactoring with Evaluation {
     val NAME = "refactored_func"
 
 
-    def refactor(morpheus: Morpheus): (Boolean, AST, List[FeatureExpr], List[(String, AST)]) = {
+    def refactor(morpheus: Morpheus): (Boolean, AST, List[FeatureExpr], List[(String, TranslationUnit)]) = {
         val resultDir = getResultDir(morpheus.getFile)
         val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(morpheus.getFile)
 
-        def refactor(morpheus: Morpheus, depth: Int): (Boolean, AST, List[FeatureExpr], List[(String, AST)]) = {
+        def refactor(morpheus: Morpheus, depth: Int): (Boolean, AST, List[FeatureExpr], List[(String, TranslationUnit)]) = {
             val compStmts = filterAllASTElems[CompoundStatement](morpheus.getTranslationUnit)
 
             // Real random approach
@@ -91,8 +90,8 @@ trait DefaultExtract extends Refactoring with Evaluation {
             val refactored = CExtractFunction.extract(morpheus, statements, NAME)
             refactored match {
                 case Right(a) => {
-                    StatsJar.addStat(morpheus.getFile, RefactorTime, refactorTime.getTime)
-                    StatsJar.addStat(morpheus.getFile, Statements, statements)
+                    StatsCan.addStat(morpheus.getFile, RefactorTime, refactorTime.getTime)
+                    StatsCan.addStat(morpheus.getFile, Statements, statements)
                     (true, a, features, List())
                 }
                 case Left(s) => {

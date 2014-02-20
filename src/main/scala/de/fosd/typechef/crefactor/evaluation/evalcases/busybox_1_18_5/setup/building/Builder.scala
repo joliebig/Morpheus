@@ -19,8 +19,8 @@ object Builder extends BusyBoxEvaluation with Building {
         resultDir.mkdirs()
 
         // write AST in current result dir
-        printAndWriteTUnit(ast, refFile.getCanonicalPath.replace(".pi", ".c"))
-        printAndWriteTUnit(ast, currentFile.getCanonicalPath)
+        writePrettyPrintedTUnit(ast, refFile.getCanonicalPath.replace(".pi", ".c"))
+        writePrettyPrintedTUnit(ast, currentFile.getCanonicalPath)
 
         def buildAndTest(busyBoxFile: File, ext: String): (Boolean, String) = {
             val buildResult = build

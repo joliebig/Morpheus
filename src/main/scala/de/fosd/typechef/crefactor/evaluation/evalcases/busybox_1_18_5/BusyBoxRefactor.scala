@@ -1,10 +1,10 @@
 package de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5
 
-import de.fosd.typechef.crefactor.evaluation.{Refactoring, StatsJar, Refactor}
+import de.fosd.typechef.crefactor.evaluation.{Refactoring, StatsCan, Refactor}
 import de.fosd.typechef.parser.c.TranslationUnit
 import de.fosd.typechef.featureexpr.FeatureModel
 import de.fosd.typechef.crefactor.Morpheus
-import java.io.File
+import java.io.{FileWriter, File}
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.refactor.{Rename, Inline, Extract}
@@ -36,15 +36,18 @@ object BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
                     write(result._2, morpheus.getFile)
                     PrepareASTforVerification.makeConfigs(result._2, morpheus.getFM, morpheus.getFile, result._3)
                     val time = new StopClock
-                    StatsJar.addStat(file, AffectedFeatures, result._3)
+                    StatsCan.addStat(file, AffectedFeatures, result._3)
                     // run refactored first
                     BusyBoxVerification.verify(file, fm, "_ref")
                     runScript("./cleanAndReset.sh", sourcePath)
                     BusyBoxVerification.verify(file, fm, "_org")
                     runScript("./cleanAndReset.sh", sourcePath)
-                    StatsJar.addStat(file, TestingTime, time.getTime)
+                    StatsCan.addStat(file, TestingTime, time.getTime)
                 } else writeError("Could not engine file.", path)
-                StatsJar.write(path + ".stats")
+                val writer = new FileWriter(path + ".stats")
+                StatsCan.write(writer)
+                writer.flush()
+                writer.close()
             } catch {
                 case e: Exception => {
                     e.printStackTrace

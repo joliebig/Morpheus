@@ -1,9 +1,9 @@
 package de.fosd.typechef.crefactor.evaluation.evalcases.openSSL
 
-import de.fosd.typechef.crefactor.evaluation.{StatsJar, Refactoring, Refactor}
+import de.fosd.typechef.crefactor.evaluation.{StatsCan, Refactoring, Refactor}
 import de.fosd.typechef.parser.c.TranslationUnit
 import de.fosd.typechef.featureexpr.FeatureModel
-import java.io.File
+import java.io.{FileWriter, File}
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.refactor.{Inline, Extract, Rename}
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
@@ -35,12 +35,15 @@ object OpenSSLRefactor extends OpenSSLEvaluation with Refactor {
                 if (result._1) {
                     write(result._2, morpheus.getFile.replace(".pi", ".c"))
                     val time = new StopClock
-                    StatsJar.addStat(file, AffectedFeatures, result._2)
+                    StatsCan.addStat(file, AffectedFeatures, result._2)
                     OpenSSLVerification.verify(morpheus.getFile, morpheus.getFM, "first")
                     runScript("./clean.sh", sourcePath)
-                    StatsJar.addStat(file, TestingTime, time.getTime)
+                    StatsCan.addStat(file, TestingTime, time.getTime)
                 } else writeError("Could not engine file.", path)
-                StatsJar.write(path + ".stats")
+                val writer = new FileWriter(path + ".stats")
+                StatsCan.write(writer)
+                writer.flush()
+                writer.close()
             } catch {
                 case e: Exception => {
                     e.printStackTrace()

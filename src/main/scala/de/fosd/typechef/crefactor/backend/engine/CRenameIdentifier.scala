@@ -5,7 +5,7 @@ import de.fosd.typechef.parser.c.{TranslationUnit, AST, Id}
 import de.fosd.typechef.crefactor.frontend.util.Selection
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.evaluation_utils.Configuration
-import de.fosd.typechef.crefactor.evaluation.StatsJar
+import de.fosd.typechef.crefactor.evaluation.StatsCan
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import java.io.File
 import de.fosd.typechef.conditional.Opt
@@ -27,7 +27,7 @@ object CRenameIdentifier extends ASTSelection with CRefactor {
 
     def rename(id: Id, nid: String, morpheus: Morpheus): Either[String, TranslationUnit] = {
         val lid = morpheus.linkage(id).map(_.entry)
-        StatsJar.addStat(morpheus.getFile, Amount, lid.size)
+        StatsCan.addStat(morpheus.getFile, Amount, lid.size)
 
         if (!isValidId(nid))
             Left(Configuration.getInstance().getConfig("default.error.invalidName"))
