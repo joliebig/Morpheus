@@ -469,11 +469,11 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             if (ft.isTautology(morpheus.getFM)) {
                 o match {
                     // only variables are interesting
-                    case o@One((CUnknown(_), _, _)) =>
-                    case o@One((CFunction(_, _), _, _)) =>
-                    case o@One((CType(CFunction(_, _), _, _, _), _, _, ExternalLinkage)) =>
-                    case o@One((CType(CFunction(_, _), _, _, _), _, _, InternalLinkage)) =>
-                    case o@One((_, KEnumVar, _, _)) =>
+                    case One((CUnknown(_), _, _)) =>
+                    case One((CFunction(_, _), _, _)) =>
+                    case One((CType(CFunction(_, _), _, _, _), _, _, ExternalLinkage)) =>
+                    case One((CType(CFunction(_, _), _, _, _), _, _, InternalLinkage)) =>
+                    case One((_, KEnumVar, _, _)) =>
                         // direct enum use -> check for visibility only as enums are constant
                         // if not visible afterwards the refactoring can not be made.
                         if (morpheus.getUseDeclMap.get(id).exists(t => findPriorASTElem[CompoundStatement](t, morpheus.getASTEnv) match {
@@ -481,7 +481,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                             case _ => true
                         })) throw new RefactorException("Type Declaration for " + id.name +
                             " would be invisible after extraction!")
-                    case o@One((CType(_, _, _, _), KParameter, _, _)) =>
+                    case One((CType(_, _, _, _), KParameter, _, _)) =>
                         // Passed as parameter in parent function
                         addParameterToGenerateFromParameter(id, ft)
                     case _ =>
