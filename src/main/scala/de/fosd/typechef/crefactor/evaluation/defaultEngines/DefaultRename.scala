@@ -84,10 +84,7 @@ trait DefaultRename extends Refactoring with Evaluation {
             val associatedIds = morpheus.linkage(id)
             addType(associatedIds, morpheus, run)
             logger.info("Run " + run + ": Found Id: " + id)
-            logger.info("Run " + run + ": Associated Ids: " + associatedIds.size)
-            associatedIds.foreach(id => logger.info(morpheus.getASTEnv.containsASTElem(id)))
-            associatedIds.foreach(id => logger.info(morpheus.getASTEnv.featureExpr(id.entry)))
-            (id, associatedIds.length, associatedIds.map(morpheus.getASTEnv.featureExpr).distinct)
+            (id, associatedIds.length, associatedIds.map(id => morpheus.getASTEnv.featureExpr(id.entry)).distinct)
         }
 
         val time = new StopClock
