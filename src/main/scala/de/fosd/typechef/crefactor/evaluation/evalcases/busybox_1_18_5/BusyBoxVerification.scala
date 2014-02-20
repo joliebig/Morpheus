@@ -5,6 +5,7 @@ import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr, SingleFeat
 import de.fosd.typechef.parser.c.AST
 import de.fosd.typechef.crefactor.evaluation.{StatsCan, Verification}
 import de.fosd.typechef.crefactor.evaluation.Stats._
+import de.fosd.typechef.crefactor.evaluation.util.StopClock
 
 object BusyBoxVerification extends BusyBoxEvaluation with Verification {
 
@@ -20,8 +21,10 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
         val result = configs.map(config => {
             logger.info("Testing config: " + config.getName + " for " + evalFile + " in mode: " + mode + ".")
             def buildAndTest(busyBoxFile: File, ext: String): (Boolean, String) = {
+                val buildTestTime = new StopClock
                 val buildResult = build
                 val testResult = runTest
+                logger.info("Build and test duration in ms: " + buildTestTime.getTime)
                 writeResult(buildResult._2, resultDir.getCanonicalPath + "/" + config.getName + ext + ".build")
                 if (!buildResult._1) writeResult(buildResult._3, resultDir.getCanonicalPath + "/" + config.getName + ext + ".buildErr")
                 writeResult(testResult, resultDir.getCanonicalPath + "/" + config.getName + ext + ".test")

@@ -36,8 +36,8 @@ object BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
                     write(result._2, morpheus.getFile)
                     logger.info("Features: " + result._3)
                     PrepareASTforVerification.makeConfigs(result._2, morpheus.getFM, morpheus.getFile, result._3)
-                    val time = new StopClock
                     StatsCan.addStat(file, AffectedFeatures, result._3)
+                    val time = new StopClock
                     // run refactored first
                     BusyBoxVerification.verify(file, fm, "_ref")
                     runScript("./cleanAndReset.sh", sourcePath)
