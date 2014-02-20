@@ -7,6 +7,7 @@ import de.fosd.typechef.parser.c._
 import de.fosd.typechef.crefactor.frontend.util.Selection
 import de.fosd.typechef.conditional._
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
+import de.fosd.typechef.typesystem.linker.SystemLinker
 
 trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation with EnforceTreeHelper {
 
@@ -23,7 +24,10 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
      * @return <code>true</code> if valid, <code>false</code> if not
      */
     def isValidId(name: String): Boolean =
-        name.matches(VALID_NAME_PATTERN) && !name.startsWith("__") && !isReservedLanguageKeyword(name)
+        (name.matches(VALID_NAME_PATTERN) && !name.startsWith("__")
+            && !isReservedLanguageKeyword(name) && !isSystemLinkedName(name))
+
+    def isSystemLinkedName(name : String) = SystemLinker.allLibs.par.contains(name)
 
     def isLinked(name: Opt[String], morpheus: Morpheus): Boolean =
         (morpheus.getLinkInterface != null) && morpheus.getLinkInterface.isListed(name, morpheus.getFM)
@@ -41,6 +45,8 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
      * @return <code>true</code> if language keyword
      */
     def isReservedLanguageKeyword(name: String) = LANGUAGE_KEYWORDS.contains(name)
+
+    def isSystemLinkedName(name : String) = SystemLinker.allLibs.par.contains(name)
 
     def getOrFeatures(a: Any): FeatureExpr = {
         var featureSet: Set[FeatureExpr] = Set()

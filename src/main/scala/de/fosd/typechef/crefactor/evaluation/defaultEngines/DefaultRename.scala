@@ -46,7 +46,6 @@ trait DefaultRename extends Refactoring with Evaluation {
             writeRunResult(run, runMorpheus, refactoredRun._4)
             logger.info("Run " + run + " affected features: " + refactoredRun._3)
         }
-        logger.info(affectedFeatures)
         (true, runMorpheus.getTranslationUnit, affectedFeatures.distinct, linkedRenamedFiles.toList.map(entry => (entry._1, entry._2.getTranslationUnit)))
     }
 
@@ -56,7 +55,7 @@ trait DefaultRename extends Refactoring with Evaluation {
         logger.info("+++ Start run: " + run)
 
         def getVariableIdToRename: (Id, Int, List[FeatureExpr]) = {
-            def isValidId(id: Id): Boolean = !id.name.contains("_main") && {
+            def isValidId(id: Id): Boolean = !id.name.contains("_main") && isSystemLinkedName(id.name) && {
                 if (linkInterface != null) !(linkInterface.isBlackListed(id.name) || renameLink.contains(id.name))
                 else true
             }
