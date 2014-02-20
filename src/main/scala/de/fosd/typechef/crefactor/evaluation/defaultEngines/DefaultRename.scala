@@ -99,15 +99,20 @@ trait DefaultRename extends Refactoring with Evaluation {
         else List()
 
         if (refactorChain == null) return (false, null, List(), List())
-        if (!refactorChain.isEmpty) renameLink + name
+        if (!refactorChain.isEmpty) {
+            renameLink + name
+            logger.info("Run " + run + ": Is linked.")
+        } else logger.info("Run " + run + ": Is not linked.")
 
         val features = toRename._3
         StatsCan.addStat(morpheus.getFile, run, AffectedFeatures, features)
 
         val startRenaming = new StopClock
         val refactored = CRenameIdentifier.rename(id, name, morpheus)
+        val renamingTime = startRenaming.getTime
+        logger.info("Run " + run + ": Renaming time : " + renamingTime)
 
-        StatsCan.addStat(morpheus.getFile, run, RefactorTime, startRenaming.getTime)
+        StatsCan.addStat(morpheus.getFile, run, RefactorTime, renamingTime)
 
         refactored match {
             case Right(ast) => {
@@ -118,13 +123,16 @@ trait DefaultRename extends Refactoring with Evaluation {
                     StatsCan.addStat(x._1.getFile, run, RefactorTime, time.getTime)
                     ref match {
                         case Right(refAST) => (x._1.getFile, refAST)
-                        case Left(s) => return (false, null, List(), List())
+                        case Left(s) =>
+                            logger.error("Run " + run + ": Refactoring faild at file " + x._1.getFile + " with " + s + ".")
+                            return (false, null, List(), List())
                     }
                 })
+                logger.info("Run " + run + ": Refactoring at file " + morpheus.getFile + " successfull.")
                 (true, ast, features, linkedRefactored)
             }
             case Left(s) =>
-                logger.error("Refactoring faild in run " + run + " at file " + morpheus.getFile + " with " + s + ".")
+                logger.error("Run " + run + ": Refactoring faild at file " + morpheus.getFile + " with " + s + ".")
                 (false, null, List(), List())
         }
 
