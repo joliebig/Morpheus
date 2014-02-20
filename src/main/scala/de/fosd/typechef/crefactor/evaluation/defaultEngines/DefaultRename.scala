@@ -19,6 +19,7 @@ import de.fosd.typechef.typesystem.CFunction
 import de.fosd.typechef.conditional.One
 import de.fosd.typechef.parser.c.Id
 import de.fosd.typechef.conditional.Opt
+import java.util
 
 
 trait DefaultRename extends Refactoring with Evaluation {
@@ -27,7 +28,7 @@ trait DefaultRename extends Refactoring with Evaluation {
 
     val REFACTOR_AMOUNT = 50
 
-    private val renameLink = mutable.HashSet[String]()
+    private val renameLink = new util.HashSet[String]()
 
     private val linkedRenamedFiles = mutable.HashMap[String, Morpheus]()
 
