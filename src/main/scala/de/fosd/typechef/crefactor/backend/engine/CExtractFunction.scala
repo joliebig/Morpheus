@@ -77,7 +77,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         def exploitStatements(statement: Statement): Statement = {
             try {
                 parentAST(statement, morpheus.getASTEnv) match {
-                    case null => throw new RefactorException("An error during determine the preconditions occured.")
+                    case null => throw new RefactorException("An error during determine the preconditions occurred.")
                     case f: FunctionDef => statement
                     case nf: NestedFunctionDef => statement
                     case p =>
@@ -125,7 +125,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 case s: Some[Statement] =>
                     uniqueSelectedStatements.add(s.get)
                     uniqueSelectedStatements.add(lookupControlStatements(s.get))
-                case x => logger.info("There might have been an expression! " + x)
+                case x => logger.info("There may have been an expression! " + x)
             }
         })
 
@@ -186,7 +186,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             case _: Expr => true
             case _ => false
         })
-            return Left("This refactoring is not yet supported!")
+            return Left("Extract function of expressions is not yet supported!")
 
         if (!selection.forall {
             case _: Statement => true
@@ -479,7 +479,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                         if (morpheus.getUseDeclMap.get(id).exists(t => findPriorASTElem[CompoundStatement](t, morpheus.getASTEnv) match {
                             case None => false
                             case _ => true
-                        })) throw new RefactorException("Type Declaration for " + id.name + " would be invisible after extraction!")
+                        })) throw new RefactorException("Type Declaration for " + id.name +
+                            " would be invisible after extraction!")
                     case o@One((CType(_, _, _, _), KParameter, _, _)) =>
                         // Passed as parameter in parent function
                         addParameterToGenerateFromParameter(id, ft)
@@ -567,11 +568,11 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     private def isPartOfSameCompStmt(selection: List[AST], morpheus: Morpheus): Boolean =
         findPriorASTElem[CompoundStatement](selection.head, morpheus.getASTEnv) match {
             case Some(c) => selection.par.forall(element => isElementOfEqCompStmt(element, c, morpheus))
-            case _ => false // not element of an ccStmt
+            case _ => false // not an element of an ccStmt
         }
 
     /**
-     * Generates the parameters requiered in the function stmt.
+     * Generates the parameters required in the function stmt.
      */
     private def genFCallParams(parameters: List[(Opt[ParameterDeclaration], Opt[Expr], Id)]) =
         parameters.flatMap(entry => Some(entry._2))
