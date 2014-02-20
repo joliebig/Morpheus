@@ -43,8 +43,9 @@ trait DefaultRename extends Refactoring with Evaluation {
             refactoredRun._3.foreach(affectedFeatures + _)
             runMorpheus = new Morpheus(refactoredRun._2, morpheus.getFM, morpheus.getLinkInterface, morpheus.getFile)
             writeRunResult(run, runMorpheus, refactoredRun._4)
+            logger.info("Run " + run + " affected features: " + refactoredRun._3)
         }
-
+        logger.info(affectedFeatures)
         (true, runMorpheus.getTranslationUnit, affectedFeatures.toList, linkedRenamedFiles.toList.map(entry => (entry._1, entry._2.getTranslationUnit)))
     }
 
