@@ -561,7 +561,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     /**
      * Generates the parameters requiered in the function stmt.
      */
-    private def genFCallParams(parameters: List[(Opt[ParameterDeclaration], Opt[Expr], Id)]) = parameters.flatMap(entry => Some(entry._2))
+    private def genFCallParams(parameters: List[(Opt[ParameterDeclaration], Opt[Expr], Id)]) =
+        parameters.flatMap(entry => Some(entry._2))
 
 
     private def uniqueExtRefIds(defs: List[(Id, List[Id])], uses: List[(Id, List[Id])]) = {
@@ -578,7 +579,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     }
 
 
-    private def genCompoundStatement(statements: List[Opt[Statement]], externalRef: List[Id], parameters: List[Id], morpheus: Morpheus): CompoundStatement = {
+    private def genCompoundStatement(statements: List[Opt[Statement]], externalRef: List[Id],
+                                     parameters: List[Id], morpheus: Morpheus): CompoundStatement = {
         def isPartOfParameter(id: Id, params: List[Id], morpheus: Morpheus): Boolean = {
             if (!morpheus.getUseDeclMap.containsKey(id)) false
             morpheus.getUseDeclMap.get(id).exists(decl => params.exists(param => param.eq(decl)))
@@ -590,7 +592,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         }).toList
 
         // Make Pointer
-        val idsAsPointer = variables.foldLeft(statements)((stmts, id) => replaceInAST(stmts, id, PointerDerefExpr(id)))
+        val idsAsPointer = variables.foldLeft(statements)((stmts, id) =>
+            replaceInAST(stmts, id, PointerDerefExpr(id)))
         CompoundStatement(idsAsPointer)
     }
 
@@ -614,7 +617,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             } else None
         }).toList
 
-    private def isElementOfEqCompStmt(element: AST, compStmt: CompoundStatement, morpheus: Morpheus) = getCompoundStatement(element, morpheus).eq(compStmt)
+    private def isElementOfEqCompStmt(element: AST, compStmt: CompoundStatement, morpheus: Morpheus) =
+        getCompoundStatement(element, morpheus).eq(compStmt)
 
     private def getCompoundStatement(element: AST, morpheus: Morpheus): CompoundStatement =
         findPriorASTElem[CompoundStatement](element, morpheus.getASTEnv) match {
@@ -652,6 +656,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         if (! filteredCaStmts.par.forall(isPartOf(_, selection)))
             return false
 
+        // determine goto and label statements and check whether their references (succs resp. preds)
+        // belong to the selection
         val gotoStmts = filterAllASTElems[GotoStatement](element)
         val succsGotoStmts = gotoStmts.flatMap(succ(_, morpheus.getASTEnv))
         val filteredGotoStmts = succsGotoStmts.filter(_.feature isSatisfiable morpheus.getFM)
@@ -679,27 +685,22 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     /**
      * Generates the required specifiers.
      */
-    private def genSpecifiers(funcDef: FunctionDef, morpheus: Morpheus
-    /* , typeSpecifier: Opt[Specifier] = Opt(FeatureExprFactory.True, VoidSpecifier()) */): 
-    List[Opt[Specifier]] = {
-        var specifiers: List[Opt[Specifier]] = 
-            List(Opt(parentOpt(funcDef, morpheus.getASTEnv).feature, VoidSpecifier()))
-
-        // preserv specifiers from function definition except type specifiers
-        funcDef.specifiers.foreach(specifier => {
+    private def genSpecifiers(fDef: FunctionDef, morpheus: Morpheus): List[Opt[Specifier]] = {
+        // preserve specifiers from function definition except type specifiers
+        val filteredSpecifiers = fDef.specifiers.filter(specifier => {
             specifier.entry match {
-                case InlineSpecifier() => specifiers ::= specifier
-                case AutoSpecifier() => specifiers ::= specifier
-                case RegisterSpecifier() => specifiers ::= specifier
-                case VolatileSpecifier() => specifiers ::= specifier
-                case ExternSpecifier() => specifiers ::= specifier
-                case ConstSpecifier() => specifiers ::= specifier
-                case RestrictSpecifier() => specifiers ::= specifier
-                case StaticSpecifier() => specifiers ::= specifier
-                case _ =>
+                case InlineSpecifier()
+                    | AutoSpecifier()
+                    | RegisterSpecifier()
+                    | VolatileSpecifier()
+                    | ExternSpecifier() 
+                    | ConstSpecifier()
+                    | RestrictSpecifier() 
+                    | StaticSpecifier() => true
+                case _ => false
             }
         })
-        specifiers
+        filteredSpecifiers ++ List(Opt(FeatureExprFactory.True, VoidSpecifier()))
     }
 
     /**
