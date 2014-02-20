@@ -19,7 +19,7 @@ import de.fosd.typechef.crewrite.IntraCFG
 /**
  * Implements the strategy of extracting a function.
  */
-// TODO Match with linking
+// TODO Match with linking; jl: is that still open?
 object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
     private var lastSelection: Selection = null
@@ -33,6 +33,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         // TODO Better solution for Control Statements
         val ids = filterASTElementsForFile[Id](filterASTElems[Id](morpheus.getTranslationUnit).par.filter(x => isPartOfSelection(x, selection)).toList, selection.getFilePath)
 
+        // TODO is code obsolete?
         /** def findMostUpwardExpr(element: Expr): Expr = {
             parentAST(element, morpheus.getASTEnv) match {
                 case e: Id => findMostUpwardExpr(e)
@@ -57,7 +58,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         }   */
 
         def findParent(id: Id) = findPriorASTElem[Statement](id, morpheus.getASTEnv)
-        // TODO Old code - trying to identify expression for extraction.
+        // TODO Old code - trying to identify expression for extraction. jl: can we remove this?
         /** priorElement match {
                 case None => null
                 case _ => priorElement.get match {
@@ -145,9 +146,10 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         cachedSelectedElements
     }
 
-    def getAvailableIdentifiers(morpheus: Morpheus, selection: Selection): List[Id] = getSelectedElements(morpheus, selection).isEmpty match {
-        case true => null
-        case false => List[Id]() // returns a empty list to signalize a valid selection was found
+    def getAvailableIdentifiers(morpheus: Morpheus, selection: Selection): List[Id] =
+        getSelectedElements(morpheus, selection).isEmpty match {
+            case true => null
+            case false => List[Id]() // returns a empty list to signalize a valid selection was found
     }
 
     def isAvailable(morpheus: Morpheus, selection: List[AST]): Boolean = {
@@ -199,7 +201,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     Either[String, TranslationUnit] = {
         try {
             val parentFunction = getFunction(selection, morpheus)
-            val parentFunctionOpt: Opt[FunctionDef] = parentOpt(parentFunction, morpheus.getASTEnv).asInstanceOf[Opt[FunctionDef]]
+            val parentFunctionOpt: Opt[FunctionDef] = parentOpt(parentFunction,
+                morpheus.getASTEnv).asInstanceOf[Opt[FunctionDef]]
             val selectedOptStatements: List[Opt[Statement]] =
                 selection.map {
                     elem => {
@@ -302,6 +305,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 morpheus.getEnv(liveId).varEnv.lookup(liveId.name) match {
                     case o@One(_) => enumIsInvisibleOutsideCCStmt(o, liveId)
                     case c@Choice(_, _, _) => enumChoiceIsInvisibleOutsideCCStmt(c, liveId)
+                    // TODO jl: I don't get why this case is necessary. Conditional has
+                    // only One or Choice, so case x => never matches!
                     case x =>
                         logger.warn("Missed pattern choice? " + x)
                         false
@@ -329,11 +334,14 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         !idsToDeclare.isEmpty
     }
 
-    private def getParamterIds(parameters: List[(Opt[ParameterDeclaration], Opt[Expr], Id)]) = parameters.flatMap(entry => Some(entry._3))
+    private def getParamterIds(parameters: List[(Opt[ParameterDeclaration], Opt[Expr], Id)]) =
+        parameters.flatMap(entry => Some(entry._3))
 
-    private def getParameterDecls(parameters: List[(Opt[ParameterDeclaration], Opt[Expr], Id)], funcDef: FunctionDef, morpheus: Morpheus) = {
+    private def getParameterDecls(parameters: List[(Opt[ParameterDeclaration], Opt[Expr], Id)],
+                                  funcDef: FunctionDef, morpheus: Morpheus) = {
         val decls = parameters.flatMap(entry => Some(entry._1))
-        List[Opt[DeclaratorExtension]](Opt(parentOpt(funcDef, morpheus.getASTEnv).feature, DeclParameterDeclList(decls)))
+        List[Opt[DeclaratorExtension]](Opt(parentOpt(funcDef, morpheus.getASTEnv).feature,
+            DeclParameterDeclList(decls)))
     }
 
     private def retrieveParameters(liveParamIds: List[Id], morpheus: Morpheus):
@@ -450,6 +458,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
         def addChoiceOne(c: Choice[_], id: Id, ft: FeatureExpr = FeatureExprFactory.True) = {
             // TODO Verify only parameters end up here.
+            // jl: I don't get the todo. What do You mean?
             val orFeatures = getOrFeatures(c)
             logger.info("OneChoiceFeature " + orFeatures)
             val featureExpr = ft.and(orFeatures)
@@ -529,12 +538,14 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                         if (morpheus.getUseDeclMap.get(i).exists(t => findPriorASTElem[CompoundStatement](t, morpheus.getASTEnv) match {
                             case None => false
                             case _ => true
-                        })) throw new RefactorException("Type Declaration for " + i + " would be invisible after extraction!")
+                        })) throw new RefactorException("Type Declaration for " + i +
+                            " would be invisible after extraction!")
                     case s@StructOrUnionSpecifier(_, Some(i@Id(_)), _, _, _) =>
                         if (morpheus.getUseDeclMap.get(i).exists(t => findPriorASTElem[CompoundStatement](t, morpheus.getASTEnv) match {
                             case None => false
                             case _ => true
-                        })) throw new RefactorException("Type Declaration for " + i + " would be invisible after extraction!")
+                        })) throw new RefactorException("Type Declaration for " + i +
+                            " would be invisible after extraction!")
                     case _ => logger.debug("Specs " + spec)
                 }
             })
@@ -545,7 +556,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 case _ => true
             })
 
-            val paramDecl = Opt(feature, ParameterDeclarationD(filteredDeclSpecs, declDeclPointerMap.get(decl), List()))
+            val paramDecl = Opt(feature, ParameterDeclarationD(filteredDeclSpecs,
+                declDeclPointerMap.get(decl), List()))
             val expr = Opt(feature, PointerCreationExpr(Id(declDeclPointerMap.get(decl).getName)))
             val id = declIdMap.get(decl)
             Some((paramDecl, expr, id))
