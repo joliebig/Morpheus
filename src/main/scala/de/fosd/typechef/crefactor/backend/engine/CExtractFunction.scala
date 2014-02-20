@@ -622,42 +622,6 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             case _ => null
         }
 
-    /**
-     * Conditional complete?
-     */
-    /*
-    private def isConditionalComplete(selection: List[AST], parentFunction: FunctionDef, morpheus: Morpheus): Boolean = {
-        if (selection.isEmpty) return false
-
-        if (!selectionIsConditional(selection)) return true
-        // no variable configuration -> conditional complete
-
-        if (!(filterAllFeatureExpr(selection).toSet.size > 1)) return true
-        // only one and the same feature -> conditonal complete
-        val expr1 = selection.head.asInstanceOf[Opt[_]]
-        val expr2 = selection.last.asInstanceOf[Opt[_]]
-
-        if (expr1.feature.equivalentTo(expr2.feature)) return true
-        // start and end feature are the same -> eligable
-        val prevState = prevOpt(expr1, morpheus.getASTEnv)
-        val nextState = nextOpt(expr2, morpheus.getASTEnv)
-
-        if (((prevState != null) && prevState.feature.equals(expr2.feature))
-            || ((nextState != null) && nextState.feature.equals(expr1.feature))
-            || ((prevState != null) && (nextState != null) && nextState.feature.equals(prevState.feature))) return true
-        // prev feature and next feature are the same -> eligible
-        // TODO Null States!
-        false
-    }
-    */
-
-    /**
-     * InlineFuncOptionSelector is conditonal?
-     */
-    /*
-    private def selectionIsConditional(selection: List[AST]) = selection.exists(isVariable)
-    */
-
     private def isValidSelection(element: AST, selection: List[AST], morpheus: Morpheus):
     Boolean = {
         
