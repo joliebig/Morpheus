@@ -25,7 +25,7 @@ object StatsCan {
             writer.write("+++ Begin " + file + " +++\n")
 
             statsCan.get(file) match {
-                case Some(currFile) => currFile.keySet.foreach(run => {
+                case Some(currFile) => currFile.keySet.toList.sorted.foreach(run => {
 
                     writer.write("\t+++ Begin " + run + " +++\n")
                     currFile.get(run) match {
