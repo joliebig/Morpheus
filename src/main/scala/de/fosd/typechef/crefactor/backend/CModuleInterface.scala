@@ -9,7 +9,7 @@ import de.fosd.typechef.crefactor.Logging
 import de.fosd.typechef.conditional.Opt
 import de.fosd.typechef.featureexpr.FeatureModel
 
-class CLinking(linkPath: String) extends Logging {
+class CModuleInterface(linkPath: String) extends Logging {
 
     val reader = new InterfaceWriter {}
     val linkFile = new File(linkPath)

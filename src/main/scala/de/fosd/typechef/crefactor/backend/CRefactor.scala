@@ -25,12 +25,12 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
     def isValidId(name: String): Boolean =
         name.matches(VALID_NAME_PATTERN) && !name.startsWith("__") && !isReservedLanguageKeyword(name)
 
-    def isLinked(name: Opt[String], morpheus: Morpheus): Boolean =
-        (morpheus.getLinkInterface != null) && morpheus.getLinkInterface.isListed(name, morpheus.getFM)
+    def isValidInProgram(name: Opt[String], morpheus: Morpheus): Boolean =
+        (morpheus.getModuleInterface != null) && morpheus.getModuleInterface.isListed(name, morpheus.getFM)
 
-    def generateValidNewName(id: Id, stmt: Opt[AST], morph: Morpheus, appendix: Int = 1): String = {
+    def generateValidNewName(id: Id, stmt: Opt[AST], morpheus: Morpheus, appendix: Int = 1): String = {
         val newName = id.name + "_" + appendix
-        if (isShadowed(newName, stmt.entry, morph)) generateValidNewName(id, stmt, morph, appendix + 1)
+        if (isValidInModule(newName, stmt.entry, morpheus)) generateValidNewName(id, stmt, morpheus, appendix + 1)
         else newName
     }
 
@@ -70,7 +70,7 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
     }
 
 
-    def isShadowed(name: String, element: AST, morpheus: Morpheus): Boolean = {
+    def isValidInModule(name: String, element: AST, morpheus: Morpheus): Boolean = {
         val lookupValue = findPriorASTElem[CompoundStatement](element, morpheus.getASTEnv) match {
             case Some(x) => x.innerStatements.last.entry
             case _ => morpheus.getTranslationUnit.defs.last.entry

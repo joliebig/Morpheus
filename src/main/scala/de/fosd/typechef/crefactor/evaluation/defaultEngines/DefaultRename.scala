@@ -11,8 +11,8 @@ import de.fosd.typechef.parser.c.Id
 import scala.collection.mutable
 import de.fosd.typechef.error.Position
 import java.io.File
-import de.fosd.typechef.crefactor.backend.CLinking
 import de.fosd.typechef.conditional.Opt
+import de.fosd.typechef.crefactor.backend.CModuleInterface
 
 
 trait DefaultRename extends Refactoring with Evaluation {
@@ -21,7 +21,7 @@ trait DefaultRename extends Refactoring with Evaluation {
 
     def refactor(morpheus: Morpheus): (Boolean, AST, List[FeatureExpr], List[(String, AST)]) = {
         def findIdInAST(position: Position, id: Id, ast: AST) = filterASTElems[Id](ast).par.find(aId => (position.equals(aId.getPositionFrom) || position.equals(aId.getPositionTo)) && aId.name.equalsIgnoreCase(id.name))
-        val linkInterface = morpheus.getLinkInterface
+        val linkInterface = morpheus.getModuleInterface
 
         def getVariableIdToRename: (Id, Int, List[FeatureExpr]) = {
             def isValidId(id: Id): Boolean = !id.name.contains("_main") && {
@@ -30,11 +30,12 @@ trait DefaultRename extends Refactoring with Evaluation {
             }
 
             // TODO Fix Bug in OpenSSL for functions without body
-            def isWritable(id: Id): Boolean = morpheus.linkage(id).map(_.entry).forall(i =>
+            def isWritable(id: Id): Boolean = morpheus.getReferences(id).map(_.entry).forall(i =>
                 isValidId(i) && (i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) || new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
 
             val allIds = morpheus.getUseDeclMap.keys
-            val linkedIds = if (FORCE_LINKING && linkInterface != null) allIds.par.filter(id => linkInterface.isListed(Opt(parentOpt(id, morpheus.getASTEnv).feature, id.name), morpheus.getFM)) else allIds
+            val linkedIds = if (FORCE_LINKING && linkInterface != null)
+                allIds.par.filter(id => linkInterface.isListed(Opt(parentOpt(id, morpheus.getASTEnv).feature, id.name), morpheus.getFM)) else allIds
             val ids = if (linkedIds.isEmpty) allIds else linkedIds
 
             logger.info("IDs found: " + ids.size)
@@ -57,7 +58,7 @@ trait DefaultRename extends Refactoring with Evaluation {
             }
 
             val id = getRandomID
-            val associatedIds = morpheus.linkage(id)
+            val associatedIds = morpheus.getReferences(id)
             println("+++ Found Id: " + id)
             println("+++ Associated Ids: " + associatedIds.size)
             (id, associatedIds.length, associatedIds.map(morpheus.getASTEnv.featureExpr).distinct)
@@ -102,7 +103,7 @@ trait DefaultRename extends Refactoring with Evaluation {
     }
 
 
-    private def getLinkedFilesToRefactor(linkInterface: CLinking, id: Id):
+    private def getLinkedFilesToRefactor(linkInterface: CModuleInterface, id: Id):
     List[(Morpheus, Position)] = {
         val linked = linkInterface.getPositions(id.name)
         val affectedFiles = linked.foldLeft(new mutable.HashMap[String, Position])((map, pos) => map += (pos.getFile -> pos))

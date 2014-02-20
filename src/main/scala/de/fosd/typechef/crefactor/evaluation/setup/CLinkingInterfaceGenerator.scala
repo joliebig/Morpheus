@@ -6,7 +6,7 @@ import de.fosd.typechef.typesystem.linker.{EmptyInterface, CInterface, SystemLin
 import java.io.File
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.Logging
-import de.fosd.typechef.crefactor.backend.CLinking
+import de.fosd.typechef.crefactor.backend.CModuleInterface
 
 /**
  * Interface for generating linking informations of a whole given project
@@ -90,5 +90,5 @@ trait CLinkingInterfaceGenerator extends Evaluation with App with Logging {
     reader.debugInterface(finalInterface, dbgInterfacePath)
     logger.info("Generated debug interface in " + dbgInterfacePath.getCanonicalPath)
 
-    new CLinking(interfacePath.getCanonicalPath)
+    new CModuleInterface(interfacePath.getCanonicalPath)
 }

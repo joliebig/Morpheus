@@ -176,7 +176,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         // Linking check is performed as soon as we know the featureExpr which will have the introduced function.
 
         // we check binding and visibility using the last element in the translation unit
-        if (isShadowed(funName, morpheus.getTranslationUnit.defs.last.entry, morpheus))
+        if (isValidInModule(funName, morpheus.getTranslationUnit.defs.last.entry, morpheus))
             return Left(Configuration.getInstance().getConfig("default.error.invalidName"))
 
         // we can only handle statements. report error otherwise.
@@ -244,7 +244,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             val newFDef = genFDef(specifiers, declarator, compundStatement)
             val newFDefOpt = genFDefExternal(parentFunction, newFDef, morpheus)
 
-            if (isLinked(Opt(newFDefOpt.feature, funcName), morpheus))
+            if (isValidInProgram(Opt(newFDefOpt.feature, funcName), morpheus))
                 return Left(Configuration.getInstance().getConfig("default.error.invalidName"))
 
             // generate function fCall
@@ -746,7 +746,9 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     /**
      * Generates the opt node for the tunit.
      */
-    private def genFDefExternal(oldFunc: FunctionDef, newFunc: FunctionDef, morpheus: Morpheus, feature: FeatureExpr = FeatureExprFactory.True) = Opt[FunctionDef](parentOpt(oldFunc, morpheus.getASTEnv).feature.and(feature), newFunc)
+    private def genFDefExternal(oldFunc: FunctionDef, newFunc: FunctionDef,
+                                morpheus: Morpheus, feature: FeatureExpr = FeatureExprFactory.True) =
+        Opt[FunctionDef](parentOpt(oldFunc, morpheus.getASTEnv).feature.and(feature), newFunc)
 
     /**
      * Generates the decl.
