@@ -102,7 +102,11 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         val r = manybu(rule {
             case id: Id => if (ids.exists(isPartOf(id, _))) {
                 val copiedId = id.copy(name = newName)
-                copyPositions(id, copiedId)
+                val orgPosRange = id.range
+                orgPosRange match {
+                    case Some(range) => copiedId.setPositionRange(range._1, range._2)
+                    case _ =>
+                }
                 copiedId
             } else id
             case x => x
