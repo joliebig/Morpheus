@@ -85,7 +85,8 @@ trait DefaultRename extends Refactoring with Evaluation {
             addType(associatedIds, morpheus, run)
             logger.info("Run " + run + ": Found Id: " + id)
             logger.info("Run " + run + ": Associated Ids: " + associatedIds.size)
-            logger.info(morpheus.getASTEnv.containsASTElem(id))
+            associatedIds.foreach(id => logger.info(morpheus.getASTEnv.containsASTElem(id)))
+            associatedIds.foreach(id => logger.info(morpheus.getASTEnv.featureExpr(id.entry)))
             (id, associatedIds.length, associatedIds.map(morpheus.getASTEnv.featureExpr).distinct)
         }
 
