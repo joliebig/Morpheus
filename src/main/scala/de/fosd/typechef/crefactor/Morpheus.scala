@@ -31,30 +31,12 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
         StatsCan.addStat(file, TypeCheck, typeCheck.getTime)
 
     private val enforce = new StopClock
-    enforceFMDeclUse(getFM, getASTEnv)
+    enforceFmOnCDeclUse(getFM, getASTEnv)
     logger.info("Enforcing featuremodel on decluse in " + enforce.getTime + "ms.")
 
     override def getDeclUseMap = IdentityIdHashMap(enforcedFMDeclUse)
 
     override def getUseDeclMap = IdentityIdHashMap(enforcedFMUseDecl)
-
-    private def enforceFMDeclUse(featureModel: FeatureModel, astEnv: ASTEnv) = {
-        def addToTargetMap(key: Id, entry: Id, targetMap: java.util.IdentityHashMap[Id, List[Id]]) = {
-            if (targetMap.containsKey(key)) targetMap.put(key, entry :: targetMap.get(key))
-            else targetMap.put(key, List(entry))
-        }
-
-        def fillMap(sourceMap: IdentityIdHashMap, targetMap: java.util.IdentityHashMap[Id, List[Id]]) = {
-            targetMap.clear()
-            sourceMap.keys.foreach(key =>
-                sourceMap.get(key).foreach(entry =>
-                    if ((astEnv.featureExpr(entry) and astEnv.featureExpr(key)) isSatisfiable (fm))
-                        addToTargetMap(key, entry, targetMap)))
-        }
-
-        fillMap(super.getDeclUseMap, enforcedFMDeclUse)
-        fillMap(super.getUseDeclMap, enforcedFMUseDecl)
-    }
 
     // determines linkage information between identifier uses and declares and vice versa
     //
@@ -129,7 +111,7 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
         //ts = new CTypeSystemFrontend(astCached.asInstanceOf[TranslationUnit], fm)
         //ts.checkAST
         typecheckTranslationUnit(tunitCached)
-        enforceFMDeclUse(getFM, getASTEnv)
+        enforceFmOnCDeclUse(getFM, getASTEnv)
         setChanged()
         notifyObservers()
     }
@@ -145,4 +127,23 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
     def getFile = file
 
     def getModuleInterface = moduleInterface
+
+    // enforces the feature model on cDeclUse - at removes all invalid connections determined by the feature model
+    private def enforceFmOnCDeclUse(featureModel: FeatureModel, astEnv: ASTEnv) = {
+        def addToTargetMap(key: Id, entry: Id, targetMap: java.util.IdentityHashMap[Id, List[Id]]) = {
+            if (targetMap.containsKey(key)) targetMap.put(key, entry :: targetMap.get(key))
+            else targetMap.put(key, List(entry))
+        }
+
+        def fillMap(sourceMap: IdentityIdHashMap, targetMap: java.util.IdentityHashMap[Id, List[Id]]) = {
+            targetMap.clear()
+            sourceMap.keys.foreach(key =>
+                sourceMap.get(key).foreach(entry =>
+                    if ((astEnv.featureExpr(entry) and astEnv.featureExpr(key)) isSatisfiable (fm))
+                        addToTargetMap(key, entry, targetMap)))
+        }
+
+        fillMap(super.getDeclUseMap, enforcedFMDeclUse)
+        fillMap(super.getUseDeclMap, enforcedFMUseDecl)
+    }
 }
