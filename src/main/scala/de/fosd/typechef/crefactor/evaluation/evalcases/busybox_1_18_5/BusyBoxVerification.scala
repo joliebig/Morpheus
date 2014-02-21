@@ -97,7 +97,7 @@ object PrepareASTforVerification extends BusyBoxEvaluation {
                     wrongCounter += 1
                     List()
                 }
-            }).toList.distinct
+            }).distinct.toList
         })
     }
 
