@@ -78,7 +78,7 @@ trait DefaultRename extends Refactoring with Evaluation {
             logger.info("Run " + run + ": Variable IDs found: " + variableIds.size)
 
             def getRandomID: Id = {
-                val randID = if (!variableIds.isEmpty && FORCE_VARIABILITY) variableIds.apply((math.random * variableIds.size).toInt) else ids.apply((math.random * ids.size).toInt)
+                val randID = if ((variableIds.size > 25) && FORCE_VARIABILITY) variableIds.apply((math.random * variableIds.size).toInt) else ids.apply((math.random * ids.size).toInt)
                 if (isWritable(randID)) randID
                 else getRandomID
             }
