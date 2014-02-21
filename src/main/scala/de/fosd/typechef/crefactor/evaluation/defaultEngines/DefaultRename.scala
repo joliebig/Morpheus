@@ -143,9 +143,11 @@ trait DefaultRename extends Refactoring with Evaluation {
 
     private def findIdInAST(position: Position, id: Id, tUnit: TranslationUnit) = {
         logger.info("Looking for " + position)
-        filterASTElems[Id](tUnit).par.find(aId =>
+        filterASTElems[Id](tUnit).par.find(aId => {
+            if (aId.name.equalsIgnoreCase(id.name))
+                logger.info("Found matching names " + id.name + " at: " + aId.getPositionFrom + ", " + aId.getPositionTo)
             (position.equals(aId.getPositionFrom) || position.equals(aId.getPositionTo)) // TODO Range Check
-                && aId.name.equalsIgnoreCase(id.name))
+                && aId.name.equalsIgnoreCase(id.name))}
     }
 
 
