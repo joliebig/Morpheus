@@ -178,7 +178,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         // Linking check is performed as soon as we know the featureExpr which will have the introduced function.
 
         val oldFDef = findPriorASTElem[FunctionDef](selection.head, morpheus.getASTEnv)
-        if (isValidInProgram(Opt(morpheus.getASTEnv.featureExpr(oldFDef), funName), morpheus))
+        if (isValidInProgram(Opt(morpheus.getASTEnv.featureExpr(oldFDef.get), funName), morpheus))
             return Left(Configuration.getInstance().getConfig(
                 "default.error.isInConflictWithSymbolInModuleInterface"))
 
