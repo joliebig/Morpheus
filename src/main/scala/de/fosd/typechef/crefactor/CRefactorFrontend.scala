@@ -53,6 +53,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
     }
 
     def parseOrLoadTUnit(file: String): (TranslationUnit, FeatureModel) = {
+        logger.info("Loading file: " + file)
         val opt = new FrontendOptionsWithConfigFiles()
         opt.parseOptions(file +: command)
 
