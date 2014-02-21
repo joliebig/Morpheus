@@ -68,10 +68,10 @@ object CInlineFunction extends ASTSelection with CRefactor {
             assert(false, "Inlining of external function definitions is not supported.")
 
         var tunitRefactored = calls.foldLeft(morpheus.getTranslationUnit)((curTunit, call) =>
-            inlineFuncCall(curTunit, new Morpheus(curTunit), call, fDefs, rename))
+            inlineFuncCall(curTunit, new Morpheus(curTunit, morpheus.getFM), call, fDefs, rename))
         tunitRefactored =
             callExpr.foldLeft(tunitRefactored)(
-                (workingAST, expr) => inlineFuncCallExpr(workingAST, new Morpheus(workingAST),
+                (workingAST, expr) => inlineFuncCallExpr(workingAST, new Morpheus(workingAST, morpheus.getFM),
                     expr, fDefs, rename))
 
         // Remove inlined function stmt's declaration and definitions
