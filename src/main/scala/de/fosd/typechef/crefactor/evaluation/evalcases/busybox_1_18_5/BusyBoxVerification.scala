@@ -76,6 +76,8 @@ object PrepareASTforVerification extends BusyBoxEvaluation {
     private def genAllConfigVariantsForFeatures(enabledFeatures: List[SingleFeatureExpr], affectedFeatures: List[FeatureExpr], fm: FeatureModel, dir: File): List[List[SingleFeatureExpr]] = {
         var wrongCounter = 0
         val singleAffectedFeatures = affectedFeatures.flatMap(_.collectDistinctFeatureObjects.filterNot(ft => filterFeatures.contains(ft.feature))).distinct
+        logger.info("Single AffectedFeatures: " + singleAffectedFeatures.size)
+
         // default start config, it all starts from this config
         val startConfig = List(enabledFeatures)
 
