@@ -19,7 +19,6 @@ import de.fosd.typechef.crewrite.IntraCFG
 /**
  * Implements the strategy of extracting a function.
  */
-// TODO Match with linking; jl: is that still open?
 object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
     private var lastSelection: Selection = null
@@ -30,54 +29,14 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         if (lastSelection.eq(selection)) return cachedSelectedElements
         lastSelection = selection
 
-        // TODO Better solution for Control Statements
         val ids = filterASTElementsForFile[Id](filterASTElems[Id](morpheus.getTranslationUnit).par.filter(x => isPartOfSelection(x, selection)).toList, selection.getFilePath)
 
-        // TODO is code obsolete?
-        /** def findMostUpwardExpr(element: Expr): Expr = {
-            parentAST(element, morpheus.getASTEnv) match {
-                case e: Id => findMostUpwardExpr(e)
-                case e: Constant => findMostUpwardExpr(e)
-                case e: StringLit => findMostUpwardExpr(e)
-                case e: UnaryExpr => findMostUpwardExpr(e)
-                case e: PostfixExpr => findMostUpwardExpr(e)
-                case e: SizeOfExprT => findMostUpwardExpr(e)
-                case e: SizeOfExprU => findMostUpwardExpr(e)
-                case e: CastExpr => findMostUpwardExpr(e)
-                case e: PointerDerefExpr => findMostUpwardExpr(e)
-                case e: PointerCreationExpr => findMostUpwardExpr(e)
-                case e: UnaryOpExpr => findMostUpwardExpr(e)
-                case e: NAryExpr => findMostUpwardExpr(e)
-                case e: ExprList => findMostUpwardExpr(e)
-                case e: ConditionalExpr => findMostUpwardExpr(e)
-                case e: AssignExpr => findMostUpwardExpr(e)
-                case x =>
-                    println(x)
-                    element
-            }
-        }   */
-
         def findParent(id: Id) = findPriorASTElem[Statement](id, morpheus.getASTEnv)
-        // TODO Old code - trying to identify expression for extraction. jl: can we remove this?
-        /** priorElement match {
-                case None => null
-                case _ => priorElement.get match {
-                    case ifState: IfStatement => Some(findMostUpwardExpr(id))
-                    case elIf: ElifStatement => Some(findMostUpwardExpr(id))
-                    case doState: DoStatement => Some(findMostUpwardExpr(id))
-                    case whileState: WhileStatement => Some(findMostUpwardExpr(id))
-                    case forState: ForStatement => Some(findMostUpwardExpr(id))
-                    case returnState: ReturnStatement => Some(findMostUpwardExpr(id))
-                    case switch: SwitchStatement => Some(findMostUpwardExpr(id))
-                    case caseState: CaseStatement => Some(findMostUpwardExpr(id))
-                    case s => Some(s)
-                }
-            } **/
 
         def exploitStatements(statement: Statement): Statement = {
             try {
                 parentAST(statement, morpheus.getASTEnv) match {
-                    case null => throw new RefactorException("An error during determine the preconditions occurred.")
+                    case null => throw new RefactorException("An error during determining the preconditions occurred.")
                     case f: FunctionDef => statement
                     case nf: NestedFunctionDef => statement
                     case p =>
@@ -286,8 +245,10 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                     enumIsInvisibleOutsideCCStmt(o1, liveId) || enumIsInvisibleOutsideCCStmt(o2, liveId)
                 case c@Choice(_, c1@Choice(_, _, _), o2@One(_)) =>
                     enumIsInvisibleOutsideCCStmt(o2, liveId) || enumChoiceIsInvisibleOutsideCCStmt(c1, liveId)
-                case c@Choice(_, o1@One(_), c1@Choice(_, _, _)) => enumIsInvisibleOutsideCCStmt(o1, liveId) || enumChoiceIsInvisibleOutsideCCStmt(c1, liveId)
-                case c@Choice(_, c1@Choice(_, _, _), c2@Choice(_, _, _)) => enumChoiceIsInvisibleOutsideCCStmt(c1, liveId) || enumChoiceIsInvisibleOutsideCCStmt(c2, liveId)
+                case c@Choice(_, o1@One(_), c1@Choice(_, _, _)) =>
+                    enumIsInvisibleOutsideCCStmt(o1, liveId) || enumChoiceIsInvisibleOutsideCCStmt(c1, liveId)
+                case c@Choice(_, c1@Choice(_, _, _), c2@Choice(_, _, _)) =>
+                    enumChoiceIsInvisibleOutsideCCStmt(c1, liveId) || enumChoiceIsInvisibleOutsideCCStmt(c2, liveId)
             }
         }
 
@@ -310,11 +271,6 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 morpheus.getEnv(liveId).varEnv.lookup(liveId.name) match {
                     case o@One(_) => enumIsInvisibleOutsideCCStmt(o, liveId)
                     case c@Choice(_, _, _) => enumChoiceIsInvisibleOutsideCCStmt(c, liveId)
-                    // TODO jl: I don't get why this case is necessary. Conditional has
-                    // only One or Choice, so case x => never matches!
-                    case x =>
-                        logger.warn("Missed pattern choice? " + x)
-                        false
                 }
             } catch {
                 case _: Throwable =>
@@ -323,7 +279,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             }
         })
 
-        if (invisibleEnums) logger.info("Not available for extract - has invisible enums.")
+        if (invisibleEnums)
+            logger.info("Not available for extract - has invisible enums.")
 
         invisibleEnums
     }
@@ -462,8 +419,6 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         }
 
         def addChoiceOne(c: Choice[_], id: Id, ft: FeatureExpr = FeatureExprFactory.True) = {
-            // TODO Verify only parameters end up here.
-            // jl: I don't get the todo. What do You mean?
             val orFeatures = getOrFeatures(c)
             logger.info("OneChoiceFeature " + orFeatures)
             val featureExpr = ft.and(orFeatures)
@@ -707,14 +662,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         // preserve specifiers from function definition except type specifiers
         val filteredSpecifiers = fDef.specifiers.filter(specifier => {
             specifier.entry match {
-                case InlineSpecifier()
-                     | AutoSpecifier()
-                     | RegisterSpecifier()
-                     | VolatileSpecifier()
-                     | ExternSpecifier()
-                     | ConstSpecifier()
-                     | RestrictSpecifier()
-                     | StaticSpecifier() => true
+                case spec: OtherSpecifier => true
                 case _ => false
             }
         })
