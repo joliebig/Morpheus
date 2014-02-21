@@ -143,10 +143,12 @@ trait DefaultRename extends Refactoring with Evaluation {
 
     private def findIdInAST(position: Position, id: Id, tUnit: TranslationUnit) = {
         logger.info("Looking for " + position + "of " + id.name + ".")
-        filterASTElems[Id](tUnit).par.find(aId => {
+        val found = filterASTElems[Id](tUnit).par.find(aId => {
             if (aId.name.equalsIgnoreCase(id.name)) logger.info("Found matching names " + id.name + " at: " + aId.getPositionFrom + ", " + aId.getPositionTo)
             (position.getLine.equals(aId.getPositionFrom.getLine) || position.getLine.equals(aId.getPositionTo.getLine)) && aId.name.equalsIgnoreCase(id.name)
         })
+        logger.info("Found the following linkedIds: " + found)
+        found
     }
 
 
