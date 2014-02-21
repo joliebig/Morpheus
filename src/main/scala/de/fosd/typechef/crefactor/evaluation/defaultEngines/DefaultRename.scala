@@ -145,7 +145,11 @@ trait DefaultRename extends Refactoring with Evaluation {
         logger.info("Looking for " + position + "of " + id.name + ".")
         val found = filterASTElems[Id](tUnit).par.find(aId => {
             if (aId.name.equalsIgnoreCase(id.name)) logger.info("Found matching names " + id.name + " at: " + aId.getPositionFrom + ", " + aId.getPositionTo)
-            (position.getLine.equals(aId.getPositionFrom.getLine) || position.getLine.equals(aId.getPositionTo.getLine)) && aId.name.equalsIgnoreCase(id.name)
+            // as positions in TypeChef are little bit buggy - we extend the search ranch.
+            ((position.getLine.equals(aId.getPositionFrom.getLine) || position.getLine.equals(aId.getPositionTo.getLine)
+                || position.getLine.equals(aId.getPositionFrom.getLine - 1) || position.getLine.equals(aId.getPositionTo.getLine - 1)
+                || position.getLine.equals(aId.getPositionFrom.getLine + 1) || position.getLine.equals(aId.getPositionTo.getLine + 1))
+                && aId.name.equalsIgnoreCase(id.name))
         })
         logger.info("Found the following linkedIds: " + found)
         found
