@@ -81,6 +81,7 @@ object PrepareASTforVerification extends BusyBoxEvaluation {
 
         // iterate over every affected feature and activate or deactivate it on all configs and generated configes
         singleAffectedFeatures.foldLeft(startConfig)((configs, singleAffectFeature) => {
+            logger.info("Generating configs for single affected feature: " + singleAffectFeature)
             configs ::: configs.map(config => {
                 var generatedConfig: List[SingleFeatureExpr] = List()
                 if (config.contains(singleAffectFeature)) generatedConfig = config.diff(List(singleAffectFeature))
