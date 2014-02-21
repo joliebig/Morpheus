@@ -19,8 +19,8 @@ class CModuleInterface(linkPath: String) extends Logging {
     }
     var blackList = new mutable.ParHashSet[String]()
 
-    val idLinkExpMap: util.IdentityHashMap[String, List[CSignature]] = new util.IdentityHashMap()
-    val idLinkPosMap: util.IdentityHashMap[String, List[Position]] = new util.IdentityHashMap()
+    val idLinkExpMap: util.HashMap[String, List[CSignature]] = new util.HashMap()
+    val idLinkPosMap: util.HashMap[String, List[Position]] = new util.HashMap()
 
     if (interface != null) {
         interface.exports.foreach(addToMaps)

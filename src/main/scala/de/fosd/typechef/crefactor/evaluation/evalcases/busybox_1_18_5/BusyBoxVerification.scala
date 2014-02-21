@@ -111,11 +111,11 @@ object PrepareASTforVerification extends BusyBoxEvaluation {
 
         var pairCounter = 0
 
-        /** pairWiseConfigs._1.foreach(pairConfig => {
+        pairWiseConfigs._1.foreach(pairConfig => {
             val enabledFeatures = pairConfig.getTrueSet.filterNot(ft => filterFeatures.contains(ft.feature))
             writeConfig(enabledFeatures, dir, pairCounter + "pairwise.config")
             pairCounter += 1
-        })  */
+        })
 
 
         val generatedConfigs = configs.listFiles().map(config => {
