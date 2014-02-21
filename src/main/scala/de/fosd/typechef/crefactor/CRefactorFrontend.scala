@@ -28,9 +28,9 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
 
     private var runOpt: FrontendOptions = new FrontendOptions()
 
-    override def main(args: Array[String]): Unit = parseOrLoadASTandProcess(args, true)
+    override def main(args: Array[String]): Unit = parseOrLoadTUnitandProcess(args, true)
 
-    def parseOrLoadASTandProcess(args: Array[String], saveArg: Boolean = false) = {
+    def parseOrLoadTUnitandProcess(args: Array[String], saveArg: Boolean = false) = {
         // Parsing MorphFrontend is adapted by the original typechef frontend
         runOpt = new FrontendOptionsWithConfigFiles()
         try {
@@ -66,8 +66,8 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
 
         val tunit = {
             if (runOpt.reuseAST && new File(opt.getSerializedTUnitFilename).exists())
-                loadSerializedAST(opt.getSerializedTUnitFilename)
-            else parseAST(fm, opt)
+                loadSerializedTUnit(opt.getSerializedTUnitFilename)
+            else parseTUnit(fm, opt)
         }
 
         if (tunit == null) {
@@ -96,8 +96,8 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
 
             val tunit = {
                 if (opt.reuseAST && new File(opt.getSerializedTUnitFilename).exists())
-                    loadSerializedAST(opt.getSerializedTUnitFilename)
-                else parseAST(fm, opt)
+                    loadSerializedTUnit(opt.getSerializedTUnitFilename)
+                else parseTUnit(fm, opt)
             }
 
             if (tunit == null) {
@@ -149,7 +149,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         if (opt.writeDebugInterface)
             ts.debugInterface(interface, new File(opt.getDebugInterfaceFilename))
     }
-    private def parseAST(fm: FeatureModel, opt: FrontendOptions): TranslationUnit = {
+    private def parseTUnit(fm: FeatureModel, opt: FrontendOptions): TranslationUnit = {
         val parsingTime = new StopClock
         val parserMain = new ParserMain(new CParser(fm))
         val ast = parserMain.parserMain(lex(opt), opt)
@@ -192,7 +192,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         fw.close()
     }
 
-    private def loadSerializedAST(filename: String): TranslationUnit = {
+    private def loadSerializedTUnit(filename: String): TranslationUnit = {
         val fr = new ObjectInputStream(new GZIPInputStream(new FileInputStream(filename))) {
             override protected def resolveClass(desc: ObjectStreamClass) = { /*println(desc);*/ super.resolveClass(desc) }
         }
@@ -201,11 +201,11 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         ast
     }
 
-    private def prettyPrint(ast: AST, options: FrontendOptions) = {
+    private def prettyPrint(tunit: TranslationUnit, options: FrontendOptions) = {
         val filePath = options.getFile ++ ".pp"
         val file = new File(filePath)
         logger.info("Pretty printing to: " + file.getCanonicalPath)
-        val prettyPrinted = PrettyPrinter.print(ast).replace("definedEx", "defined")
+        val prettyPrinted = PrettyPrinter.print(tunit).replace("definedEx", "defined")
         val writer = new FileWriter(file, false)
         writer.write(addBuildCondition(filePath, prettyPrinted))
         writer.flush()
