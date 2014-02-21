@@ -1,6 +1,6 @@
 package de.fosd.typechef.crefactor.evaluation.defaultEngines
 
-import de.fosd.typechef.crefactor.evaluation.{Evaluation, StatsCan, Refactoring}
+import de.fosd.typechef.crefactor.evaluation._
 import de.fosd.typechef.crefactor.{CRefactorFrontend, Morpheus}
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 import de.fosd.typechef.crefactor.backend.engine.CRenameIdentifier
@@ -9,7 +9,7 @@ import de.fosd.typechef.crefactor.evaluation.Stats._
 import scala.collection.mutable
 import de.fosd.typechef.error.Position
 import java.io.File
-import de.fosd.typechef.crefactor.backend.CLinking
+import de.fosd.typechef.crefactor.backend.CModuleInterface
 import de.fosd.typechef.typesystem._
 import scala.Some
 import de.fosd.typechef.conditional.Choice
@@ -42,7 +42,7 @@ trait DefaultRename extends Refactoring with Evaluation {
             StatsCan.addStat(morpheus.getFile, run, AffectedFeatures, refactoredRun._3)
             if (!refactoredRun._1) return (false, null, List(), List())
             affectedFeatures = affectedFeatures ::: refactoredRun._3
-            runMorpheus = new Morpheus(refactoredRun._2, morpheus.getFM, morpheus.getLinkInterface, morpheus.getFile)
+            runMorpheus = new Morpheus(refactoredRun._2, morpheus.getFM, morpheus.getModuleInterface, morpheus.getFile)
             writeRunResult(run, runMorpheus, refactoredRun._4)
             logger.info("Run " + run + " affected features: " + refactoredRun._3)
         }
@@ -50,23 +50,25 @@ trait DefaultRename extends Refactoring with Evaluation {
     }
 
     private def singleRefactor(morpheus: Morpheus, run: Int): (Boolean, TranslationUnit, List[FeatureExpr], List[(String, TranslationUnit)]) = {
-        val linkInterface = morpheus.getLinkInterface
+        val moduleInterface = morpheus.getModuleInterface
         val name = REFACTOR_NAME + "_" + run
         logger.info("+++ Start run: " + run)
 
         def getVariableIdToRename: (Id, Int, List[FeatureExpr]) = {
             def isValidId(id: Id): Boolean = !id.name.contains("_main") && !isSystemLinkedName(id.name) && {
-                if (linkInterface != null) !(linkInterface.isBlackListed(id.name) || renameLink.contains(id.name))
+                if (moduleInterface != null) !(moduleInterface.isBlackListed(id.name) || renameLink.contains(id.name))
                 else true
             }
 
             // TODO Fix Bug in OpenSSL for functions without body
             def isWritable(id: Id): Boolean =
-                morpheus.linkage(id).map(_.entry).forall(i =>
+                morpheus.getReferences(id).map(_.entry).forall(i =>
                     isValidId(i) && (i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) || new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
 
             val allIds = morpheus.getUseDeclMap.keys
-            val linkedIds = if (FORCE_LINKING && linkInterface != null) allIds.par.filter(id => linkInterface.isListed(Opt(parentOpt(id, morpheus.getASTEnv).feature, id.name), morpheus.getFM)) else allIds
+            val linkedIds = if (FORCE_LINKING && moduleInterface != null)
+                allIds.par.filter(id => moduleInterface.isListed(Opt(parentOpt(id, morpheus.getASTEnv).feature, id.name), morpheus.getFM))
+            else allIds
             val ids = if (linkedIds.isEmpty) allIds else linkedIds
 
             logger.info("Run " + run + ": IDs found: " + ids.size)
@@ -82,7 +84,7 @@ trait DefaultRename extends Refactoring with Evaluation {
             }
 
             val id = getRandomID
-            val associatedIds = morpheus.linkage(id)
+            val associatedIds = morpheus.getReferences(id)
             addType(associatedIds, morpheus, run)
             logger.info("Run " + run + ": Found Id: " + id)
             (id, associatedIds.length, associatedIds.map(id => morpheus.getASTEnv.featureExpr(id.entry)).distinct)
@@ -96,7 +98,7 @@ trait DefaultRename extends Refactoring with Evaluation {
         val id = toRename._1
         StatsCan.addStat(morpheus.getFile, run, RenamedId, id.name)
 
-        val refactorChain = if (linkInterface != null) getLinkedFilesToRefactor(linkInterface, id)
+        val refactorChain = if (moduleInterface != null) getLinkedFilesToRefactor(moduleInterface, id)
         else List()
 
         if (refactorChain == null) return (false, null, List(), List())
@@ -145,8 +147,8 @@ trait DefaultRename extends Refactoring with Evaluation {
                 && aId.name.equalsIgnoreCase(id.name))
 
 
-    private def getLinkedFilesToRefactor(linkInterface: CLinking, id: Id): List[(Morpheus, Position)] = {
-        val linked = linkInterface.getPositions(id.name)
+    private def getLinkedFilesToRefactor(modulInterface: CModuleInterface, id: Id): List[(Morpheus, Position)] = {
+        val linked = modulInterface.getPositions(id.name)
         val affectedFiles = linked.foldLeft(new mutable.HashMap[String, Position])((map, pos) => map += (pos.getFile -> pos))
         val refactorChain = affectedFiles.foldLeft(List[(Morpheus, Position)]())((list, entry) => {
             if (blackListFiles.exists(getFileName(entry._1).equalsIgnoreCase)) {

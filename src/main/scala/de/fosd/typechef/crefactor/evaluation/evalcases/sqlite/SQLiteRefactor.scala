@@ -9,18 +9,18 @@ import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.refactor.{Extract, Inline, Rename}
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.Stats._
-import de.fosd.typechef.crefactor.backend.CLinking
+import de.fosd.typechef.crefactor.backend.CModuleInterface
 
 
 object SQLiteRefactor extends SQLiteEvaluation with Refactor {
-    def rename(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking) =
+    def rename(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
         evaluate(tunit, fm, file, linkInterface, Rename)
-    def inline(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking) =
+    def inline(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
         evaluate(tunit, fm, file, linkInterface, Inline)
-    def extract(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking) =
+    def extract(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
         evaluate(tunit, fm, file, linkInterface, Extract)
 
-    private def evaluate(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CLinking, r: Refactoring): Unit = {
+    private def evaluate(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface, r: Refactoring): Unit = {
         println("+++ File to engine: " + getFileName(file) + " +++")
         val resultDir = getResultDir(file)
         val path = resultDir.getCanonicalPath + File.separatorChar

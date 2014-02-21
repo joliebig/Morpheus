@@ -20,7 +20,7 @@ import javax.swing.SwingUtilities
 import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.SQLiteRefactor
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.BusyBoxRefactor
 import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.OpenSSLRefactor
-import de.fosd.typechef.crefactor.backend.CLinking
+import de.fosd.typechef.crefactor.backend.CModuleInterface
 
 object CRefactorFrontend extends App with InterfaceWriter with BuildCondition with Logging with EnforceTreeHelper {
 
@@ -83,7 +83,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         if (opt.writeBuildCondition) writeBuildCondition(opt.getFile)
 
         val linkInf = {
-            if (opt.refLink) new CLinking(opt.getLinkingInterfaceFile)
+            if (opt.refLink) new CModuleInterface(opt.getLinkingInterfaceFile)
             else null
         }
 
@@ -164,7 +164,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         logger.info("Can build " + new File(opt.getFile).getName + " : " + canBuild)
     }
     private def refactorEval(opt: FrontendOptions, tunit: TranslationUnit,
-                             fm: FeatureModel, linkInf: CLinking) {
+                             fm: FeatureModel, linkInf: CModuleInterface) {
         val caseStudy: Refactor = {
             if (opt.getRefStudy.equalsIgnoreCase("busybox")) BusyBoxRefactor
             else if (opt.getRefStudy.equalsIgnoreCase("openssl")) OpenSSLRefactor
@@ -207,7 +207,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         writer.close()
     }
 
-    private def createAndShowGui(tunit: TranslationUnit, fm: FeatureModel, opts: FrontendOptions, linkInf: CLinking) = {
+    private def createAndShowGui(tunit: TranslationUnit, fm: FeatureModel, opts: FrontendOptions, linkInf: CModuleInterface) = {
         val morpheus = new Morpheus(tunit, fm, linkInf, opts.getFile)
         SwingUtilities.invokeLater(new Runnable {
             def run() {

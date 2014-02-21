@@ -15,7 +15,7 @@ trait ASTSelection extends Logging {
         /**
          * Annotated tunit elements have often the same starting line. As workaround we only identify the element by its end value.
          */
-        (isInRange(value.getPositionTo.getLine, selection.getLineStart + 1, (selection.getLineEnd - 1)))
+        isInRange(value.getPositionTo.getLine, selection.getLineStart + 1, selection.getLineEnd - 1)
         // TODO FIX IT -> Broken!
         // && ((selection.getRowEnd <= value.getPositionTo.getColumn) || (selection.getRowEnd <= value.getPositionTo.getColumn)))
     }
@@ -23,14 +23,14 @@ trait ASTSelection extends Logging {
     /**
      * Compares the position between two tunit elements.
      */
-    def comparePosition(e1: AST, e2: AST) = (e1.getPositionFrom < e2.getPositionFrom)
+    def comparePosition(e1: AST, e2: AST) = e1.getPositionFrom < e2.getPositionFrom
 
     def comparePosition(e1: Opt[AST], e2: Opt[AST]): Boolean = comparePosition(e1.entry, e2.entry)
 
     /**
      * Checks if an tunit element is in a certain range.
      */
-    def isInRange(pos: Int, start: Int, end: Int) = ((start <= pos) && (pos <= end))
+    def isInRange(pos: Int, start: Int, end: Int) = (start <= pos) && (pos <= end)
 
     /**
      * Remove all tunit elements except those from the specified file.
@@ -49,12 +49,16 @@ trait ASTSelection extends Logging {
         val startRow = selection.getRowStart
         val endRow = selection.getRowEnd
 
-        if (!((isInRange(element.getPositionFrom.getLine, startLine, endLine) && isInRange(element.getPositionTo.getLine, startLine, endLine)))) false
+        if (!(isInRange(element.getPositionFrom.getLine, startLine, endLine)
+            && isInRange(element.getPositionTo.getLine, startLine, endLine))) false
         else if (element.getPositionFrom.getLine == startLine) isInRange(element.getPositionFrom.getColumn, scala.math.min(startRow, endRow), scala.math.max(startRow, endRow))
-        else if (element.getPositionTo.getLine == endLine) isInRange(element.getPositionTo.getColumn, scala.math.min(startRow, endRow), scala.math.max(startRow, endRow))
+        else if (element.getPositionTo.getLine == endLine)
+            isInRange(element.getPositionTo.getColumn,
+                scala.math.min(startRow, endRow),
+                scala.math.max(startRow, endRow))
         else true
     }
 
-    def compareByName(id1: Id, id2: Id) = (id1.name < id2.name)
+    def compareByName(id1: Id, id2: Id) = id1.name < id2.name
 
 }
