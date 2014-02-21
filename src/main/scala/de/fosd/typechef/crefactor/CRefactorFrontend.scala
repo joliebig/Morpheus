@@ -152,10 +152,10 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
     private def parseTUnit(fm: FeatureModel, opt: FrontendOptions): TranslationUnit = {
         val parsingTime = new StopClock
         val parserMain = new ParserMain(new CParser(fm))
-        val ast = parserMain.parserMain(lex(opt), opt)
+        val tUnit = parserMain.parserMain(lex(opt), opt)
         StatsCan.addStat(opt.getFile, Parsing, parsingTime.getTime)
 
-        ast
+        tUnit
     }
     private def testBuildingAndTesting(ast: AST, fm: FeatureModel, opt: FrontendOptions) {
         val builder: Building = {
