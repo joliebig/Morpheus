@@ -5,6 +5,7 @@ import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr, SingleFeat
 import de.fosd.typechef.parser.c.AST
 import de.fosd.typechef.crefactor.evaluation.{StatsCan, Verification}
 import de.fosd.typechef.crefactor.evaluation.Stats._
+import de.fosd.typechef.crefactor.evaluation.util.StopClock
 
 object BusyBoxVerification extends BusyBoxEvaluation with Verification {
 
@@ -82,9 +83,11 @@ object PrepareASTforVerification extends BusyBoxEvaluation {
         val startConfig = List(enabledFeatures)
 
         // iterate over every affected feature and activate or deactivate it on all configs and generated configes
+        var genCounter = 0
         singleAffectedFeatures.foldLeft(startConfig)((configs, singleAffectFeature) => {
             logger.info("Generating configs for single affected feature: " + singleAffectFeature)
-            configs ::: configs.par.map(config => {
+            configs ::: configs.flatMap(config => {
+                val genTime = new StopClock
                 var generatedConfig: List[SingleFeatureExpr] = List()
                 if (config.contains(singleAffectFeature)) generatedConfig = config.diff(List(singleAffectFeature))
                 else generatedConfig = singleAffectFeature :: config
@@ -93,11 +96,16 @@ object PrepareASTforVerification extends BusyBoxEvaluation {
                     fExpr.and(singleFxpr)
                 })
 
-                if (generatedFeatureExpr.isSatisfiable(fm)) generatedConfig
+                if (generatedFeatureExpr.isSatisfiable(fm)){
+                    genCounter += 1
+                    logger.info("Generated config number: " + genCounter + " in " + genTime.getTime  + "ms.")
+                    Some(generatedConfig)
+                }
                 else {
-                    writeConfig(generatedConfig, dir, wrongCounter + ".invalidConfig")
                     wrongCounter += 1
-                    List()
+                    logger.info("Generated invalid config number: " + wrongCounter + " in " + genTime.getTime  + "ms.")
+                    writeConfig(generatedConfig, dir, wrongCounter + ".invalidConfig")
+                    None
                 }
             }).distinct.toList
         })
