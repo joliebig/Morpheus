@@ -321,6 +321,7 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
     }
 
     def writePrettyPrintedTUnit(ast: AST, filePath: String) {
+        logger.info("Pretty printing to: " + filePath)
         val file = new File(filePath)
         val prettyPrinted = PrettyPrinter.print(ast).replace("definedEx", "defined")
         val writer = new FileWriter(file, false)
