@@ -107,7 +107,7 @@ object PrepareASTforVerification extends BusyBoxEvaluation {
                     writeConfig(generatedConfig, dir, wrongCounter + ".invalidConfig")
                     None
                 }
-            }).distinct.toList
+            }).distinct
         })
     }
 
