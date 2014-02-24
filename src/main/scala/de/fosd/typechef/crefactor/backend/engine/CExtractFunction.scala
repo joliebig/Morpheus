@@ -221,8 +221,9 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                     FunctionCall(ExprList(callParameters)))))
 
             // Keep changes at the AST as local as possible
+            // TODO: Check with single compound statements.
             val tunitWithFCall = insertBefore(compStmt.innerStatements,
-                selectedOptStatements.head, functionCall)
+                    selectedOptStatements.head, functionCall)
             val ccStmtWithRemovedStmts = eqRemove(tunitWithFCall, selectedOptStatements)
             val tunitWithFDef = insertInAstBefore(morpheus.getTranslationUnit,
                 parentFunctionOpt, newFDefOpt)
@@ -336,7 +337,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             addTodeclIdMapMap(decl, id)
         }
 
-        def addParameterToGenerateFromParameter(id: Id, ft: FeatureExpr, featureExploit: Boolean = true) = {
+        def addParameterFromParameter(id: Id, ft: FeatureExpr, featureExploit: Boolean = true) = {
 
             def retrieveAllDeclParameterFeatures(paramDecl: Product, feature: FeatureExpr): FeatureExpr = {
                 // get up to DeclParameterDeclList to make sure ALL features are found
@@ -422,7 +423,25 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             val orFeatures = getOrFeatures(c)
             logger.info("OneChoiceFeature " + orFeatures)
             val featureExpr = ft.and(orFeatures)
-            addParameterToGenerateFromParameter(id, featureExpr, false)
+            addParameterFromDeclaration(id, featureExpr, false)
+        }
+
+        def addParameterFromDeclaration(id: Id, ft: FeatureExpr, featureExploit: Boolean = true) {
+            val decl = findPriorASTElem[Declaration](id, morpheus.getASTEnv)
+            decl match {
+                case Some(entry) => {
+                    val feature = if (ft.equivalentTo(FeatureExprFactory.True)) parentOpt(entry, morpheus.getASTEnv).feature else ft
+                    // TODO Possible Scala Bug?
+                    // addDeclToDeclsToGenerate(feature, entry, id)
+                    addToDeclFeatureMap(entry, feature)
+                    addTodeclDeclPointerMap(entry, generateInit(entry, id))
+                    addTodeclIdMapMap(entry, id)
+                }
+                case none =>
+                    // fallback as parameter from parameter...
+                    addParameterFromParameter(id, ft, featureExploit)
+                    logger.warn("Passed as parameter and detected as declaration but not as parameter: " + id)
+            }
         }
 
         def addOne(o: One[_], id: Id, ft: FeatureExpr = FeatureExprFactory.True) = {
@@ -443,23 +462,10 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                             " would be invisible after extraction!")
                     case One((CType(_, _, _, _), KParameter, _, _)) =>
                         // Passed as parameter in parent function
-                        addParameterToGenerateFromParameter(id, ft)
+                        addParameterFromParameter(id, ft)
                     case _ =>
                         // Declared in parent function or globally defined
-                        val decl = findPriorASTElem[Declaration](id, morpheus.getASTEnv)
-                        decl match {
-                            case Some(entry) => {
-                                val feature = if (ft.equivalentTo(FeatureExprFactory.True)) parentOpt(entry, morpheus.getASTEnv).feature else ft
-                                // TODO Possible Scala Bug?
-                                // addDeclToDeclsToGenerate(feature, entry, id)
-                                addToDeclFeatureMap(entry, feature)
-                                addTodeclDeclPointerMap(entry, generateInit(entry, id))
-                                addTodeclIdMapMap(entry, id)
-                            }
-                            case none =>
-                                addParameterToGenerateFromParameter(id, ft)
-                                logger.warn("Passed as parameter and detected as declaration but not as parameter: " + id)
-                        }
+                        addParameterFromDeclaration(id, ft)
                     }
             }
         }
