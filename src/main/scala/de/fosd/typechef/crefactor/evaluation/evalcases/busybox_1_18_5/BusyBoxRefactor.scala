@@ -34,6 +34,7 @@ object BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
                 val result = r.refactor(morpheus)
                 if (result._1) {
                     write(result._2, morpheus.getFile)
+                    result._4.par.foreach(linked => writePrettyPrintedTUnit(linked._2, linked._1))
                     logger.info("Features: " + result._3)
                     PrepareASTforVerification.makeConfigs(result._2, morpheus.getFM, morpheus.getFile, result._3)
                     StatsCan.addStat(file, AffectedFeatures, result._3)
