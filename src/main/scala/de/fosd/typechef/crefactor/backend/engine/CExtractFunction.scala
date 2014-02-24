@@ -118,7 +118,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         }) false
         else if (!isPartOfSameCompStmt(selection, morpheus)) false
         else if (!filterAllASTElems[ReturnStatement](selection).isEmpty) false
-        else if (selection.par.forall(isValidSelection(_, selection, morpheus))) false
+        else if (!selection.par.forall(isValidSelection(_, selection, morpheus))) false
         else if (hasVarsToDefinedExternal(selection, morpheus)) false
         else if (hasInvisibleEnumerations(selection, morpheus)) false
         // else if (!isConditionalComplete(selection, getParentFunction(selection, morpheus), morpheus)) false // Not Relevant?
