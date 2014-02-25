@@ -9,11 +9,12 @@ import de.fosd.typechef.conditional._
 import scala._
 import scala.Some
 import de.fosd.typechef.crefactor.frontend.util.Selection
+import de.fosd.typechef.crewrite.IntraCFG
 
 /**
  * Implements the technique of inlining a function
  */
-object CInlineFunction extends ASTSelection with CRefactor {
+object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
 
     def getSelectedElements(morpheus: Morpheus, selection: Selection): List[AST] = {
         val functions = (filterASTElems[FunctionDef](morpheus.getTranslationUnit) ::: filterASTElems[FunctionCall](morpheus.getTranslationUnit)
@@ -150,6 +151,33 @@ object CInlineFunction extends ASTSelection with CRefactor {
      */
     private def hasIncompatibleCFG(func: FunctionDef, morpheus: Morpheus): Boolean = {
 
+        // this function determines for a given AST node the corresponding statement
+        // in the compound statement that is directly attached to the function definition
+        def getStatementForAstNode(i: AST): Option[Statement] = {
+            findPriorASTElem[FunctionDef](i, morpheus.getASTEnv) match {
+                case None => None
+                case Some(f) => {
+                    f.stmt.innerStatements.foreach {
+                        cStmt => if (isPartOf(i, cStmt)) return Some(cStmt.entry)
+                    }
+                    None
+                }
+            }
+        }
+
+        val fPreds = pred(func, morpheus.getASTEnv).filterNot(x => x.feature isSatisfiable morpheus.getFM)
+        val fReturnStmts = fPreds.map(_.entry).filter { case _: ReturnStatement => true; case _ => false }
+
+        if (fReturnStmts.size > 0) {
+            val fStmt = getStatementForAstNode(fReturnStmts.head)
+
+            fReturnStmts.tail.forall(isPartOf(_, fStmt))
+        } else {
+            false
+        }
+
+
+        /**
         // TODO Optimize Runtime
         def codeAfterStatement(feature: FeatureExpr, opt: Opt[_]): Boolean = {
             val next = nextOpt(opt, morpheus.getASTEnv)
@@ -184,6 +212,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
                     List(outerStatement)).exists(statement => codeAfterStatement(parent.feature, statement))
             case _ => false
         })
+        */
     }
 
     private def isRecursive(funcDef: FunctionDef): Boolean = {
