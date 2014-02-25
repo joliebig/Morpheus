@@ -584,6 +584,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         }
     }
 
+    // TODO Rewrite Method without old usedecl and decluse usage
     private def externalOccurrences(ids: List[Id], map: IdentityIdHashMap, morpheus: Morpheus) =
         ids.par.flatMap(id => {
             if (map.containsKey(id) && !isPartOfFuncCall(id, morpheus)) {
