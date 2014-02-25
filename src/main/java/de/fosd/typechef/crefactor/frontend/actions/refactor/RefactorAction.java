@@ -100,7 +100,7 @@ public class RefactorAction {
                     final ThreadMXBean tb = ManagementFactory.getThreadMXBean();
                     final long startTime = tb.getCurrentThreadCpuTime();
                     final Either<String, TranslationUnit> inlineResult = CInlineFunction.inline(morpheus, id,
-                            dialog.isRename(), false, dialog.isOnce());
+                            dialog.isRename(), dialog.isOnce());
                     logger.info("Duration for transforming: "
                             + ((tb.getCurrentThreadCpuTime() - startTime) / 1000000) + "ms");
 
