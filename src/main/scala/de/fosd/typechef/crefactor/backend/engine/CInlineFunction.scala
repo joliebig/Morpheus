@@ -87,11 +87,10 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
         morpheus.getReferences(callId).map(_.entry).foreach(id => {
             val parent = parentOpt(id, morpheus.getASTEnv)
             parent.entry match {
+                case n: NestedFunctionDef => // not supported
                 case w: WhileStatement => callExpr ::= parent.asInstanceOf[Opt[AST]]
                 case p: Statement => callStmt ::= parent.asInstanceOf[Opt[Statement]]
                 case f: FunctionDef => defs ::= parent.asInstanceOf[Opt[FunctionDef]]
-                // we do not support inlining of nested functions
-                case n: NestedFunctionDef => ;
                 case iI: InitDeclaratorI =>
                     iI.i match {
                         case None => decl ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[AST]]
