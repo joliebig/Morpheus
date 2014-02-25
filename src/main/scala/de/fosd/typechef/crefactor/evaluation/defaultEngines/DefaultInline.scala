@@ -66,7 +66,7 @@ trait DefaultInline extends Refactoring with Evaluation {
         } catch {
             case e: Exception => {
                 logger.error("Inlining failed!")
-                e.printStackTrace
+                e.printStackTrace()
                 return (false, null, List(), List())
             }
         }
