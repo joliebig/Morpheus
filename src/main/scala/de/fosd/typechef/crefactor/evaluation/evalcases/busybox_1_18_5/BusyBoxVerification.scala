@@ -85,8 +85,11 @@ object PrepareASTforVerification extends BusyBoxEvaluation {
         // iterate over every affected feature and activate or deactivate it on all configs and generated configes
         var genCounter = 0
         singleAffectedFeatures.foldLeft(startConfig)((configs, singleAffectFeature) => {
+            // TODO current debug break for big configs in extract - will be replaced soon by a new approach - so just looking away from the following code
+            if (genCounter > 5) return configs
             logger.info("Generating configs for single affected feature: " + singleAffectFeature)
             configs ::: configs.flatMap(config => {
+                if (genCounter > 5) return None
                 val genTime = new StopClock
                 var generatedConfig: List[SingleFeatureExpr] = List()
                 if (config.contains(singleAffectFeature)) generatedConfig = config.diff(List(singleAffectFeature))

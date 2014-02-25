@@ -33,6 +33,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
     def parseOrLoadTUnitandProcess(args: Array[String], saveArg: Boolean = false) = {
         // Parsing MorphFrontend is adapted by the original typechef frontend
         runOpt = new FrontendOptionsWithConfigFiles()
+
         try {
             runOpt.parseOptions(args)
         } catch {
