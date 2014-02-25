@@ -19,13 +19,13 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
     def this(tunit: TranslationUnit, fm: FeatureModel, file: String) = this(tunit, fm, null, file)
 
     private var tunitCached: TranslationUnit = tunit
-    private var astEnvCached: ASTEnv = CASTEnv.createASTEnv(tunit)
-    private val ts = new CTypeSystemFrontend(tunit, fm) with CTypeCache with CDeclUse
+    private var astEnvCached: ASTEnv = CASTEnv.createASTEnv(getTranslationUnit)
+    private var ts = new CTypeSystemFrontend(getTranslationUnit, getFM) with CTypeCache with CDeclUse
 
     private val connectedIdsCache: java.util.IdentityHashMap[Id, List[Opt[Id]]] = new java.util.IdentityHashMap()
 
     private val typeCheck = new StopClock
-    ts.typecheckTranslationUnit(tunit)
+    getTypeSystem.typecheckTranslationUnit(getTranslationUnit)
     private val typeCheckTime = typeCheck.getTime
 
     if (file != null)
@@ -77,14 +77,12 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
         connectedIdsCache.get(id)
     }
 
-    //private var ts = new CTypeSystemFrontend(tunit.asInstanceOf[TranslationUnit], fm)
-    //ts.checkAST
     def update(tunit: TranslationUnit) {
+        connectedIdsCache.clear()
         tunitCached = tunit
-        astEnvCached = CASTEnv.createASTEnv(tunitCached)
-        //ts = new CTypeSystemFrontend(astCached.asInstanceOf[TranslationUnit], fm)
-        //ts.checkAST
-        ts.typecheckTranslationUnit(tunitCached)
+        astEnvCached = CASTEnv.createASTEnv(getTranslationUnit)
+        ts = new CTypeSystemFrontend(getTranslationUnit, getFM) with CTypeCache with CDeclUse
+        getTypeSystem.typecheckTranslationUnit(getTranslationUnit)
         setChanged()
         notifyObservers()
     }
