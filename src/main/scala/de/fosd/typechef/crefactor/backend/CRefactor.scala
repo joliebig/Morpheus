@@ -13,7 +13,11 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
 
     private val VALID_NAME_PATTERN = "[a-zA-Z_][a-zA-Z0-9_]*"
 
-    private val LANGUAGE_KEYWORDS = List("auto", "break", "case", "char", "const", "continue", "default", "do", "double", "else", "enum", "extern", "float", "for", "goto", "if", "inline", "int", "long", "register", "restrict", "return", "short", "signed", "sizeof", "static", "struct", "switch", "typedef", "union", "unsigned", "void", "volatile", "while", "_Alignas", "_Alignof", "_Atomic", "_Bool", "_Complex", "_Generic", "_Imaginary", "_Noreturn", "_Static_assert", "_Thread_local")
+    private val LANGUAGE_KEYWORDS = List("auto", "break", "case", "char", "const", "continue", "default",
+        "do", "double", "else", "enum", "extern", "float", "for", "goto", "if", "inline", "int", "long",
+        "register", "restrict", "return", "short", "signed", "sizeof", "static", "struct", "switch",
+        "typedef", "union", "unsigned", "void", "volatile", "while", "_Alignas", "_Alignof", "_Atomic",
+        "_Bool", "_Complex", "_Generic", "_Imaginary", "_Noreturn", "_Static_assert", "_Thread_local")
 
     def isAvailable(morpheus: Morpheus, selection: Selection): Boolean
 
@@ -24,8 +28,10 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
      * @return <code>true</code> if valid, <code>false</code> if not
      */
     def isValidId(name: String): Boolean =
-        (name.matches(VALID_NAME_PATTERN) && !name.startsWith("__")
-            && !isReservedLanguageKeyword(name) && !isSystemLinkedName(name))
+        (name.matches(VALID_NAME_PATTERN)
+            && !name.startsWith("__")
+            && !isReservedLanguageKeyword(name)
+            && !isSystemLinkedName(name))
 
     def isSystemLinkedName(name: String) = SystemLinker.allLibs.par.contains(name)
 
@@ -67,7 +73,8 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
     def buildVariableCompoundStatement(stmts: List[(CompoundStatementExpr, FeatureExpr)]): CompoundStatementExpr = {
         // move several compoundStatement into one and apply their feature.
         val innerstmts = stmts.foldLeft(List[Opt[Statement]]())((innerstmts, stmtEntry) => stmtEntry._1 match {
-            case CompoundStatementExpr(CompoundStatement(inner)) => innerstmts ::: inner.map(stmt => stmt.copy(feature = stmt.feature.and(stmtEntry._2)))
+            case CompoundStatementExpr(CompoundStatement(inner)) =>
+                innerstmts ::: inner.map(stmt => stmt.copy(feature = stmt.feature.and(stmtEntry._2)))
             case _ => innerstmts
         })
         CompoundStatementExpr(CompoundStatement(innerstmts))
@@ -212,15 +219,18 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         })
     }
 
-    def insertBefore(l: List[Opt[Statement]], mark: Opt[Statement], insert: Opt[Statement]) = l.foldLeft(List[Opt[Statement]]())((nl, s) => {
-        if (mark.eq(s)) insert :: s :: nl
-        else s :: nl
-    }).reverse
+    def insertBefore(l: List[Opt[Statement]], mark: Opt[Statement], insert: Opt[Statement]) =
+        l.foldLeft(List[Opt[Statement]]())((nl, s) => {
+            if (mark.eq(s)) insert :: s :: nl
+            else s :: nl
+        }).reverse
 
-    def insertRefactoredAST(morpheus: Morpheus, callCompStmt: CompoundStatement, workingCallCompStmt: CompoundStatement): TranslationUnit = {
+    def insertRefactoredAST(morpheus: Morpheus, callCompStmt: CompoundStatement,
+                            workingCallCompStmt: CompoundStatement): TranslationUnit = {
         val parent = parentOpt(callCompStmt, morpheus.getASTEnv)
         parent.entry match {
-            case f: FunctionDef => replaceInASTOnceTD(morpheus.getTranslationUnit, parent, parent.copy(entry = f.copy(stmt = workingCallCompStmt)))
+            case f: FunctionDef => replaceInASTOnceTD(morpheus.getTranslationUnit, parent,
+                parent.copy(entry = f.copy(stmt = workingCallCompStmt)))
             case c: CompoundStatement => replaceInAST(morpheus.getTranslationUnit, c,
                 c.copy(innerStatements = workingCallCompStmt.innerStatements))
                 .asInstanceOf[TranslationUnit]
