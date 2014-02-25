@@ -90,8 +90,8 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                 case w: WhileStatement => callExpr ::= parent.asInstanceOf[Opt[AST]]
                 case p: Statement => callStmt ::= parent.asInstanceOf[Opt[Statement]]
                 case f: FunctionDef => defs ::= parent.asInstanceOf[Opt[FunctionDef]]
-                // TODO Nested FunctionDefs => Can this happen?
-                // case n: NestedFunctionDef => defs = n :: defs
+                // we do not support inlining of nested functions
+                case n: NestedFunctionDef => ;
                 case iI: InitDeclaratorI =>
                     iI.i match {
                         case None => decl ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[AST]]
@@ -115,7 +115,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
             case f: FunctionDef => f.declarator.getId
             case n: NestedFunctionDef => n.declarator.getId
             case c: FunctionCall => getFunctionIdentifier(astEnv.parent(c).asInstanceOf[AST], astEnv)
-            case PostfixExpr(i@Id(_), _) => i
+            case PostfixExpr(i: Id, _) => i
             case _ =>
                 assert(false, function)
                 null
@@ -209,15 +209,6 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
             case _ => false
         })
     }
-
-    /*
-    private def isRecursive(funcDef: NestedFunctionDef): Boolean = {
-        filterASTElems[PostfixExpr](funcDef).exists({
-            case PostfixExpr(Id(name), FunctionCall(_)) => name.equals(funcDef.getName)
-            case _ => false
-        })
-    }
-    */
 
     private def inlineFuncCallExpr(ast: AST, morpheus: Morpheus, call: Opt[AST],
                                    funcDefs: List[Opt[_]], rename: Boolean): TranslationUnit = {

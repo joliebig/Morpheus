@@ -13,27 +13,29 @@ trait ASTSelection extends Logging {
 
     def isPartOfSelection(value: AST, selection: Selection): Boolean = {
         /**
-         * Annotated tunit elements have often the same starting line. As workaround we only identify the element by its end value.
+         * Annotated tunit elements have often the same starting line. As workaround we only identify
+         * the element by its end value.
          */
         isInRange(value.getPositionTo.getLine, selection.getLineStart + 1, selection.getLineEnd - 1)
         // TODO FIX IT -> Broken!
-        // && ((selection.getRowEnd <= value.getPositionTo.getColumn) || (selection.getRowEnd <= value.getPositionTo.getColumn)))
+        // && ((selection.getRowEnd <= value.getPositionTo.getColumn)
+        // || (selection.getRowEnd <= value.getPositionTo.getColumn)))
     }
 
     /**
-     * Compares the position between two tunit elements.
+     * Compares the position of two AST nodes.
      */
     def comparePosition(e1: AST, e2: AST) = e1.getPositionFrom < e2.getPositionFrom
 
     def comparePosition(e1: Opt[AST], e2: Opt[AST]): Boolean = comparePosition(e1.entry, e2.entry)
 
     /**
-     * Checks if an tunit element is in a certain range.
+     * Checks if an AST node (here pos) belongs to a given range [start, end]
      */
     def isInRange(pos: Int, start: Int, end: Int) = (start <= pos) && (pos <= end)
 
     /**
-     * Remove all tunit elements except those from the specified file.
+     * Remove all AST elements except those that belong to the given file.
      */
     def filterASTElementsForFile[T <: AST](selection: List[T], file: String): List[T] = {
         // offset 5 because file path of callId contains the string "file "
@@ -41,7 +43,8 @@ trait ASTSelection extends Logging {
         selection.filter(p => p.getFile.get.regionMatches(true, offset, file, 0, file.length())).toList
     }
 
-    def isPartOfFile[T <: AST](element: T, file: String) = element.getFile.get.regionMatches(true, 5, file, 0, file.length())
+    def isPartOfFile[T <: AST](element: T, file: String) =
+        element.getFile.get.regionMatches(true, 5, file, 0, file.length())
 
     def isElementOfSelectionRange(element: AST, selection: Selection): Boolean = {
         val startLine = selection.getLineStart
