@@ -112,11 +112,13 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
     // decl-use information in typesystem are determined without the feature model
     // solely on the basis of annotations in the source code
     private def getEnforcedFmEntriesFromMap(key: Id, map: IdentityIdHashMap): List[Id] = {
-        if (!map.containsKey(key)) List()
-        else map.get(key).flatMap(entry => {
-            if (getASTEnv.featureExpr(entry) and getASTEnv.featureExpr(key) isSatisfiable getFM) Some(entry)
-            else None
-        })
+        if (!map.containsKey(key))
+            List()
+        else
+            map.get(key).flatMap(entry => {
+                if (getASTEnv.featureExpr(entry) and getASTEnv.featureExpr(key) isSatisfiable getFM) Some(entry)
+                else None
+            })
     }
 
 }
