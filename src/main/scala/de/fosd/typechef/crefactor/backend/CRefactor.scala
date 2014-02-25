@@ -235,7 +235,7 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
                 c.copy(innerStatements = workingCallCompStmt.innerStatements))
                 .asInstanceOf[TranslationUnit]
             case x =>
-                assert(false, "Something bad happend - i am going to cry, i missed: " + x)
+                assert(false, "Something bad happened; missing: " + x)
                 morpheus.getTranslationUnit
         }
     }
