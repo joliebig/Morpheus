@@ -11,7 +11,6 @@ import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.StatsCan
 import de.fosd.typechef.conditional.Opt
 import de.fosd.typechef.crefactor.backend.CModuleInterface
-import java.util
 
 class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModuleInterface, file: String)
     extends Observable with Logging {
@@ -36,7 +35,7 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
 
     def getUses(id: Id): List[Id] = getEnforcedFmEntriesFromMap(id, getTypeSystem.getDeclUseMap)
 
-    def getAllUses : List[Id] = getUseDeclMap.keys
+    def getAllUses: List[Id] = getUseDeclMap.keys
 
     def isInDeclUseMap(id: Id) = getDeclUseMap.containsKey(id)
 
@@ -58,18 +57,17 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
 
         }
 
-        def visitIds(curId: Id) = {
-            addToConnectedIdMap(curId)
-            getUses(curId).foreach(use => {
-                addToConnectedIdMap(use)
-                getDecls(use).foreach(addOccurrence)
-            })
+        // find all uses of an callId
+        def addOccurrence(curId: Id) {
+            if (!visited.contains(curId)) {
+                addToConnectedIdMap(curId)
+                getUses(curId).foreach(use => {
+                    addToConnectedIdMap(use)
+                    getDecls(use).foreach(addOccurrence)
+                })
+            }
         }
 
-        // find all uses of an callId
-        def addOccurrence(curId: Id) =
-            if (!visited.contains(curId))
-                visitIds(curId)
 
         if (isInUseDeclMap(id))
             getDecls(id).foreach(addOccurrence)
@@ -91,7 +89,7 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
         notifyObservers()
     }
 
-    def getEnv(ast: AST) = ts.lookupEnv(ast)
+    def getEnv(ast: AST) = getTypeSystem.lookupEnv(ast)
 
     def getTranslationUnit = tunitCached
 
