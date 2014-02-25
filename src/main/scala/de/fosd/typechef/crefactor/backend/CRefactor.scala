@@ -1,7 +1,7 @@
 package de.fosd.typechef.crefactor.backend
 
 import de.fosd.typechef.typesystem.{CType, CEnvCache}
-import de.fosd.typechef.crefactor.Morpheus
+import de.fosd.typechef.crefactor.{Logging, Morpheus}
 import org.kiama.rewriting.Rewriter._
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.crefactor.frontend.util.Selection
@@ -9,7 +9,7 @@ import de.fosd.typechef.conditional._
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 import de.fosd.typechef.typesystem.linker.SystemLinker
 
-trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation with EnforceTreeHelper {
+trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation with EnforceTreeHelper with Logging {
 
     private val VALID_NAME_PATTERN = "[a-zA-Z_][a-zA-Z0-9_]*"
 
@@ -124,7 +124,10 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
     def replaceCompoundStmt[T <: Product](t: T, cStmt: CompoundStatement,
                                           newInnerStmt: List[Opt[Statement]]): T = {
         val r = manybu(rule {
-            case cc: CompoundStatement => if (isPartOf(cStmt, cc)) cc.copy(innerStatements = newInnerStmt) else cc
+            case cc: CompoundStatement => if (isPartOf(cStmt, cc)) {
+                logger.info("hit")
+                cc.copy(innerStatements = newInnerStmt)
+            } else cc
             case x => x
         })
         r(t).get.asInstanceOf[T]
@@ -212,10 +215,15 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         })
     }
 
-    def insertBefore(l: List[Opt[Statement]], mark: Opt[Statement], insert: Opt[Statement]) = l.foldLeft(List[Opt[Statement]]())((nl, s) => {
-        if (mark.eq(s)) insert :: s :: nl
-        else s :: nl
-    }).reverse
+    def insertBefore(l: List[Opt[Statement]], mark: Opt[Statement], insert: Opt[Statement]) = {
+        l.foldLeft(List[Opt[Statement]]())((nl, s) => {
+            if (mark.eq(s)) {
+                logger.info("inserting before.")
+                insert :: s :: nl
+            }
+            else s :: nl
+        }).reverse
+    }
 
     def insertRefactoredAST(morpheus: Morpheus, callCompStmt: CompoundStatement, workingCallCompStmt: CompoundStatement): TranslationUnit = {
         val parent = parentOpt(callCompStmt, morpheus.getASTEnv)

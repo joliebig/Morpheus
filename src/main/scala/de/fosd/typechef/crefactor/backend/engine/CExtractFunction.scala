@@ -455,7 +455,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                     case One((_, KEnumVar, _, _)) =>
                         // direct enum use -> check for visibility only as enums are constant
                         // if not visible afterwards the refactoring can not be made.
-                        if (morpheus.getUseDeclMap.get(id).exists(t => findPriorASTElem[CompoundStatement](t, morpheus.getASTEnv) match {
+                        if (morpheus.getDecls(id).exists(t => findPriorASTElem[CompoundStatement](t, morpheus.getASTEnv) match {
                             case None => false
                             case _ => true
                         })) throw new RefactorException("Type Declaration for " + id.name +
@@ -502,13 +502,13 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             decl.declSpecs.foreach(spec => {
                 spec.entry match {
                     case t@TypeDefTypeSpecifier(i@Id(_)) =>
-                        if (morpheus.getUseDeclMap.get(i).exists(t => findPriorASTElem[CompoundStatement](t, morpheus.getASTEnv) match {
+                        if (morpheus.getDecls(i).exists(t => findPriorASTElem[CompoundStatement](t, morpheus.getASTEnv) match {
                             case None => false
                             case _ => true
                         })) throw new RefactorException("Type Declaration for " + i +
                             " would be invisible after extraction!")
                     case s@StructOrUnionSpecifier(_, Some(i@Id(_)), _, _, _) =>
-                        if (morpheus.getUseDeclMap.get(i).exists(t => findPriorASTElem[CompoundStatement](t, morpheus.getASTEnv) match {
+                        if (morpheus.getDecls(i).exists(t => findPriorASTElem[CompoundStatement](t, morpheus.getASTEnv) match {
                             case None => false
                             case _ => true
                         })) throw new RefactorException("Type Declaration for " + i +
@@ -562,7 +562,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                                      parameters: List[Id], morpheus: Morpheus): CompoundStatement = {
         def isPartOfParameter(id: Id, params: List[Id], morpheus: Morpheus): Boolean = {
             if (!morpheus.getUseDeclMap.containsKey(id)) false
-            morpheus.getUseDeclMap.get(id).exists(decl => params.exists(param => param.eq(decl)))
+            morpheus.getDecls(id).exists(decl => params.exists(param => param.eq(decl)))
         }
 
         val variables = externalRef.par.flatMap(id => isPartOfParameter(id, parameters, morpheus) match {
