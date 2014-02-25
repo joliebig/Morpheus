@@ -77,14 +77,6 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
         Right(tunitRefactored)
     }
 
-
-    private def removeFuncDeclDefsFromAST(tunit: TranslationUnit, decl: List[Opt[AST]],
-                                          defs: List[Opt[FunctionDef]]): TranslationUnit = {
-        val astWoDecl = decl.foldLeft(tunit)((curTunit, x) => removeFromAST(curTunit, x))
-        val astWoDeclDef = defs.foldLeft(astWoDecl)((curTunit, x) => removeFromAST(curTunit, x))
-        astWoDeclDef
-    }
-
     def divideCallDeclDef(callId: Id, morpheus: Morpheus): (List[Opt[Statement]], List[Opt[AST]],
         List[Opt[FunctionDef]], List[Opt[AST]]) = {
         var callStmt = List[Opt[Statement]]()
