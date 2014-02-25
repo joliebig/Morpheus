@@ -32,6 +32,7 @@ trait DefaultRename extends Refactoring with Evaluation {
 
     private val linkedRenamedFiles = mutable.HashMap[String, Morpheus]()
 
+    // refactor attempts to make REFACTOR_AMOUNT renamings in a file
     def refactor(morpheus: Morpheus): (Boolean, TranslationUnit, List[FeatureExpr], List[(String, TranslationUnit)]) = {
 
         var runMorpheus = morpheus
@@ -49,6 +50,8 @@ trait DefaultRename extends Refactoring with Evaluation {
         (true, runMorpheus.getTranslationUnit, affectedFeatures.distinct, linkedRenamedFiles.toList.map(entry => (entry._1, entry._2.getTranslationUnit)))
     }
 
+    // this function applies a single renaming, after checking different predicates
+    // such as isValidId, ...
     private def singleRefactor(morpheus: Morpheus, run: Int): (Boolean, TranslationUnit, List[FeatureExpr], List[(String, TranslationUnit)]) = {
         val moduleInterface = morpheus.getModuleInterface
         val name = REFACTOR_NAME + "_" + run
@@ -127,15 +130,15 @@ trait DefaultRename extends Refactoring with Evaluation {
                     ref match {
                         case Right(refAST) => (x._1.getFile, refAST)
                         case Left(s) =>
-                            logger.error("Run " + run + ": Refactoring faild at file " + x._1.getFile + " with " + s + ".")
+                            logger.error("Run " + run + ": Refactoring failed at file " + x._1.getFile + " with " + s + ".")
                             return (false, null, List(), List())
                     }
                 })
-                logger.info("Run " + run + ": Refactoring at file " + morpheus.getFile + " successfull.")
+                logger.info("Run " + run + ": Refactoring at file " + morpheus.getFile + " successful.")
                 (true, ast, features, linkedRefactored)
             }
             case Left(s) =>
-                logger.error("Run " + run + ": Refactoring faild at file " + morpheus.getFile + " with " + s + ".")
+                logger.error("Run " + run + ": Refactoring failed at file " + morpheus.getFile + " with " + s + ".")
                 (false, null, List(), List())
         }
 
@@ -205,7 +208,7 @@ trait DefaultRename extends Refactoring with Evaluation {
                     case o@One((CType(CFunction(_, _), _, _, _), _, _, _)) => foundTypes + "FunctionName"
                     case o@One((_, KEnumVar, _, _)) => foundTypes + "Enum"
                     case o@One((CType(_, _, _, _), _, _, _)) => foundTypes + "Variable"
-                    case o => logger.warn("Unknown Type " + id + " " + o)
+                    case _ => logger.warn("Unknown Type " + id + " " + o)
                 }
             }
         }
