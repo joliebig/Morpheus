@@ -561,7 +561,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     private def genCompoundStatement(statements: List[Opt[Statement]], externalRef: List[Id],
                                      parameters: List[Id], morpheus: Morpheus): CompoundStatement = {
         def isPartOfParameter(id: Id, params: List[Id], morpheus: Morpheus): Boolean = {
-            if (!morpheus.getUseDeclMap.containsKey(id)) false
+            if (!morpheus.isInUseDeclMap(id)) false
             morpheus.getDecls(id).exists(decl => params.exists(param => param.eq(decl)))
         }
 
