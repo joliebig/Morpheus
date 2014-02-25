@@ -89,26 +89,28 @@ object PrepareASTforVerification extends BusyBoxEvaluation {
             if (genCounter > 5) return configs
             logger.info("Generating configs for single affected feature: " + singleAffectFeature)
             configs ::: configs.flatMap(config => {
-                if (genCounter > 5) return None
-                val genTime = new StopClock
-                var generatedConfig: List[SingleFeatureExpr] = List()
-                if (config.contains(singleAffectFeature)) generatedConfig = config.diff(List(singleAffectFeature))
-                else generatedConfig = singleAffectFeature :: config
-
-                val generatedFeatureExpr = generatedConfig.foldLeft(FeatureExprFactory.True)((fExpr, singleFxpr) => {
-                    fExpr.and(singleFxpr)
-                })
-
-                if (generatedFeatureExpr.isSatisfiable(fm)){
-                    genCounter += 1
-                    logger.info("Generated config number: " + genCounter + " in " + genTime.getTime  + "ms.")
-                    Some(generatedConfig)
-                }
+                if (genCounter > 5) None
                 else {
-                    wrongCounter += 1
-                    logger.info("Generated invalid config number: " + wrongCounter + " in " + genTime.getTime  + "ms.")
-                    writeConfig(generatedConfig, dir, wrongCounter + ".invalidConfig")
-                    None
+                    val genTime = new StopClock
+                    var generatedConfig: List[SingleFeatureExpr] = List()
+                    if (config.contains(singleAffectFeature)) generatedConfig = config.diff(List(singleAffectFeature))
+                    else generatedConfig = singleAffectFeature :: config
+
+                    val generatedFeatureExpr = generatedConfig.foldLeft(FeatureExprFactory.True)((fExpr, singleFxpr) => {
+                        fExpr.and(singleFxpr)
+                    })
+
+                    if (generatedFeatureExpr.isSatisfiable(fm)) {
+                        genCounter += 1
+                        logger.info("Generated config number: " + genCounter + " in " + genTime.getTime + "ms.")
+                        Some(generatedConfig)
+                    }
+                    else {
+                        wrongCounter += 1
+                        logger.info("Generated invalid config number: " + wrongCounter + " in " + genTime.getTime + "ms.")
+                        writeConfig(generatedConfig, dir, wrongCounter + ".invalidConfig")
+                        None
+                    }
                 }
             }).distinct
         })
