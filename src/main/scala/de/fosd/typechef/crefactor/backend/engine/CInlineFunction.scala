@@ -9,11 +9,12 @@ import de.fosd.typechef.conditional._
 import scala._
 import scala.Some
 import de.fosd.typechef.crefactor.frontend.util.Selection
+import de.fosd.typechef.crewrite.IntraCFG
 
 /**
  * Implements the technique of inlining a function
  */
-object CInlineFunction extends ASTSelection with CRefactor {
+object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
 
     def getSelectedElements(morpheus: Morpheus, selection: Selection): List[AST] = {
         val functions = (filterASTElems[FunctionDef](morpheus.getTranslationUnit) ::: filterASTElems[FunctionCall](morpheus.getTranslationUnit)
@@ -58,9 +59,9 @@ object CInlineFunction extends ASTSelection with CRefactor {
      * @param rename indicates if variables should be renamed
      * @return the refactored tunit
      */
-    def inline(morpheus: Morpheus, id: Id, rename: Boolean, evalMode: Boolean, once: Boolean = false):
+    def inline(morpheus: Morpheus, id: Id, rename: Boolean, once: Boolean = false):
     Either[String, TranslationUnit] = {
-        val (calls, decl, fDefs, callExpr) = divideCallDeclDef(id, morpheus)
+        val (calls, _, fDefs, callExpr) = divideCallDeclDef(id, morpheus)
 
         if (fDefs.isEmpty)
             Left("Inlining of external function definitions is not supported.")
@@ -73,19 +74,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
                 (workingAST, expr) => inlineFuncCallExpr(workingAST,
                     new Morpheus(workingAST, morpheus.getFM), expr, fDefs, rename))
 
-        // TODO: can be removed. Should be part of a different refactoring. Remove unnecessary symbols.
-        // Remove inlined function stmt's declaration and definitions
-        if (!evalMode)
-            tunitRefactored = removeFuncDeclDefsFromAST(tunitRefactored, decl, fDefs)
         Right(tunitRefactored)
-    }
-
-
-    private def removeFuncDeclDefsFromAST(tunit: TranslationUnit, decl: List[Opt[AST]],
-                                          defs: List[Opt[FunctionDef]]): TranslationUnit = {
-        val astWoDecl = decl.foldLeft(tunit)((curTunit, x) => removeFromAST(curTunit, x))
-        val astWoDeclDef = defs.foldLeft(astWoDecl)((curTunit, x) => removeFromAST(curTunit, x))
-        astWoDeclDef
     }
 
     def divideCallDeclDef(callId: Id, morpheus: Morpheus): (List[Opt[Statement]], List[Opt[AST]],
@@ -98,11 +87,10 @@ object CInlineFunction extends ASTSelection with CRefactor {
         morpheus.getReferences(callId).map(_.entry).foreach(id => {
             val parent = parentOpt(id, morpheus.getASTEnv)
             parent.entry match {
+                case n: NestedFunctionDef => // not supported
                 case w: WhileStatement => callExpr ::= parent.asInstanceOf[Opt[AST]]
                 case p: Statement => callStmt ::= parent.asInstanceOf[Opt[Statement]]
                 case f: FunctionDef => defs ::= parent.asInstanceOf[Opt[FunctionDef]]
-                // TODO Nested FunctionDefs => Can this happen?
-                // case n: NestedFunctionDef => defs = n :: defs
                 case iI: InitDeclaratorI =>
                     iI.i match {
                         case None => decl ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[AST]]
@@ -126,7 +114,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
             case f: FunctionDef => f.declarator.getId
             case n: NestedFunctionDef => n.declarator.getId
             case c: FunctionCall => getFunctionIdentifier(astEnv.parent(c).asInstanceOf[AST], astEnv)
-            case PostfixExpr(i@Id(_), _) => i
+            case PostfixExpr(i: Id, _) => i
             case _ =>
                 assert(false, function)
                 null
@@ -150,6 +138,33 @@ object CInlineFunction extends ASTSelection with CRefactor {
      */
     private def hasIncompatibleCFG(func: FunctionDef, morpheus: Morpheus): Boolean = {
 
+        // this function determines for a given AST node the corresponding statement
+        // in the compound statement that is directly attached to the function definition
+        def getStatementForAstNode(i: AST): Option[Statement] = {
+            findPriorASTElem[FunctionDef](i, morpheus.getASTEnv) match {
+                case None => None
+                case Some(f) => {
+                    f.stmt.innerStatements.foreach {
+                        cStmt => if (isPartOf(i, cStmt)) return Some(cStmt.entry)
+                    }
+                    None
+                }
+            }
+        }
+
+        val fPreds = pred(func, morpheus.getASTEnv).filterNot(x => x.feature isSatisfiable morpheus.getFM)
+        val fReturnStmts = fPreds.map(_.entry).filter { case _: ReturnStatement => true; case _ => false }
+
+        if (fReturnStmts.size > 0) {
+            val fStmt = getStatementForAstNode(fReturnStmts.head)
+
+            fReturnStmts.tail.forall(isPartOf(_, fStmt))
+        } else {
+            false
+        }
+
+
+        /**
         // TODO Optimize Runtime
         def codeAfterStatement(feature: FeatureExpr, opt: Opt[_]): Boolean = {
             val next = nextOpt(opt, morpheus.getASTEnv)
@@ -184,6 +199,7 @@ object CInlineFunction extends ASTSelection with CRefactor {
                     List(outerStatement)).exists(statement => codeAfterStatement(parent.feature, statement))
             case _ => false
         })
+        */
     }
 
     private def isRecursive(funcDef: FunctionDef): Boolean = {
@@ -192,15 +208,6 @@ object CInlineFunction extends ASTSelection with CRefactor {
             case _ => false
         })
     }
-
-    /*
-    private def isRecursive(funcDef: NestedFunctionDef): Boolean = {
-        filterASTElems[PostfixExpr](funcDef).exists({
-            case PostfixExpr(Id(name), FunctionCall(_)) => name.equals(funcDef.getName)
-            case _ => false
-        })
-    }
-    */
 
     private def inlineFuncCallExpr(ast: AST, morpheus: Morpheus, call: Opt[AST],
                                    funcDefs: List[Opt[_]], rename: Boolean): TranslationUnit = {

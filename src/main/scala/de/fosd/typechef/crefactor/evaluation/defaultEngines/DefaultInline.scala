@@ -38,7 +38,7 @@ trait DefaultInline extends Refactoring with Evaluation {
 
         try {
             val refTime = new StopClock
-            val refAST = CInlineFunction.inline(morpheus, callIdToInline, true, true)
+            val refAST = CInlineFunction.inline(morpheus, callIdToInline, true)
 
             refAST match {
                 case Left(errmsg) => {
@@ -66,7 +66,7 @@ trait DefaultInline extends Refactoring with Evaluation {
         } catch {
             case e: Exception => {
                 logger.error("Inlining failed!")
-                e.printStackTrace
+                e.printStackTrace()
                 return (false, null, List(), List())
             }
         }
