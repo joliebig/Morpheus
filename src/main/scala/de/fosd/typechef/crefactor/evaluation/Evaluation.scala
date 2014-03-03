@@ -31,6 +31,7 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
     val allFeaturesFile: String
     val allFeatures: (List[SingleFeatureExpr], IdentityHashMap[String, String])
     val pairWiseFeaturesFile: String
+    val existingConfigsDir: String = completePath + "/existing_configs/"
 
     val featureModel: String
     val featureModel_DIMACS: String
@@ -39,6 +40,8 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
 
     val FORCE_VARIABILITY: Boolean
     val FORCE_LINKING: Boolean
+
+    val maxConfigs: Int = 1000
 
 
     /**
@@ -370,26 +373,6 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
         val out = new java.io.FileWriter(dir.getCanonicalPath + File.separatorChar + getFileName(originalFilePath) + ".stats")
         stats.foreach(stat => {
             out.write(stat.toString)
-            out.write("\n")
-        })
-        out.flush()
-        out.close()
-    }
-
-    def writeConfig(config: Set[SingleFeatureExpr], dir: File, name: String): Unit = writeConfig(config.toList, dir, name)
-
-    def writeConfig(config: List[SingleFeatureExpr], dir: File, name: String) {
-        val out = new java.io.FileWriter(dir.getCanonicalPath + File.separatorChar + name)
-        val disabledFeatures = allFeatures._1.diff(config)
-        config.foreach(feature => {
-            val ft = feature.feature
-            out.write(ft + "=y")
-            out.write("\n")
-        })
-        disabledFeatures.foreach(feature => {
-            val ft = feature.feature
-            if (allFeatures._2.containsKey(feature.feature)) out.write(ft + "=" + allFeatures._2.get(feature.feature))
-            else out.write("# " + ft + " is not set")
             out.write("\n")
         })
         out.flush()
