@@ -108,7 +108,8 @@ trait Verification extends Evaluation {
     def variabilityCoverage(existingConfigs: File, fm: FeatureModel, affectedFeatures: List[List[FeatureExpr]],
                             startCounter: Int = 0) = {
         var genCounter = startCounter
-        existingConfigs.listFiles().toList.flatMap(config => {
+        logger.info("Loading following configs: " + existingConfigs.listFiles())
+        existingConfigs.listFiles().flatMap(config => {
             if (genCounter > maxConfigs) None
             else {
                 val enabledFeatures = getEnabledFeaturesFromConfigFile(fm, config)
