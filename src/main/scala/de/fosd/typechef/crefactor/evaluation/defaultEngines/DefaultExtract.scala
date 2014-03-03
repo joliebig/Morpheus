@@ -19,11 +19,11 @@ trait DefaultExtract extends Refactoring with Evaluation {
     val NAME = "refactored_func"
 
 
-    def refactor(morpheus: Morpheus): (Boolean, AST, List[FeatureExpr], List[(String, TranslationUnit)]) = {
+    def refactor(morpheus: Morpheus): (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)]) = {
         val resultDir = getResultDir(morpheus.getFile)
         val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(morpheus.getFile)
 
-        def refactor(morpheus: Morpheus, depth: Int): (Boolean, AST, List[FeatureExpr], List[(String, TranslationUnit)]) = {
+        def refactor(morpheus: Morpheus, depth: Int): (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)]) = {
             val compStmts = filterAllASTElems[CompoundStatement](morpheus.getTranslationUnit)
 
             // Real random approach
@@ -92,7 +92,7 @@ trait DefaultExtract extends Refactoring with Evaluation {
                 case Right(a) => {
                     StatsCan.addStat(morpheus.getFile, RefactorTime, refactorTime.getTime)
                     StatsCan.addStat(morpheus.getFile, Statements, statements)
-                    (true, a, features, List())
+                    (true, a, List(features), List())
                 }
                 case Left(s) => {
                     // TODO Correct Error Handling

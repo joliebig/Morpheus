@@ -6,6 +6,7 @@ import de.fosd.typechef.parser.c.AST
 import de.fosd.typechef.crefactor.evaluation.{StatsCan, Verification}
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
+import de.fosd.typechef.ConfigurationHandling
 
 object BusyBoxVerification extends BusyBoxEvaluation with Verification {
 
@@ -72,7 +73,7 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
 
 }
 
-object PrepareASTforVerification extends BusyBoxEvaluation {
+object PrepareTUnitForVerification extends BusyBoxEvaluation {
 
     private def genAllConfigVariantsForFeatures(enabledFeatures: List[SingleFeatureExpr], affectedFeatures: List[FeatureExpr], fm: FeatureModel, dir: File): List[List[SingleFeatureExpr]] = {
         var wrongCounter = 0
@@ -116,11 +117,9 @@ object PrepareASTforVerification extends BusyBoxEvaluation {
         })
     }
 
-    def makeConfigs(refactored: AST, fm: FeatureModel, originalFilePath: String, affectedFeatures: List[FeatureExpr]) {
+    def makeConfigs(refactored: AST, fm: FeatureModel, originalFilePath: String, affectedFeatures: List[List[FeatureExpr]]) {
         val dir = getResultDir(originalFilePath)
-
-        val configRes = getClass.getResource("/busybox_Configs/")
-        val configs = new File(configRes.getFile)
+        val configsDir = new File(getClass.getResource("/busybox_Configs/").getFile)
 
         initializeFeatureList(refactored)
         val pairWiseConfigs = loadConfigurationsFromCSVFile(new File(pairWiseFeaturesFile), new File(featureModel_DIMACS), features, fm, "CONFIG_")
@@ -133,8 +132,8 @@ object PrepareASTforVerification extends BusyBoxEvaluation {
             pairCounter += 1
         })
 
-
-        val generatedConfigs = configs.listFiles().map(config => {
+        /**
+        val generatedConfigs = configsDir.listFiles().map(config => {
             val enabledFeatures = getEnabledFeaturesFromConfigFile(fm, config)
             (config, genAllConfigVariantsForFeatures(enabledFeatures, affectedFeatures, fm, dir))
         })
@@ -146,7 +145,7 @@ object PrepareASTforVerification extends BusyBoxEvaluation {
                 writeConfig(genConfig, dir, configNumber + name)
                 configNumber += 1
             })
-        })
+        }) */
     }
 
 }

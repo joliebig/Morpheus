@@ -36,7 +36,7 @@ object BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
                     write(result._2, morpheus.getFile)
                     result._4.par.foreach(linked => writePrettyPrintedTUnit(linked._2, linked._1))
                     logger.info("Features: " + result._3)
-                    PrepareASTforVerification.makeConfigs(result._2, morpheus.getFM, morpheus.getFile, result._3)
+                    PrepareTUnitForVerification.makeConfigs(result._2, morpheus.getFM, morpheus.getFile, result._3)
                     StatsCan.addStat(file, AffectedFeatures, result._3)
                     val time = new StopClock
                     // run refactored first

@@ -18,7 +18,7 @@ trait DefaultInline extends Refactoring with Evaluation {
         }
     }
 
-    def refactor(morpheus: Morpheus): (Boolean, AST, List[FeatureExpr], List[(String, TranslationUnit)]) = {
+    def refactor(morpheus: Morpheus): (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)]) = {
         val psExpr = filterAllASTElems[PostfixExpr](morpheus.getTranslationUnit)
         val funcCalls = psExpr.par.filter(isFunctionCall)
         val availableFuncCalls = funcCalls.par.filter(p => {
@@ -60,7 +60,7 @@ trait DefaultInline extends Refactoring with Evaluation {
 
                     logger.info("Affected features: " + features)
 
-                    (true, tunit, features, List())
+                    (true, tunit, List(features), List())
                 }
             }
         } catch {

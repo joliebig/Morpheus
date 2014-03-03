@@ -33,16 +33,16 @@ trait DefaultRename extends Refactoring with Evaluation {
     private val linkedRenamedFiles = mutable.HashMap[String, Morpheus]()
 
     // refactor attempts to make REFACTOR_AMOUNT renamings in a file
-    def refactor(morpheus: Morpheus): (Boolean, TranslationUnit, List[FeatureExpr], List[(String, TranslationUnit)]) = {
+    def refactor(morpheus: Morpheus): (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)]) = {
 
         var runMorpheus = morpheus
-        var affectedFeatures = List[FeatureExpr]()
+        var affectedFeatures = List[List[FeatureExpr]]()
 
         for (run <- 1 to REFACTOR_AMOUNT) {
             val refactoredRun = singleRefactor(runMorpheus, run)
             StatsCan.addStat(morpheus.getFile, run, AffectedFeatures, refactoredRun._3)
             if (!refactoredRun._1) return (false, null, List(), List())
-            affectedFeatures = affectedFeatures ::: refactoredRun._3
+            affectedFeatures = refactoredRun._3 :: affectedFeatures
             runMorpheus = new Morpheus(refactoredRun._2, morpheus.getFM, morpheus.getModuleInterface, morpheus.getFile)
             writeRunResult(run, runMorpheus, refactoredRun._4)
             logger.info("Run " + run + " affected features: " + refactoredRun._3)
@@ -76,12 +76,17 @@ trait DefaultRename extends Refactoring with Evaluation {
 
             logger.info("Run " + run + ": IDs found: " + ids.size)
 
-            val variableIds = ids.par.filter(id => isVariable(parentOpt(id, morpheus.getASTEnv)))
+            val nonRefactoredIds = ids.par.filterNot(id => id.name.startsWith(REFACTOR_NAME))
+            val variableIds = nonRefactoredIds.par.filter(id => isVariable(parentOpt(id, morpheus.getASTEnv)))
 
             logger.info("Run " + run + ": Variable IDs found: " + variableIds.size)
 
+            if (variableIds.nonEmpty && FORCE_VARIABILITY) {
+                //return Left
+            }
+
             def getRandomID: Id = {
-                val randID = if ((variableIds.size > 25) && FORCE_VARIABILITY) variableIds.apply((math.random * variableIds.size).toInt) else ids.apply((math.random * ids.size).toInt)
+                val randID = if (FORCE_VARIABILITY) variableIds.apply((math.random * variableIds.size).toInt) else nonRefactoredIds.apply((math.random * ids.size).toInt)
                 if (isWritable(randID)) randID
                 else getRandomID
             }

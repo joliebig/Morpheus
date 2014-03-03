@@ -8,7 +8,7 @@ import de.fosd.typechef.crefactor.backend.CModuleInterface
 trait Refactoring {
 
     def refactor(morpheus: Morpheus):
-    (Boolean, AST, List[FeatureExpr], List[(String, TranslationUnit)])
+    (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)])
 
 }
 
