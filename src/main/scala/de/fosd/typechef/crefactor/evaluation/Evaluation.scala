@@ -31,7 +31,7 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
     val allFeaturesFile: String
     val allFeatures: (List[SingleFeatureExpr], IdentityHashMap[String, String])
     val pairWiseFeaturesFile: String
-    val existingConfigsDir: String = completePath + "existing_configs/"
+    val existingConfigsDir: String
 
     val featureModel: String
     val featureModel_DIMACS: String

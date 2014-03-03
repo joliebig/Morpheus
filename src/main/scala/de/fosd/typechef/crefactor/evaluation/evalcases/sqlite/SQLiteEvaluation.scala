@@ -21,6 +21,7 @@ trait SQLiteEvaluation extends Evaluation with ASTNavigation with ConditionalNav
     val allFeaturesFile = null
     val allFeatures = null
     val pairWiseFeaturesFile = null
+    val existingConfigsDir: String = completePath + "/existing_configs/"
 
     val featureModel: String = completePath + "/fm.txt"
     val featureModel_DIMACS: String = completePath + "/sqlite.dimacs"
