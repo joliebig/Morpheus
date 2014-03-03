@@ -41,13 +41,23 @@ trait DefaultRename extends Refactoring with Evaluation {
         for (run <- 1 to REFACTOR_AMOUNT) {
             val refactoredRun = singleRefactor(runMorpheus, run)
             StatsCan.addStat(morpheus.getFile, run, AffectedFeatures, refactoredRun._3)
-            if (!refactoredRun._1) return (false, null, List(), List())
+
+            if (!refactoredRun._1)
+                return (run != 1, runMorpheus.getTranslationUnit, affectedFeatures.distinct,
+                    linkedRenamedFiles.toList.map(entry => (entry._1, entry._2.getTranslationUnit)))
+
             affectedFeatures = refactoredRun._3 :: affectedFeatures
             runMorpheus = new Morpheus(refactoredRun._2, morpheus.getFM, morpheus.getModuleInterface, morpheus.getFile)
+
+            refactoredRun._4.foreach(
+                entry => linkedRenamedFiles.put(entry._1, new Morpheus(entry._2, runMorpheus.getFM, entry._1)))
+
             writeRunResult(run, runMorpheus, refactoredRun._4)
             logger.info("Run " + run + " affected features: " + refactoredRun._3)
         }
-        (true, runMorpheus.getTranslationUnit, affectedFeatures.distinct, linkedRenamedFiles.toList.map(entry => (entry._1, entry._2.getTranslationUnit)))
+
+        (true, runMorpheus.getTranslationUnit, affectedFeatures.distinct,
+            linkedRenamedFiles.toList.map(entry => (entry._1, entry._2.getTranslationUnit)))
     }
 
     // this function applies a single renaming, after checking different predicates
@@ -217,9 +227,6 @@ trait DefaultRename extends Refactoring with Evaluation {
                 }
             }
         }
-
-
-
 
         ids.map(id => {
             try {
