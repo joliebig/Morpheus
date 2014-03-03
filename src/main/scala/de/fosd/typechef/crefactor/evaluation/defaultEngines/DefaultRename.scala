@@ -91,17 +91,21 @@ trait DefaultRename extends Refactoring with Evaluation {
 
             logger.info("Run " + run + ": Variable IDs found: " + variableIds.size)
 
-            if (variableIds.nonEmpty && FORCE_VARIABILITY) {
-                //return Left
+            if (variableIds.isEmpty && FORCE_VARIABILITY) {
+                return null
             }
 
-            def getRandomID: Id = {
-                val randID = if (FORCE_VARIABILITY) variableIds.apply((math.random * variableIds.size).toInt) else nonRefactoredIds.apply((math.random * ids.size).toInt)
+            def getRandomID(depth : Int = 0) : Id = {
+                if (FORCE_VARIABILITY && variableIds.size < depth) return null
+                val randID = if (FORCE_VARIABILITY && variableIds.nonEmpty) variableIds.apply((math.random * variableIds.size).toInt) else nonRefactoredIds.apply((math.random * ids.size).toInt)
                 if (isWritable(randID)) randID
-                else getRandomID
+                else getRandomID(depth + 1)
             }
 
-            val id = getRandomID
+            val id = getRandomID()
+
+            if (id == null) return null
+
             val associatedIds = morpheus.getReferences(id)
             addType(associatedIds, morpheus, run)
             logger.info("Run " + run + ": Found Id: " + id)
@@ -110,6 +114,7 @@ trait DefaultRename extends Refactoring with Evaluation {
 
         val time = new StopClock
         val toRename = getVariableIdToRename
+        if (toRename == null) return (false, null, List(), List())
         val determineTime = time.getTime
         logger.info("Run " + run + ": Time to determine id: " + time.getTime)
         StatsCan.addStat(morpheus.getFile, run, RandomRefactorDeterminationTime, determineTime)
