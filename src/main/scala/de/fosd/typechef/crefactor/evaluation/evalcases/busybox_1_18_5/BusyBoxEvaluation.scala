@@ -30,9 +30,6 @@ trait BusyBoxEvaluation extends Evaluation {
 
     val FORCE_VARIABILITY = true
     val FORCE_LINKING = false
-    val MAX_DEPTH = 27
-    val amountOfRefactorings = 3
-    val MAX = 1
 
 }
 
