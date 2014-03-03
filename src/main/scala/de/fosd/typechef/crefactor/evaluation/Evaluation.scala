@@ -324,11 +324,15 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
     }
 
     def writePrettyPrintedTUnit(ast: AST, filePath: String) {
+        val path = {
+            if (filePath.startsWith("file")) filePath.substring(5)
+            else filePath
+        }
         logger.info("Pretty printing to: " + filePath)
-        val file = new File(filePath)
+        val file = new File(path)
         val prettyPrinted = PrettyPrinter.print(ast).replace("definedEx", "defined")
         val writer = new FileWriter(file, false)
-        writer.write(addBuildCondition(filePath, prettyPrinted))
+        writer.write(addBuildCondition(path, prettyPrinted))
         writer.flush()
         writer.close()
     }
