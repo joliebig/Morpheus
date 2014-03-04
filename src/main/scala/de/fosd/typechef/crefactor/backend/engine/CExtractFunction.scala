@@ -34,16 +34,19 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         val ids = filterASTElementsForFile[Id](
             filterASTElems[Id](morpheus.getTranslationUnit).par.filter(x => isPartOfSelection(x, selection)).toList, selection.getFilePath)
 
+        // TODO: @andreas What is this function doing?
         def exploitStatements(statement: Statement): Statement = {
             try {
                 parentAST(statement, morpheus.getASTEnv) match {
-                    case null => throw new RefactorException("An error during determining the preconditions occurred.")
-                    case f: FunctionDef => statement
-                    case nf: NestedFunctionDef => statement
+                    // TODO: @andreas Suggestion for a better error message. "No proper selection for extract function."
+                    case null => throw new RefactorException("An error occurred during determining preconditions.")
+                    case _: FunctionDef => statement
+                    case _: NestedFunctionDef => statement
                     case p =>
                         if (isElementOfSelectionRange(p, selection)) {
                             exploitStatements(p.asInstanceOf[Statement])
-                        } else statement
+                        } else
+                            statement
                 }
             } catch {
                 case _: Throwable => statement
@@ -99,7 +102,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 uniqueSelectedStatements.add(exploitedStatement)
             })
             parents = uniqueSelectedStatements.toArray(Array[Statement]()).toList
-        } else parents = uniqueSelectedExpressions.toArray(Array[Expr]()).toList
+        } else
+            parents = uniqueSelectedExpressions.toArray(Array[Expr]()).toList
 
         cachedSelectedElements = parents.sortWith(comparePosition)
         logger.info("ExtractFuncSelection: " + cachedSelectedElements)
@@ -113,7 +117,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         }
 
     def isAvailable(morpheus: Morpheus, selection: List[AST]): Boolean = {
-        if (selection.isEmpty) false
+        if (selection.isEmpty)
+            false
         else if (!selection.par.forall {
             element => findPriorASTElem[FunctionDef](element, morpheus.getASTEnv).isDefined
         }) false
@@ -135,7 +140,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         if (!isValidId(funName))
             return Left(Configuration.getInstance().getConfig("default.error.invalidName"))
 
-        // Linking check is performed as soon as we know the featureExpr which will have the introduced function.
+        // Reference check is performed as soon as we know the featureExpr the new function is going to have!
 
         val oldFDef = findPriorASTElem[FunctionDef](selection.head, morpheus.getASTEnv)
         if (isValidInProgram(Opt(morpheus.getASTEnv.featureExpr(oldFDef.get), funName), morpheus))
@@ -539,11 +544,10 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         }
 
     /**
-     * Generates the parameters required in the function stmt.
+     * Generate the parameters required in the function stmt.
      */
     private def genFCallParams(parameters: List[(Opt[ParameterDeclaration], Opt[Expr], Id)]) =
-        parameters.flatMap(entry => Some(entry._2))
-
+        parameters.map(_._2)
 
     private def uniqueExtRefIds(defs: List[(Id, List[Id])], uses: List[(Id, List[Id])]) = {
         val parameterIds = Collections.newSetFromMap[Id](new java.util.IdentityHashMap())
@@ -557,7 +561,6 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         uses.foreach(id => declarationIds.add(id._1))
         declarationIds.toArray(Array[Id]()).toList.sortWith(compareByName)
     }
-
 
     private def genCompoundStatement(statements: List[Opt[Statement]], externalRef: List[Id],
                                      parameters: List[Id], morpheus: Morpheus): CompoundStatement = {
@@ -607,8 +610,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             case _ => null
         }
 
-    private def isValidSelection(element: AST, selection: List[AST], morpheus: Morpheus):
-    Boolean = {
+    private def isValidSelection(element: AST, selection: List[AST], morpheus: Morpheus): Boolean = {
         
         // determine all continue statements and check whether their jump targets
         // are part of the selection
@@ -678,9 +680,11 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     }
 
     /**
-     * Generates the function definition.
+     * Generate the function definition.
      */
-    private def genFDef(specs: List[Opt[Specifier]], decl: Declarator, stmts: CompoundStatement, oldStyleParameters: List[Opt[OldParameterDeclaration]] = List[Opt[OldParameterDeclaration]]()) = FunctionDef(specs, decl, oldStyleParameters, stmts)
+    private def genFDef(specs: List[Opt[Specifier]], decl: Declarator, stmts: CompoundStatement,
+                        oldStyleParameters: List[Opt[OldParameterDeclaration]] = List()) =
+        FunctionDef(specs, decl, oldStyleParameters, stmts)
 
     /**
      * Generates the opt node for the tunit.
@@ -689,8 +693,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         Opt[FunctionDef](morpheus.getASTEnv.featureExpr(oldFDef), newFDef)
 
     /**
-     * Generates the decl.
+     * Generate the function declarator.
      */
     private def genDeclarator(name: String, extensions: List[Opt[DeclaratorExtension]] =
-    List[Opt[DeclaratorExtension]]()) = AtomicNamedDeclarator(List[Opt[Pointer]](), Id(name), extensions)
+        List[Opt[DeclaratorExtension]]()) = AtomicNamedDeclarator(List[Opt[Pointer]](), Id(name), extensions)
 }
