@@ -22,7 +22,7 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
     private var astEnvCached: ASTEnv = CASTEnv.createASTEnv(getTranslationUnit)
     private var ts = new CTypeSystemFrontend(getTranslationUnit, getFM) with CTypeCache with CDeclUse
 
-    private val connectedIdsCache: java.util.IdentityHashMap[Id, List[Opt[Id]]] = new java.util.IdentityHashMap()
+    private val idRefsCache: java.util.IdentityHashMap[Id, List[Opt[Id]]] = new java.util.IdentityHashMap()
 
     private val typeCheck = new StopClock
     getTypeSystem.typecheckTranslationUnit(getTranslationUnit)
@@ -41,44 +41,45 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
 
     def isInUseDeclMap(id: Id) = getUseDeclMap.containsKey(id)
 
-    // determines linkage information between identifier uses and declares and vice versa
+    // determines reference information between id uses and id declarations
     def getReferences(id: Id): List[Opt[Id]] = {
-        if (connectedIdsCache.containsKey(id))
-            return connectedIdsCache.get(id)
+        if (idRefsCache.containsKey(id))
+            return idRefsCache.get(id)
 
         val visited = Collections.newSetFromMap[Id](new java.util.IdentityHashMap())
 
-        def addToConnectedIdMap(conn: Id) = {
+        def markVisited(conn: Id) = {
             visited.add(conn)
-            val fExpConn = astEnvCached.featureExpr(conn)
-            if (connectedIdsCache.containsKey(id))
-                connectedIdsCache.put(id, Opt(fExpConn, conn) :: connectedIdsCache.get(id))
-            else connectedIdsCache.put(id, List(Opt(fExpConn, conn)))
+            val fExpRef = astEnvCached.featureExpr(conn)
+            if (idRefsCache.containsKey(id))
+                idRefsCache.put(id, Opt(fExpRef, conn) :: idRefsCache.get(id))
+            else
+                idRefsCache.put(id, List(Opt(fExpRef, conn)))
 
         }
 
         // find all uses of an callId
-        def addOccurrence(curId: Id) {
+        def exploreId(curId: Id) {
             if (!visited.contains(curId)) {
-                addToConnectedIdMap(curId)
+                markVisited(curId)
                 getUses(curId).foreach(use => {
-                    addToConnectedIdMap(use)
-                    getDecls(use).foreach(addOccurrence)
+                    markVisited(use)
+                    getDecls(use).foreach(exploreId)
                 })
             }
         }
 
 
         if (isInUseDeclMap(id))
-            getDecls(id).foreach(addOccurrence)
+            getDecls(id).foreach(exploreId)
         else
-            addOccurrence(id)
+            exploreId(id)
 
-        connectedIdsCache.get(id)
+        idRefsCache.get(id)
     }
 
     def update(tunit: TranslationUnit) {
-        connectedIdsCache.clear()
+        idRefsCache.clear()
         tunitCached = tunit
         astEnvCached = CASTEnv.createASTEnv(getTranslationUnit)
         ts = new CTypeSystemFrontend(getTranslationUnit, getFM) with CTypeCache with CDeclUse
@@ -107,16 +108,14 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
     // TODO make private and replace all references
     def getUseDeclMap = getTypeSystem.getUseDeclMap
 
-    // decl-use information in typesystem are determined without the feature model
+    // reference information (declaration-use) in the typesystem are determined without the feature model
     // solely on the basis of annotations in the source code
+    // to rule out references that do not occur in any variant of the system we use the feature model here
     private def getEnforcedFmEntriesFromMap(key: Id, map: IdentityIdHashMap): List[Id] = {
         if (!map.containsKey(key))
             List()
         else
-            map.get(key).flatMap(entry => {
-                if (getASTEnv.featureExpr(entry) and getASTEnv.featureExpr(key) isSatisfiable getFM) Some(entry)
-                else None
-            })
+            map.get(key).filter { entry => getASTEnv.featureExpr(entry) and getASTEnv.featureExpr(key) isSatisfiable getFM }
     }
 
 }
