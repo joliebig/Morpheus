@@ -185,7 +185,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             logger.debug(selectedOptStatements)
 
             /**
-             * Liveness analysis
+             * determine variables that are live outside of the selection and that so need to be
+             * passed as parameters to the newly create function
              */
             val startTime = new StopClock
 
