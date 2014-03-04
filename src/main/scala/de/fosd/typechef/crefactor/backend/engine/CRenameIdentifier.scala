@@ -27,18 +27,19 @@ object CRenameIdentifier extends ASTSelection with CRefactor {
         !getAvailableIdentifiers(morpheus, selection).isEmpty
 
     def rename(id: Id, nid: String, morpheus: Morpheus): Either[String, TranslationUnit] = {
-        val lid = morpheus.getReferences(id).map(_.entry)
-        StatsCan.addStat(morpheus.getFile, Amount, lid.size)
+        val rid = morpheus.getReferences(id).map(_.entry)
+        StatsCan.addStat(morpheus.getFile, Amount, rid.size)
 
         if (!isValidId(nid) || isSystemLinkedName(nid))
             Left(Configuration.getInstance().getConfig("default.error.invalidName"))
         else if (isValidInProgram(Opt(parentOpt(id, morpheus.getASTEnv).feature, nid), morpheus))
             Left(Configuration.getInstance().getConfig("default.error.invalidName"))
-        else if (lid.exists(isValidInModule(nid, _, morpheus)))
+        else if (rid.exists(isValidInModule(nid, _, morpheus)))
             Left(Configuration.getInstance().getConfig("engine.rename.failed.shadowing"))
-        else if (!lid.par.forall(id => new File(id.getFile.get.replaceFirst("file ", "")).canWrite))
+        // isWritable
+        else if (!rid.par.forall(id => new File(id.getFile.get.replaceFirst("file ", "")).canWrite))
             Left(Configuration.getInstance().getConfig("engine.rename.failed.rename"))
         else
-            Right(replaceIds(morpheus.getTranslationUnit, lid, nid))
+            Right(replaceIds(morpheus.getTranslationUnit, rid, nid))
     }
 }
