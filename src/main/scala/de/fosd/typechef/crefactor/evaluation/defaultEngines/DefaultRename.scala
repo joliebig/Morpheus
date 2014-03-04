@@ -76,12 +76,15 @@ trait DefaultRename extends Refactoring with Evaluation {
             // TODO Fix Bug in OpenSSL for functions without body
             def isWritable(id: Id): Boolean =
                 morpheus.getReferences(id).map(_.entry).forall(i =>
-                    isValidId(i) && (i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) || new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
+                    isValidId(i) &&
+                        (i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) ||
+                            new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
 
             val allIds = morpheus.getAllUses
             val linkedIds = if (FORCE_LINKING && moduleInterface != null)
                 allIds.par.filter(id => moduleInterface.isListed(Opt(parentOpt(id, morpheus.getASTEnv).feature, id.name), morpheus.getFM))
             else allIds
+
             val ids = if (linkedIds.isEmpty) allIds else linkedIds
 
             logger.info("Run " + run + ": IDs found: " + ids.size)
@@ -97,7 +100,11 @@ trait DefaultRename extends Refactoring with Evaluation {
 
             def getRandomID(depth : Int = 0) : Id = {
                 if (FORCE_VARIABILITY && variableIds.size < depth) return null
-                val randID = if (FORCE_VARIABILITY && variableIds.nonEmpty) variableIds.apply((math.random * variableIds.size).toInt) else nonRefactoredIds.apply((math.random * ids.size).toInt)
+                val randID = if (FORCE_VARIABILITY && variableIds.nonEmpty)
+                                 variableIds.apply((math.random * variableIds.size).toInt)
+                             else
+                                 nonRefactoredIds.apply((math.random * ids.size).toInt)
+
                 if (isWritable(randID)) randID
                 else getRandomID(depth + 1)
             }
