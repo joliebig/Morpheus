@@ -61,7 +61,4 @@ trait ASTSelection extends Logging {
                 scala.math.max(startRow, endRow))
         else true
     }
-
-    def compareByName(id1: Id, id2: Id) = id1.name < id2.name
-
 }

@@ -124,7 +124,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         }) false
         else if (!isPartOfSameCompStmt(selection, morpheus)) false
         else if (!filterAllASTElems[ReturnStatement](selection).isEmpty) false
-        else if (!selection.par.forall(isValidSelection(_, selection, morpheus))) false
+        else if (!selection.par.forall(checkAstElemForCFGDisruption(_, selection, morpheus))) false
         else if (hasVarsToDefinedExternal(selection, morpheus)) false
         else if (hasInvisibleEnumerations(selection, morpheus)) false
         // else if (!isConditionalComplete(selection, getParentFunction(selection, morpheus), morpheus)) false // Not Relevant?
@@ -398,9 +398,11 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             // make pointer
             val genPointers =
                 if (noPointer) List[Opt[Pointer]]()
-                else decl.declSpecs.foldLeft((List[Opt[Pointer]](), List[FeatureExpr]()))((entries, declSpec) => genPointer(entries, declSpec))._1
+                else decl.declSpecs.foldLeft((List[Opt[Pointer]](), List[FeatureExpr]()))
+                    { (entries, declSpec) => genPointer(entries, declSpec) }._1
 
-            val resPointers = decl.init.foldLeft(genPointers)((currentPointers, declInit) => declInit.entry.declarator.pointers ::: currentPointers)
+            val resPointers = decl.init.foldLeft(genPointers)
+                { (currentPointers, declInit) => declInit.entry.declarator.pointers ::: currentPointers }
 
             //if (array)
             // AtomicNamedDeclarator(pointer, Id(param.name),
@@ -436,7 +438,10 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             val decl = findPriorASTElem[Declaration](id, morpheus.getASTEnv)
             decl match {
                 case Some(entry) => {
-                    val feature = if (ft.equivalentTo(FeatureExprFactory.True)) parentOpt(entry, morpheus.getASTEnv).feature else ft
+                    val feature = if (ft.equivalentTo(FeatureExprFactory.True))
+                                      parentOpt(entry, morpheus.getASTEnv).feature
+                                  else
+                                      ft
                     // TODO Possible Scala Bug?
                     // addDeclToDeclsToGenerate(feature, entry, id)
                     addToDeclFeatureMap(entry, feature)
@@ -553,33 +558,29 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         val parameterIds = Collections.newSetFromMap[Id](new java.util.IdentityHashMap())
         defs.foreach(x => x._2.foreach(entry => parameterIds.add(entry)))
         uses.foreach(x => parameterIds.add(x._1))
-        parameterIds.toArray(Array[Id]()).toList.sortWith(compareByName)
+        parameterIds.toArray(Array[Id]()).toList.sortWith { (i1, i2) => i1.name < i2.name }
     }
 
     private def getIdsToDeclare(uses: List[(Id, List[Id])]) = {
         val declarationIds = Collections.newSetFromMap[Id](new java.util.IdentityHashMap())
         uses.foreach(id => declarationIds.add(id._1))
-        declarationIds.toArray(Array[Id]()).toList.sortWith(compareByName)
+        declarationIds.toArray(Array[Id]()).toList.sortWith { (i1, i2) => i1.name < i2.name }
     }
 
     private def genCompoundStatement(statements: List[Opt[Statement]], externalRef: List[Id],
                                      parameters: List[Id], morpheus: Morpheus): CompoundStatement = {
-        def isPartOfParameter(id: Id, params: List[Id], morpheus: Morpheus): Boolean = {
+        def isPartOfParameter(id: Id, morpheus: Morpheus): Boolean = {
             if (!morpheus.isInUseDeclMap(id)) false
-            morpheus.getDecls(id).exists(decl => params.exists(param => param.eq(decl)))
+            morpheus.getDecls(id).exists(decl => parameters.exists(param => param.eq(decl)))
         }
 
-        val variables = externalRef.par.flatMap(id => isPartOfParameter(id, parameters, morpheus) match {
-            case true => Some(id)
-            case _ => None
-        }).toList
+        val variables = externalRef.par.filter(isPartOfParameter(_, morpheus))
 
-        // Make Pointer
-        val idsAsPointer = variables.foldLeft(statements)((stmts, id) =>
-            replaceInAST(stmts, id, PointerDerefExpr(id)))
+        // transform input ids into pointer expressions
+        val idsAsPointer = variables.foldLeft(statements)((curStatements, id) =>
+            replaceInAST(curStatements, id, PointerDerefExpr(id)))
         CompoundStatement(idsAsPointer)
     }
-
 
     private def isPartOfFuncCall(id: Id, morpheus: Morpheus): Boolean = {
         morpheus.getASTEnv.parent(id) match {
@@ -610,7 +611,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             case _ => null
         }
 
-    private def isValidSelection(element: AST, selection: List[AST], morpheus: Morpheus): Boolean = {
+    private def checkAstElemForCFGDisruption(element: AST, selection: List[AST], morpheus: Morpheus): Boolean = {
         
         // determine all continue statements and check whether their jump targets
         // are part of the selection
