@@ -34,8 +34,6 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         val ids = filterASTElementsForFile[Id](
             filterASTElems[Id](morpheus.getTranslationUnit).par.filter(x => isPartOfSelection(x, selection)).toList, selection.getFilePath)
 
-        def findParent(id: Id) = findPriorASTElem[Statement](id, morpheus.getASTEnv)
-
         def exploitStatements(statement: Statement): Statement = {
             try {
                 parentAST(statement, morpheus.getASTEnv) match {
@@ -81,7 +79,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         val uniqueSelectedExpressions = Collections.newSetFromMap[Expr](new java.util.IdentityHashMap())
 
         ids.foreach(id => {
-            val parent = findParent(id)
+            val parent = findPriorASTElem[Statement](id, morpheus.getASTEnv)
             parent match {
                 case null =>
                 case s: Some[Statement] =>
