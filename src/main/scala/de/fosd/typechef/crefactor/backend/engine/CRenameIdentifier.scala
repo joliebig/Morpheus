@@ -30,7 +30,7 @@ object CRenameIdentifier extends ASTSelection with CRefactor {
         val rid = morpheus.getReferences(id).map(_.entry)
         StatsCan.addStat(morpheus.getFile, Amount, rid.size)
 
-        if (!isValidId(nid) || isSystemLinkedName(nid))
+        if (!isValidId(nid))
             Left(Configuration.getInstance().getConfig("default.error.invalidName"))
         else if (isValidInProgram(Opt(parentOpt(id, morpheus.getASTEnv).feature, nid), morpheus))
             Left(Configuration.getInstance().getConfig("default.error.invalidName"))
