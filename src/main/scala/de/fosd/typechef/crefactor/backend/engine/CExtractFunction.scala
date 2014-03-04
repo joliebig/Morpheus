@@ -8,7 +8,7 @@ import de.fosd.typechef.crefactor.frontend.util.Selection
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.evaluation_utils.Configuration
 import de.fosd.typechef.typesystem._
-import de.fosd.typechef.conditional.{Choice, One, Opt}
+import de.fosd.typechef.conditional.{ConditionalLib, Choice, One, Opt}
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.StatsCan
@@ -125,7 +125,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         else if (!isPartOfSameCompStmt(selection, morpheus)) false
         else if (!filterAllASTElems[ReturnStatement](selection).isEmpty) false
         else if (!selection.par.forall(checkAstElemForCFGDisruption(_, selection, morpheus))) false
-        else if (hasVarsToDefinedExternal(selection, morpheus)) false
+        else if (hasIdsWithDifferentScope(selection, morpheus)) false
         else if (hasInvisibleEnumerations(selection, morpheus)) false
         // else if (!isConditionalComplete(selection, getParentFunction(selection, morpheus), morpheus)) false // Not Relevant?
         else true
@@ -201,19 +201,19 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 return Left("Invalid selection, a declared variable in the selection gets used outside.")
 
             val params = retrieveParameters(extRefIds, morpheus)
-            val paramIds = getParamterIds(params)
+            val paramsIds = params.map(_._3)
 
             StatsCan.addStat(morpheus.getFile, Liveness, startTime.getTime)
             StatsCan.addStat(morpheus.getFile, ExternalUses, externalUses)
             StatsCan.addStat(morpheus.getFile, ExternalDecls, externalDefs)
-            StatsCan.addStat(morpheus.getFile, Parameters, paramIds)
+            StatsCan.addStat(morpheus.getFile, Parameters, paramsIds)
 
             // generate new function definition
             val specifiers = genSpecifiers(parentFunction, morpheus)
             val parameterDecls = getParameterDecls(params, parentFunction, morpheus)
             val declarator = genDeclarator(funcName, parameterDecls)
             val compundStatement = genCompoundStatement(selectedOptStatements,
-                allExtRefIds, paramIds, morpheus)
+                allExtRefIds, paramsIds, morpheus)
             val newFDef = genFDef(specifiers, declarator, compundStatement)
             val newFDefOpt = genFDefExternal(parentFunction, newFDef, morpheus)
 
@@ -246,27 +246,6 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     }
 
     private def hasInvisibleEnumerations(selection: List[AST], morpheus: Morpheus): Boolean = {
-        def enumChoiceIsInvisibleOutsideCCStmt(c: Choice[_], liveId: Id): Boolean = {
-            c match {
-                case c@Choice(_, o1@One(_), o2@One(_)) =>
-                    enumIsInvisibleOutsideCCStmt(o1, liveId) || enumIsInvisibleOutsideCCStmt(o2, liveId)
-                case c@Choice(_, c1@Choice(_, _, _), o2@One(_)) =>
-                    enumIsInvisibleOutsideCCStmt(o2, liveId) || enumChoiceIsInvisibleOutsideCCStmt(c1, liveId)
-                case c@Choice(_, o1@One(_), c1@Choice(_, _, _)) =>
-                    enumIsInvisibleOutsideCCStmt(o1, liveId) || enumChoiceIsInvisibleOutsideCCStmt(c1, liveId)
-                case c@Choice(_, c1@Choice(_, _, _), c2@Choice(_, _, _)) =>
-                    enumChoiceIsInvisibleOutsideCCStmt(c1, liveId) || enumChoiceIsInvisibleOutsideCCStmt(c2, liveId)
-            }
-        }
-
-        def enumIsInvisibleOutsideCCStmt(o: One[_], liveId: Id): Boolean = {
-            o match {
-                case o@One((_, KEnumVar, 1, _)) =>
-                    logger.info(liveId + " is invisible after extraction")
-                    true
-                case _ => false
-            }
-        }
 
         val selectedIds = filterAllASTElems[Id](selection)
         val externalUses = externalOccurrences(selectedIds, morpheus.getDeclUseMap, morpheus)
@@ -275,10 +254,13 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
         val invisibleEnums = liveIds.exists(liveId => {
             try {
-                morpheus.getEnv(liveId).varEnv.lookup(liveId.name) match {
-                    case o@One(_) => enumIsInvisibleOutsideCCStmt(o, liveId)
-                    case c@Choice(_, _, _) => enumChoiceIsInvisibleOutsideCCStmt(c, liveId)
-                }
+                val enums = ConditionalLib.leaves(morpheus.getEnv(liveId).varEnv.lookup(liveId.name))
+                val res = enums.exists { case (_, KEnumVar, 1, _) => true; case _ => false }
+
+                if (res)
+                    logger.info(liveId + " is invisible after extraction")
+
+                res
             } catch {
                 case _: Throwable =>
                     logger.warn("No entry found for: " + liveId)
@@ -292,24 +274,21 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         invisibleEnums
     }
 
-    private def hasVarsToDefinedExternal(selection: List[AST], morpheus: Morpheus): Boolean = {
+    private def hasIdsWithDifferentScope(selection: List[AST], morpheus: Morpheus): Boolean = {
         val selectedIds = filterAllASTElems[Id](selection)
         val externalUses = externalOccurrences(selectedIds, morpheus.getDeclUseMap, morpheus)
         val idsToDeclare = getIdsToDeclare(externalUses)
 
         if (!idsToDeclare.isEmpty) logger.error("Invalid selection for: " + selection +
-            " with follwoing ids to declare: " + idsToDeclare)
+            " with following ids to declare: " + idsToDeclare)
 
         !idsToDeclare.isEmpty
     }
 
-    private def getParamterIds(parameters: List[(Opt[ParameterDeclaration], Opt[Expr], Id)]) =
-        parameters.flatMap(entry => Some(entry._3))
-
     private def getParameterDecls(parameters: List[(Opt[ParameterDeclaration], Opt[Expr], Id)],
-                                  funcDef: FunctionDef, morpheus: Morpheus) = {
+                                  fDef: FunctionDef, morpheus: Morpheus) = {
         val decls = parameters.flatMap(entry => Some(entry._1))
-        List[Opt[DeclaratorExtension]](Opt(parentOpt(funcDef, morpheus.getASTEnv).feature,
+        List[Opt[DeclaratorExtension]](Opt(parentOpt(fDef, morpheus.getASTEnv).feature,
             DeclParameterDeclList(decls)))
     }
 
