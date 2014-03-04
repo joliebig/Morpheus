@@ -69,17 +69,7 @@ trait Verification extends Evaluation {
         //val pwConfig = ConfigurationHandling.buildConfigurationsPairwise(tunit, ff, fm, null, null, "busybox", List())
 
         // TOOD Ask Jörg move to config handling
-        initializeFeatureList(tunit)
-        val pairWiseConfigs =
-            loadConfigurationsFromCSVFile(new File(pairWiseFeaturesFile), new File(featureModel_DIMACS), features, fm, "CONFIG_")
 
-        var pairCounter = 0
-
-        pairWiseConfigs._1.foreach(pairConfig => {
-            val enabledFeatures = pairConfig.getTrueSet.filterNot(ft => filterFeatures.contains(ft.feature))
-            writeConfig(enabledFeatures, resultDir, pairCounter + "pairwise.config")
-            pairCounter += 1
-        })
 
         val generatedConfigs = variabilityCoverage(existingConfigs, fm, affectedFeatures)
 
@@ -90,9 +80,19 @@ trait Verification extends Evaluation {
             codeCoverage._1.foldLeft(0)((counter, coverageConf) => {
                 writeConfig(coverageConf, resultDir, counter + "coverage.config")
                 counter + 1
-            }
+            })
 
-            )
+            initializeFeatureList(tunit)
+            val pairWiseConfigs =
+                loadConfigurationsFromCSVFile(new File(pairWiseFeaturesFile), new File(featureModel_DIMACS), features, fm, "CONFIG_")
+
+            var pairCounter = 0
+
+            pairWiseConfigs._1.foreach(pairConfig => {
+                val enabledFeatures = pairConfig.getTrueSet.filterNot(ft => filterFeatures.contains(ft.feature))
+                writeConfig(enabledFeatures, resultDir, pairCounter + "pairwise.config")
+                pairCounter += 1
+            })
         } else {
             generatedConfigs.foreach(genConfigs => {
                 var configNumber = 0
