@@ -211,7 +211,6 @@ trait DefaultRename extends Refactoring with Evaluation {
                 logger.info("File " + getFileName(entry._1) + " is blacklisted or not in files list and cannot be build.")
                 return null
             }
-            logger.info(linkedRenamedFiles.keySet)
             linkedRenamedFiles.get(getFileName(entry._1)) match {
                 case Some(morpheus) =>
                     list :+(morpheus, entry._2)
