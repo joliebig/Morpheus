@@ -75,6 +75,9 @@ trait DefaultRename extends Refactoring with Evaluation {
 
             // TODO Fix Bug in OpenSSL for functions without body
             // TODO @andreas: I don't get why isWritable is called here again? We check this property already in CRenameIdentifier!
+            // @jl: that's right - as discussed previously, we only consider valid and variable ids for our renaming evaluation.
+            // we filter all non writeable ids at this point to avoid failing refactorings and reach as much as
+            // possible of the goal of 50 renamings.
             def isWritable(id: Id): Boolean =
                 morpheus.getReferences(id).map(_.entry).forall(i =>
                     isValidId(i) &&
@@ -100,6 +103,8 @@ trait DefaultRename extends Refactoring with Evaluation {
             }
 
             // TODO: @andreas: What is the purpose of depth? It is never used in the code apart from counting up!
+            // @jl It is used in line 107: it makes sure that in case of forced variability the id determination ends after
+            // the amount of variable ids retries is reached and no valid id is found - otherwise it would run forever
             def getRandomID(depth: Int = 0): Id = {
                 if (FORCE_VARIABILITY && variableIds.size < depth) return null
                 val randID = if (FORCE_VARIABILITY && variableIds.nonEmpty)
@@ -217,6 +222,7 @@ trait DefaultRename extends Refactoring with Evaluation {
     private def addType(ids: List[Opt[Id]], morpheus: Morpheus, run: Int) = {
 
         // TODO: @andreas What is foundTypes used for?
+        // For our statistics: how many expressions, declarations, function parameters etc are renamed.
         val foundTypes = mutable.Set[String]()
 
         def addChoice(c: Choice[_], id: Id, ft: FeatureExpr = FeatureExprFactory.True): Unit = {
@@ -256,8 +262,6 @@ trait DefaultRename extends Refactoring with Evaluation {
                 morpheus.getEnv(id.entry).varEnv.lookup(id.entry.name) match {
                     case o@One(_) => addOne(o, id.entry)
                     case c@Choice(_, _, _) => addChoice(c, id.entry)
-                    // TODO: @andreas "case x" is never reached because lookup returns Conditionals only.
-                    case x => logger.warn("Missed pattern choice? " + x)
                 }
             } catch {
                 case _: Throwable => foundTypes + "TypeDef"
