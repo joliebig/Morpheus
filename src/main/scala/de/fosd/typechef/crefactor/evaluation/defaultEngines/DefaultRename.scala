@@ -206,6 +206,7 @@ trait DefaultRename extends Refactoring with Evaluation {
         val refactorChain = affectedFiles.foldLeft(List[(Morpheus, Position)]())((list, entry) => {
             if (blackListFiles.exists(getFileName(entry._1).equalsIgnoreCase)
                 || (!evalFiles.exists(getFileName(entry._1).equalsIgnoreCase))) {
+                logger.info(!evalFiles.exists(getFileName(entry._1).equalsIgnoreCase))
                 logger.info("File " + getFileName(entry._1) + " is blacklisted or not in files list and cannot be build.")
                 return null
             }
