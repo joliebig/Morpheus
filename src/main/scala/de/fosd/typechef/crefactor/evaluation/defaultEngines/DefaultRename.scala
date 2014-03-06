@@ -25,7 +25,7 @@ trait DefaultRename extends Refactoring with Evaluation {
 
     val REFACTOR_NAME = "refactoredID"
 
-    val REFACTOR_AMOUNT = 50
+    val REFACTOR_AMOUNT = 30
 
     private val renameLink = new util.HashSet[String]()
 
