@@ -21,7 +21,6 @@ import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.SQLiteRefactor
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.BusyBoxRefactor
 import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.OpenSSLRefactor
 import de.fosd.typechef.crefactor.backend.CModuleInterface
-import com.sun.deploy.util.ArrayUtil
 
 object CRefactorFrontend extends App with InterfaceWriter with BuildCondition with Logging with EnforceTreeHelper {
 
