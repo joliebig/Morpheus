@@ -14,6 +14,7 @@ import de.fosd.typechef.conditional.Choice
 import de.fosd.typechef.parser.c.Id
 import de.fosd.typechef.conditional.Opt
 import de.fosd.typechef.typesystem.linker.SystemLinker
+import java.util
 
 trait Evaluation extends Logging with BuildCondition with ASTNavigation with ConditionalNavigation {
 
@@ -21,6 +22,7 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
     val caseStudyPath: String
     val completePath: String
     val filesToEval: String
+    val evalFiles: List[String] = getEvaluationFiles
     val blackListFiles: List[String]
     val blackListIds: List[String]
     val sourcePath: String
@@ -403,7 +405,7 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
         def readIn(reader: BufferedReader): List[String] = {
             reader.readLine() match {
                 case null => List()
-                case x => List(x).:::(readIn(reader))
+                case x => List(x + ".c").:::(readIn(reader))
             }
         }
         val reader = new BufferedReader(new FileReader(filesToEval))

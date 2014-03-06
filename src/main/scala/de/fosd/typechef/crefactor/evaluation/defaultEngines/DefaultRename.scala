@@ -204,11 +204,11 @@ trait DefaultRename extends Refactoring with Evaluation {
         val linked = cmif.getPositions(id.name)
         val affectedFiles = linked.foldLeft(new mutable.HashMap[String, Position])((map, pos) => map += (pos.getFile -> pos))
         val refactorChain = affectedFiles.foldLeft(List[(Morpheus, Position)]())((list, entry) => {
-            if (blackListFiles.exists(getFileName(entry._1).equalsIgnoreCase)) {
-                logger.info("File " + getFileName(entry._1) + " is blacklisted and cannot be build.")
+            if (blackListFiles.exists(getFileName(entry._1).equalsIgnoreCase)
+                || (!evalFiles.exists(getFileName(entry._1).equalsIgnoreCase))) {
+                logger.info("File " + getFileName(entry._1) + " is blacklisted or not in files list and cannot be build.")
                 return null
             }
-
             linkedRenamedFiles.get(entry._1) match {
                 case Some(morpheus) => list :+(morpheus, entry._2)
                 case _ =>
