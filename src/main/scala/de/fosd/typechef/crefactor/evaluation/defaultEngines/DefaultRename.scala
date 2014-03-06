@@ -9,7 +9,6 @@ import de.fosd.typechef.crefactor.evaluation.Stats._
 import scala.collection.mutable
 import de.fosd.typechef.error.Position
 import java.io.File
-import de.fosd.typechef.crefactor.backend.CModuleInterface
 import de.fosd.typechef.typesystem._
 import scala.Some
 import de.fosd.typechef.conditional.Choice
@@ -139,7 +138,7 @@ trait DefaultRename extends Refactoring with Evaluation {
         StatsCan.addStat(morpheus.getFile, run, RenamedId, id.name)
 
         val refactorChain = if (moduleInterface != null)
-                                getLinkedFilesToRefactor(moduleInterface, id)
+                                getLinkedFilesToRefactor(morpheus, id)
                             else List()
 
         if (refactorChain == null)
@@ -200,9 +199,12 @@ trait DefaultRename extends Refactoring with Evaluation {
     }
 
 
-    private def getLinkedFilesToRefactor(cmif: CModuleInterface, id: Id): List[(Morpheus, Position)] = {
+    private def getLinkedFilesToRefactor(morpheus: Morpheus, id: Id): List[(Morpheus, Position)] = {
+        val cmif = morpheus.getModuleInterface
         val linked = cmif.getPositions(id.name)
-        val affectedFiles = linked.foldLeft(new mutable.HashMap[String, Position])((map, pos) => map += (pos.getFile -> pos))
+        val affectedFiles = linked.foldLeft(new mutable.HashMap[String, Position])((map, pos) =>
+            if (getFileName(pos.getFile).equalsIgnoreCase(getFileName(morpheus.getFile))) map
+            else map += (pos.getFile -> pos))
         val refactorChain = affectedFiles.foldLeft(List[(Morpheus, Position)]())((list, entry) => {
             if (blackListFiles.exists(getFileName(entry._1).equalsIgnoreCase)
                 || (!evalFiles.exists(getFileName(entry._1).equalsIgnoreCase))) {
@@ -212,7 +214,6 @@ trait DefaultRename extends Refactoring with Evaluation {
             logger.info(linkedRenamedFiles.keySet)
             linkedRenamedFiles.get(getFileName(entry._1)) match {
                 case Some(morpheus) =>
-                    logger.info("reload!!!!!!!!!!!!!!!")
                     list :+(morpheus, entry._2)
                 case _ =>
                     val linked = CRefactorFrontend.parseOrLoadTUnit(entry._1)
