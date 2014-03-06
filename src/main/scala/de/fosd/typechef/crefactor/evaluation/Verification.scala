@@ -94,7 +94,7 @@ trait Verification extends Evaluation {
                 pairCounter += 1
             })
         } else {
-            generatedConfigs.foreach(genConfigs => {
+            generatedConfigs.distinct.foreach(genConfigs => {
                 var configNumber = 0
                 val name = genConfigs._1.getName
                 genConfigs._2.foreach(genConfig => {
