@@ -21,6 +21,7 @@ import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.SQLiteRefactor
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.BusyBoxRefactor
 import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.OpenSSLRefactor
 import de.fosd.typechef.crefactor.backend.CModuleInterface
+import com.sun.deploy.util.ArrayUtil
 
 object CRefactorFrontend extends App with InterfaceWriter with BuildCondition with Logging with EnforceTreeHelper {
 
@@ -74,7 +75,8 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         }
         logger.info("Loading file: " + file)
         val opt = new FrontendOptionsWithConfigFiles()
-        logger.info("With settings: " + (file +: command.clone()))
+        logger.info("With settings:")
+        for (entry <- file +: command.clone()) logger.info(entry)
         opt.parseOptions(file +: command.clone())
 
         val fm = getFM(opt)
