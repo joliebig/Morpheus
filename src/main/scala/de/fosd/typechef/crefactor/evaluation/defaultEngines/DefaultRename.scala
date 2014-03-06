@@ -48,7 +48,7 @@ trait DefaultRename extends Refactoring with Evaluation {
                 runMorpheus = new Morpheus(refactoredRun._2, morpheus.getFM, morpheus.getModuleInterface, morpheus.getFile)
 
                 refactoredRun._4.foreach(
-                    entry => linkedRenamedFiles.put(entry._1, new Morpheus(entry._2, runMorpheus.getFM, entry._1)))
+                    entry => linkedRenamedFiles.put(getFileName(entry._1), new Morpheus(entry._2, runMorpheus.getFM, entry._1)))
 
                 writeRunResult(run, runMorpheus, refactoredRun._4)
                 logger.info("Run " + run + " affected features: " + refactoredRun._3)
@@ -209,9 +209,10 @@ trait DefaultRename extends Refactoring with Evaluation {
                 logger.info("File " + getFileName(entry._1) + " is blacklisted or not in files list and cannot be build.")
                 return null
             }
-            linkedRenamedFiles.get(entry._1) match {
+            logger.info(linkedRenamedFiles.keySet)
+            linkedRenamedFiles.get(getFileName(entry._1)) match {
                 case Some(morpheus) =>
-                    logger.info("reload.")
+                    logger.info("reload!!!!!!!!!!!!!!!")
                     list :+(morpheus, entry._2)
                 case _ =>
                     val linked = CRefactorFrontend.parseOrLoadTUnit(entry._1)
