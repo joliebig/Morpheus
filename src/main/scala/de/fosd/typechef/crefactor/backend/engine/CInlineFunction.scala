@@ -25,7 +25,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
     }
 
     def getAvailableIdentifiers(morpheus: Morpheus, selection: Selection): List[Id] = {
-        val ids = getSelectedElements(morpheus, selection).map(x => getFunctionIdentifier(x, morpheus.getASTEnv))
+        val ids = getSelectedElements(morpheus, selection).map(getFunctionIdentifier(_, morpheus.getASTEnv))
         ids.sortWith(comparePosition)
     }
 
@@ -161,7 +161,6 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
 
         if (fReturnStmts.size > 0) {
             val fStmt = getStatementForAstNode(fReturnStmts.head)
-
             fReturnStmts.tail.forall(isPartOf(_, fStmt))
         } else {
             false
@@ -241,6 +240,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                     case NAryExpr(e, others) =>
                         call match {
                             case n@NArySubExpr(op, _) =>
+                                // TODO: @andreas. statement references the problematic replace function.
                                 val replacement = replaceInAST(others, call, n.copy(e = inlineChoice))
                                 o.copy(value = NAryExpr(e, replacement.asInstanceOf[List[Opt[NArySubExpr]]]))
                             case x =>
@@ -292,6 +292,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                 entry match {
                     case i@IfStatement(c@condition, _, elifs, _) =>
                         // TODO Refactor for performance
+                        // TODO: @andreas: unclear; What does the code do?
                         if (callParent.eq(i)) callParent = call.entry
                         val cond = inlineInCorrectConditionalStmt(condition, call.entry, callParent, buildVariableCompoundStatement(inlineExprStatements))
                         if (!cond.eq(i.condition)) replaceStmt = replaceInASTOnceTD(workingCallCompStmt, parent,
@@ -332,6 +333,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
         }
     }
 
+    // TODO: @andreas What is the parameter rename used for? Shoudn't we enforce renaming all the time, if necessary?
     private def inlineFuncCall(tunit: TranslationUnit, morpheus: Morpheus, call: Opt[Statement],
                                fDefs: List[Opt[_]], rename: Boolean): TranslationUnit = {
         var workingCallCompStmt = getCallCompStatement(call, morpheus.getASTEnv)
@@ -357,8 +359,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
             val workingCallCompStmt =
                 fDefs.foldLeft(callCompStmt)(
                     (curStmt, fDef) => fDef match {
-                        case f: Opt[FunctionDef] =>
-                            inlineFuncDefInCompStmt(curStmt, morpheus, call, f, rename)
+                        case f: Opt[FunctionDef] => inlineFuncDefInCompStmt(curStmt, morpheus, call, f, rename)
                         case _ =>
                             println("Forgotten definition")
                             curStmt
