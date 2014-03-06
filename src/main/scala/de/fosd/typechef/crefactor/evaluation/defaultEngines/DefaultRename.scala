@@ -210,6 +210,7 @@ trait DefaultRename extends Refactoring with Evaluation {
                 return null
             }
             logger.info(linkedRenamedFiles.keySet)
+            logger.info(entry._1)
             linkedRenamedFiles.get(entry._1) match {
                 case Some(morpheus) => list :+(morpheus, entry._2)
                 case _ =>
