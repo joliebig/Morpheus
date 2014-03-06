@@ -50,7 +50,21 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
             else args :+ arg
         }).toArray
 
-        processFile(runOpt)
+        val fm = getFM(runOpt)
+        runOpt.setFeatureModel(fm)
+
+        val tunit = {
+            if (runOpt.reuseAST && new File(runOpt.getSerializedTUnitFilename).exists())
+                loadSerializedTUnit(runOpt.getSerializedTUnitFilename)
+            else parseTUnit(fm, runOpt)
+        }
+
+        if (tunit == null) {
+            logger.error("... failed reading AST " + runOpt.getFile + "\nExiting.")
+            System.exit(-1)
+        }
+
+        processFile(tunit, fm, runOpt)
     }
 
     def parseOrLoadTUnit(toLoad: String): (TranslationUnit, FeatureModel) = {
@@ -79,48 +93,27 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         (tunit, fm)
     }
 
-    private def processFile(opt: FrontendOptions) = {
-        val errorXML = new ErrorXML(opt.getErrorXMLFile)
-        opt.setRenderParserError(errorXML.renderParserError)
-
-        val fm = getFM(opt)
-        opt.setFeatureModel(fm) //otherwise the lexer does not get the updated feature model with file presence conditions
-
-        if (opt.writeBuildCondition) writeBuildCondition(opt.getFile)
-
+    private def processFile(tunit: TranslationUnit, fm: FeatureModel, opt: FrontendOptions) = {
         val linkInf = {
             if (opt.refLink) new CModuleInterface(opt.getLinkingInterfaceFile)
             else null
         }
 
-        if (opt.parse) {
+        // val preparedTunit = prepareAST(tunit)
+        if (opt.writeBuildCondition) writeBuildCondition(opt.getFile)
 
-            val tunit = {
-                if (opt.reuseAST && new File(opt.getSerializedTUnitFilename).exists())
-                    loadSerializedTUnit(opt.getSerializedTUnitFilename)
-                else parseTUnit(fm, opt)
-            }
+        if (opt.serializeAST) serializeTUnit(tunit, opt.getSerializedTUnitFilename)
 
-            if (tunit == null) {
-                errorXML.write()
-                logger.error("... failed reading AST " + opt.getFile + "\nExiting.")
-                System.exit(-1)
-            }
+        if (opt.writeInterface) writeInterface(tunit, fm, opt)
 
-            // val preparedTunit = prepareAST(tunit)
+        if (opt.refEval) refactorEval(opt, tunit, fm, linkInf)
 
-            if (opt.serializeAST) serializeTUnit(tunit, opt.getSerializedTUnitFilename)
+        if (opt.prettyPrint) prettyPrint(tunit, opt)
 
-            if (opt.writeInterface) writeInterface(tunit, fm, opt, errorXML)
+        if (opt.canBuild) testBuildingAndTesting(tunit, fm, opt)
 
-            if (opt.refEval) refactorEval(opt, tunit, fm, linkInf)
+        if (opt.showGui) createAndShowGui(tunit, fm, opt, linkInf)
 
-            if (opt.prettyPrint) prettyPrint(tunit, opt)
-
-            if (opt.canBuild) testBuildingAndTesting(tunit, fm, opt)
-
-            if (opt.showGui) createAndShowGui(tunit, fm, opt, linkInf)
-        }
     }
 
     private def getFM(opt: FrontendOptions): FeatureModel = {
@@ -140,7 +133,6 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
     private def writeInterface(ast: AST, fm: FeatureModel, opt: FrontendOptions, errorXML: ErrorXML) {
         val ts = new CTypeSystemFrontend(ast.asInstanceOf[TranslationUnit], fm, opt) with CTypeCache with CDeclUse
         ts.checkAST()
-        ts.errors.map(errorXML.renderTypeError)
 
         val interface = {
             if (opt.getUseDefaultPC) ts.getInferredInterface().and(opt.getFilePresenceCondition)
@@ -154,6 +146,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         val parsingTime = new StopClock
         val parserMain = new ParserMain(new CParser(fm))
         val tUnit = parserMain.parserMain(lex(opt), opt)
+
         StatsCan.addStat(opt.getFile, Parsing, parsingTime.getTime)
 
         tUnit
