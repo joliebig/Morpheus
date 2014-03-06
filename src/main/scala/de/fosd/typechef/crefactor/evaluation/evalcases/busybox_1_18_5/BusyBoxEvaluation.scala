@@ -11,6 +11,7 @@ trait BusyBoxEvaluation extends Evaluation {
     val caseStudyPath = "../cRefactor-BusyBoxEvaluation/"
     val completePath = new File(caseStudyPath).getCanonicalPath
     val filesToEval: String = completePath + "/busybox_files"
+    val evalFiles = getEvaluationFiles
     val blackListFiles: List[String] = Source.fromFile(getClass.getResource("/busybox_blacklist").getFile).getLines().toList
     val blackListIds: List[String] = List()
     val sourcePath = completePath + "/" + evalName + "/"
