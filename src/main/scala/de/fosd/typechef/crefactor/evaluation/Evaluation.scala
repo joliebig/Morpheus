@@ -405,7 +405,7 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
         def readIn(reader: BufferedReader): List[String] = {
             reader.readLine() match {
                 case null => List()
-                case x => List(x + ".c").:::(readIn(reader))
+                case x => List(getFileName(x + ".c")).:::(readIn(reader))
             }
         }
         val reader = new BufferedReader(new FileReader(filesToEval))
