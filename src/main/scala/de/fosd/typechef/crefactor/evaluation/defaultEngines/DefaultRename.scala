@@ -209,10 +209,10 @@ trait DefaultRename extends Refactoring with Evaluation {
                 logger.info("File " + getFileName(entry._1) + " is blacklisted or not in files list and cannot be build.")
                 return null
             }
-            logger.info(linkedRenamedFiles.keySet)
-            logger.info(entry._1)
             linkedRenamedFiles.get(entry._1) match {
-                case Some(morpheus) => list :+(morpheus, entry._2)
+                case Some(morpheus) =>
+                    logger.info("reload.")
+                    list :+(morpheus, entry._2)
                 case _ =>
                     val linked = CRefactorFrontend.parseOrLoadTUnit(entry._1)
                     list :+(new Morpheus(linked._1, linked._2, entry._1), entry._2)
