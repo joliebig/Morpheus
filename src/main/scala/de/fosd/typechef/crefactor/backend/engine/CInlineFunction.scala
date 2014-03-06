@@ -369,9 +369,9 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
         }
 
         parentAST(call.entry, morpheus.getASTEnv) match {
-            case c: CompoundStatement => workingCallCompStmt = inlineCompStmt(fDefs, workingCallCompStmt)
-            case i: IfStatement => workingCallCompStmt = inlineIfStmt(fDefs, workingCallCompStmt)
-            case e: ElifStatement => workingCallCompStmt = inlineIfStmt(fDefs, workingCallCompStmt)
+            case _: CompoundStatement => workingCallCompStmt = inlineCompStmt(fDefs, workingCallCompStmt)
+            case _: IfStatement => workingCallCompStmt = inlineIfStmt(fDefs, workingCallCompStmt)
+            case _: ElifStatement => workingCallCompStmt = inlineIfStmt(fDefs, workingCallCompStmt)
             case x => println("forgotten " + x)
         }
 
