@@ -202,15 +202,18 @@ trait DefaultRename extends Refactoring with Evaluation {
     private def getLinkedFilesToRefactor(morpheus: Morpheus, id: Id): List[(Morpheus, Position)] = {
         val cmif = morpheus.getModuleInterface
         val linked = cmif.getPositions(id.name)
+
         val affectedFiles = linked.foldLeft(new mutable.HashMap[String, Position])((map, pos) =>
             if (getFileName(pos.getFile).equalsIgnoreCase(getFileName(morpheus.getFile))) map
             else map += (pos.getFile -> pos))
+
+        if (affectedFiles.keySet.exists(file => blackListFiles.exists(getFileName(file).equalsIgnoreCase)
+            || (!evalFiles.exists(getFileName(file).equalsIgnoreCase)))) {
+            logger.info("One or more file is blacklisted or is not a member of the valid files list and cannot be build.")
+            return null
+        }
+
         val refactorChain = affectedFiles.foldLeft(List[(Morpheus, Position)]())((list, entry) => {
-            if (blackListFiles.exists(getFileName(entry._1).equalsIgnoreCase)
-                || (!evalFiles.exists(getFileName(entry._1).equalsIgnoreCase))) {
-                logger.info("File " + getFileName(entry._1) + " is blacklisted or not in files list and cannot be build.")
-                return null
-            }
             linkedRenamedFiles.get(getFileName(entry._1)) match {
                 case Some(morpheus) =>
                     list :+(morpheus, entry._2)
