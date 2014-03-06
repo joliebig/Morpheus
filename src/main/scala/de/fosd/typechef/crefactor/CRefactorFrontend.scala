@@ -130,7 +130,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         fm
     }
 
-    private def writeInterface(ast: AST, fm: FeatureModel, opt: FrontendOptions, errorXML: ErrorXML) {
+    private def writeInterface(ast: AST, fm: FeatureModel, opt: FrontendOptions) {
         val ts = new CTypeSystemFrontend(ast.asInstanceOf[TranslationUnit], fm, opt) with CTypeCache with CDeclUse
         ts.checkAST()
 
