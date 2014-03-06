@@ -219,6 +219,7 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         })
     }
 
+    // TODO: @andreas use foldRight without the reverse??
     def insertBefore(l: List[Opt[Statement]], mark: Opt[Statement], insert: Opt[Statement]) =
         l.foldLeft(List[Opt[Statement]]())((nl, s) => {
             if (mark.eq(s)) insert :: s :: nl
