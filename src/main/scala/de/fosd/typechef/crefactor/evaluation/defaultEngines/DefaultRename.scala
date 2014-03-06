@@ -34,29 +34,30 @@ trait DefaultRename extends Refactoring with Evaluation {
 
     // refactor attempts to make REFACTOR_AMOUNT renamings in a file
     def refactor(morpheus: Morpheus): (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)]) = {
-
+        var succ = false
         var runMorpheus = morpheus
         var affectedFeatures = List[List[FeatureExpr]]()
 
         for (run <- 1 to REFACTOR_AMOUNT) {
             val refactoredRun = singleRefactor(runMorpheus, run)
-            StatsCan.addStat(morpheus.getFile, run, AffectedFeatures, refactoredRun._3)
 
-            if (!refactoredRun._1)
-                return (run != 1, runMorpheus.getTranslationUnit, affectedFeatures.distinct,
-                    linkedRenamedFiles.toList.map(entry => (entry._1, entry._2.getTranslationUnit)))
+            if (refactoredRun._1) {
+                succ = refactoredRun._1
+                StatsCan.addStat(morpheus.getFile, run, AffectedFeatures, refactoredRun._3)
+                affectedFeatures = refactoredRun._3 :: affectedFeatures
+                runMorpheus = new Morpheus(refactoredRun._2, morpheus.getFM, morpheus.getModuleInterface, morpheus.getFile)
 
-            affectedFeatures = refactoredRun._3 :: affectedFeatures
-            runMorpheus = new Morpheus(refactoredRun._2, morpheus.getFM, morpheus.getModuleInterface, morpheus.getFile)
+                refactoredRun._4.foreach(
+                    entry => linkedRenamedFiles.put(entry._1, new Morpheus(entry._2, runMorpheus.getFM, entry._1)))
 
-            refactoredRun._4.foreach(
-                entry => linkedRenamedFiles.put(entry._1, new Morpheus(entry._2, runMorpheus.getFM, entry._1)))
-
-            writeRunResult(run, runMorpheus, refactoredRun._4)
-            logger.info("Run " + run + " affected features: " + refactoredRun._3)
+                writeRunResult(run, runMorpheus, refactoredRun._4)
+                logger.info("Run " + run + " affected features: " + refactoredRun._3)
+            } else {
+                logger.info("Run " + run + " failed.")
+            }
         }
 
-        (true, runMorpheus.getTranslationUnit, affectedFeatures.distinct,
+        (succ, runMorpheus.getTranslationUnit, affectedFeatures.distinct,
             linkedRenamedFiles.toList.map(entry => (entry._1, entry._2.getTranslationUnit)))
     }
 

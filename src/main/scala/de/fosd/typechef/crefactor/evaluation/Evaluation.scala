@@ -399,23 +399,11 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
         result
     }
 
-    def getAllRelevantIds(a: Any): List[Id] = {
-        a match {
-            case id: Id => if (!(id.name.startsWith("__builtin"))) List(id) else List()
-            case gae: GnuAsmExpr => List()
-            case l: List[_] => l.flatMap(x => getAllRelevantIds(x))
-            case p: Product => p.productIterator.toList.flatMap(x => getAllRelevantIds(x))
-            case k => List()
-        }
-    }
-
-    def analsyeDeclUse(map: IdentityHashMap[Id, List[Id]]): List[Int] = map.keySet().toArray(Array[Id]()).map(key => map.get(key).length).toList
-
-    def getBusyBoxFiles: List[String] = {
+    def getEvaluationFiles: List[String] = {
         def readIn(reader: BufferedReader): List[String] = {
             reader.readLine() match {
                 case null => List()
-                case x => List(x + ".c").:::(readIn(reader))
+                case x => List(x).:::(readIn(reader))
             }
         }
         val reader = new BufferedReader(new FileReader(filesToEval))
