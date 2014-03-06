@@ -74,6 +74,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         }
         logger.info("Loading file: " + file)
         val opt = new FrontendOptionsWithConfigFiles()
+        logger.info("With settings: " + (file +: command.clone()))
         opt.parseOptions(file +: command.clone())
 
         val fm = getFM(opt)
