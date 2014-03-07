@@ -398,6 +398,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                 val feature = init.feature.and(returnStmt.feature)
                 if (feature.isContradiction(morpheus.getFM))
                     return compoundStmt
+
                 init.entry match {
                     case i@InitDeclaratorI(_, _, Some(Initializer(label, expr))) =>
                         initDecls ::= Opt(feature, i.copy(i = Some(Initializer(label,
