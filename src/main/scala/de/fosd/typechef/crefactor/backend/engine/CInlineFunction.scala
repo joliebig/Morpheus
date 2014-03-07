@@ -435,6 +435,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                     val feature = stmt.feature.and(call.feature)
                     if (feature.isSatisfiable(morpheus.getFM))
                     // TODO Ask Jörg for better solution -> manybu/oncetd <- wtf!?!!?!
+                    // TODO @andreas: What is the problem here?
                         if (wStatement.innerStatements.exists(entry => entry.eq(statement)))
                             wStatement = replaceInASTOnceTD(wStatement, stmt,
                                 Opt(feature, ExprStatement(AssignExpr(t, o, entry))))
