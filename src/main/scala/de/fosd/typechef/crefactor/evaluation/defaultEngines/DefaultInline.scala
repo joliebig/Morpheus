@@ -30,7 +30,8 @@ trait DefaultInline extends Refactoring with Evaluation {
 
         logger.info("Function calls found to inline: " + availableFuncCalls.size)
 
-        if (availableFuncCalls.isEmpty) return (false, null, List(), List())
+        if (availableFuncCalls.isEmpty)
+            return (false, null, List(), List())
 
         val callIdToInline = availableFuncCalls(Random.nextInt(availableFuncCalls.size)).p.asInstanceOf[Id]
 

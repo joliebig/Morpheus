@@ -62,7 +62,8 @@ trait DefaultRename extends Refactoring with Evaluation {
 
     // this function applies a single renaming, after checking different predicates
     // such as isValidId, ...
-    private def singleRefactor(morpheus: Morpheus, run: Int): (Boolean, TranslationUnit, List[FeatureExpr], List[(String, TranslationUnit)]) = {
+    private def singleRefactor(morpheus: Morpheus, run: Int):
+    (Boolean, TranslationUnit, List[FeatureExpr], List[(String, TranslationUnit)]) = {
         val moduleInterface = morpheus.getModuleInterface
         val name = REFACTOR_NAME + "_" + run
         logger.info("+++ Start run: " + run)
@@ -74,10 +75,7 @@ trait DefaultRename extends Refactoring with Evaluation {
             }
 
             // TODO Fix Bug in OpenSSL for functions without body
-            // TODO @andreas: I don't get why isWritable is called here again? We check this property already in CRenameIdentifier!
-            // @jl: that's right - as discussed previously, we only consider valid and variable ids for our renaming evaluation.
-            // we filter all non writeable ids at this point to avoid failing refactorings and reach as much as
-            // possible of the goal of 50 renamings.
+            // We check the writable property here already in order to maximize the number of possible refactorings.
             def isWritable(id: Id): Boolean =
                 morpheus.getReferences(id).map(_.entry).forall(i =>
                     isValidId(i) &&
@@ -105,8 +103,13 @@ trait DefaultRename extends Refactoring with Evaluation {
             // TODO: @andreas: What is the purpose of depth? It is never used in the code apart from counting up!
             // @jl It is used in line 107: it makes sure that in case of forced variability the id determination ends after
             // the amount of variable ids retries is reached and no valid id is found - otherwise it would run forever
+            // @andreas: Ok missed that one. In the worst ase, we always get the same randID and check that it is not
+            // writable. I'd rather see that we shuffle the list upfront and then only take elements one-by-one from it,
+            // until the list is empty and then resort to nonRefactoredIds. Maybe use function shuffle of the random class
+            // http://www.scala-lang.org/api/2.10.3/index.html#scala.util.Random$
             def getRandomID(depth: Int = 0): Id = {
-                if (FORCE_VARIABILITY && variableIds.size < depth) return null
+                if (FORCE_VARIABILITY && variableIds.size < depth)
+                    return null
                 val randID = if (FORCE_VARIABILITY && variableIds.nonEmpty)
                                  variableIds.apply((math.random * variableIds.size).toInt)
                              else
@@ -118,7 +121,8 @@ trait DefaultRename extends Refactoring with Evaluation {
 
             val id = getRandomID()
 
-            if (id == null) return null
+            if (id == null)
+                return null
 
             val associatedIds = morpheus.getReferences(id)
             addType(associatedIds, morpheus, run)
@@ -139,7 +143,8 @@ trait DefaultRename extends Refactoring with Evaluation {
 
         val refactorChain = if (moduleInterface != null)
                                 getLinkedFilesToRefactor(morpheus, id)
-                            else List()
+                            else
+                                List()
 
         if (refactorChain == null)
             return (false, null, List(), List())
@@ -189,9 +194,12 @@ trait DefaultRename extends Refactoring with Evaluation {
         val found = filterASTElems[Id](tUnit).par.find(aId => {
             if (aId.name.equalsIgnoreCase(id.name)) logger.info("Found matching names " + id.name + " at: " + aId.getPositionFrom + ", " + aId.getPositionTo)
             // as positions in TypeChef are little bit buggy - we extend the search ranch.
-            ((position.getLine.equals(aId.getPositionFrom.getLine) || position.getLine.equals(aId.getPositionTo.getLine)
-                || position.getLine.equals(aId.getPositionFrom.getLine - 1) || position.getLine.equals(aId.getPositionTo.getLine - 1)
-                || position.getLine.equals(aId.getPositionFrom.getLine + 1) || position.getLine.equals(aId.getPositionTo.getLine + 1))
+            ((position.getLine.equals(aId.getPositionFrom.getLine) ||
+                position.getLine.equals(aId.getPositionTo.getLine) ||
+                position.getLine.equals(aId.getPositionFrom.getLine - 1) ||
+                position.getLine.equals(aId.getPositionTo.getLine - 1) ||
+                position.getLine.equals(aId.getPositionFrom.getLine + 1) ||
+                position.getLine.equals(aId.getPositionTo.getLine + 1))
                 && aId.name.equalsIgnoreCase(id.name))
         })
         logger.info("Found the following linkedIds: " + found)
@@ -228,22 +236,28 @@ trait DefaultRename extends Refactoring with Evaluation {
 
     private def addType(ids: List[Opt[Id]], morpheus: Morpheus, run: Int) = {
 
-        // TODO: @andreas What is foundTypes used for?
-        // For our statistics: how many expressions, declarations, function parameters etc are renamed.
         val foundTypes = mutable.Set[String]()
 
+        // TODO @andreas: There is a lot of duplicated code here
+        // Maybe rewrite the code to
+        // def addConditional(c: Conditional[_], id: Id, ft: FeatureExpr = FeatureExprFactory.True): Unit = {
+        //  c match {
+        //     case Choice(cft, tb, eb) => addConditional(tb, id); addConditional(eb, id, cft.not())
+        //     case One => // code from below.
+        // Alternatively, use ConditionalLib.items to get a list of featureExpr/type and reason about it afterwards.
+        // Anyhow, the could would be a lot easier afterwards.
         def addChoice(c: Choice[_], id: Id, ft: FeatureExpr = FeatureExprFactory.True): Unit = {
             c match {
-                case c@Choice(cft, o1@One(_), o2@One(_)) =>
+                case Choice(cft, o1@One(_), o2@One(_)) =>
                     addOne(o1, id)
                     addOne(o2, id, cft.not())
-                case c@Choice(cft, c1@Choice(_, _, _), o2@One(_)) =>
+                case Choice(cft, c1@Choice(_, _, _), o2@One(_)) =>
                     addChoice(c1, id)
                     addOne(o2, id, cft.not())
-                case c@Choice(cft, o1@One(_), c1@Choice(_, _, _)) =>
+                case Choice(cft, o1@One(_), c1@Choice(_, _, _)) =>
                     addChoice(c1, id, cft.not())
                     addOne(o1, id)
-                case c@Choice(cft, c1@Choice(_, _, _), c2@Choice(_, _, _)) =>
+                case Choice(cft, c1@Choice(_, _, _), c2@Choice(_, _, _)) =>
                     addChoice(c1, id)
                     addChoice(c2, id, cft.not())
             }
