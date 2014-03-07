@@ -242,6 +242,8 @@ trait DefaultRename extends Refactoring with Evaluation {
 
     private def addType(ids: List[Opt[Id]], morpheus: Morpheus, run: Int) = {
 
+        // TODO @andreas: I do not have the experience, but using a set here does not allow us to count the number of
+        // occurrences right? Is it possible that more than one Function is affected at a time?
         val foundTypes = mutable.Set[String]()
 
         // TODO @andreas: There is a lot of duplicated code here
