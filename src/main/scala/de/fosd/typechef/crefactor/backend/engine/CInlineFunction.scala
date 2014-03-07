@@ -30,10 +30,11 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
     }
 
     def isAvailable(morpheus: Morpheus, selection: Selection): Boolean =
-        !getAvailableIdentifiers(morpheus, selection).isEmpty
+        getAvailableIdentifiers(morpheus, selection).nonEmpty
 
     def isAvailable(morpheus: Morpheus, call: Id): Boolean = {
-        if (!isFunctionCall(morpheus, call)) return false
+        if (!isFunctionCall(morpheus, call))
+            return false
 
         val defs = divideCallDeclDef(call, morpheus)._3
         if (defs.isEmpty)
@@ -293,18 +294,26 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                     case i@IfStatement(c@condition, _, elifs, _) =>
                         // TODO Refactor for performance
                         // TODO: @andreas: unclear; What does the code do?
-                        if (callParent.eq(i)) callParent = call.entry
-                        val cond = inlineInCorrectConditionalStmt(condition, call.entry, callParent, buildVariableCompoundStatement(inlineExprStatements))
-                        if (!cond.eq(i.condition)) replaceStmt = replaceInASTOnceTD(workingCallCompStmt, parent,
-                            parent.copy(entry = i.copy(condition = cond)))
+                        if (callParent.eq(i))
+                            callParent = call.entry
+
+                        val cond = inlineInCorrectConditionalStmt(condition, call.entry, callParent,
+                            buildVariableCompoundStatement(inlineExprStatements))
+                        if (!cond.eq(i.condition))
+                            replaceStmt = replaceInASTOnceTD(workingCallCompStmt, parent,
+                                parent.copy(entry = i.copy(condition = cond)))
                         else {
                             val refactoredElifs = elifs.map(elif => {
-                                if (parentAST(call.entry, morpheus.getASTEnv).eq(elif.entry)) callParent = call.entry
+                                if (parentAST(call.entry, morpheus.getASTEnv).eq(elif.entry))
+                                    callParent = call.entry
+
                                 val condition = elif.entry.condition
-                                val cond = inlineInCorrectConditionalStmt(condition, call.entry, callParent, buildVariableCompoundStatement(inlineExprStatements))
+                                val cond = inlineInCorrectConditionalStmt(condition, call.entry, callParent,
+                                    buildVariableCompoundStatement(inlineExprStatements))
                                 if (!cond.eq(condition))
                                     elif.copy(entry = elif.entry.copy(condition = cond))
-                                else elif
+                                else
+                                    elif
                             })
                             replaceStmt = replaceInASTOnceTD(workingCallCompStmt, parent,
                                 parent.copy(entry = i.copy(elifs = refactoredElifs)))

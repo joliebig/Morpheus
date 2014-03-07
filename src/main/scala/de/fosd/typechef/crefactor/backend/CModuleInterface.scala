@@ -36,18 +36,24 @@ class CModuleInterface(linkPath: String) extends Logging {
     }
 
     private def addToExpMap(key: String, value: CSignature) =
-        if (idLinkExpMap.containsKey(key)) idLinkExpMap.put(key, value :: idLinkExpMap.get(key))
-        else idLinkExpMap.put(key, List(value))
+        if (idLinkExpMap.containsKey(key))
+            idLinkExpMap.put(key, value :: idLinkExpMap.get(key))
+        else
+            idLinkExpMap.put(key, List(value))
 
     private def addToPosMap(key: String, value: List[Position]) =
-        if (idLinkPosMap.containsKey(key)) idLinkPosMap.put(key, value ::: idLinkPosMap.get(key))
-        else idLinkPosMap.put(key, value)
+        if (idLinkPosMap.containsKey(key))
+            idLinkPosMap.put(key, value ::: idLinkPosMap.get(key))
+        else
+            idLinkPosMap.put(key, value)
 
     private def nameIsListed(name: String) = idLinkExpMap.containsKey(name) || idLinkPosMap.containsKey(name)
 
     def isListed(id: Opt[String], fm: FeatureModel): Boolean = {
-        if (idLinkExpMap.containsKey(id.entry))  idLinkExpMap.get(id.entry).exists(sig => sig.fexpr.implies(id.feature).isTautology(fm))
-        else false
+        if (idLinkExpMap.containsKey(id.entry))
+            idLinkExpMap.get(id.entry).exists(_.fexpr.implies(id.feature).isTautology(fm))
+        else
+            false
     }
 
     def isBlackListed(id: String) = blackList.contains(id)
