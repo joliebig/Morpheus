@@ -11,6 +11,13 @@ import de.fosd.typechef.error.Position
 import java.io.File
 import de.fosd.typechef.typesystem._
 import scala.Some
+import de.fosd.typechef.conditional._
+import de.fosd.typechef.parser.c.TranslationUnit
+import de.fosd.typechef.typesystem.CUnknown
+import de.fosd.typechef.typesystem.CFunction
+import de.fosd.typechef.parser.c.Id
+import java.util
+import scala.Some
 import de.fosd.typechef.conditional.Choice
 import de.fosd.typechef.parser.c.TranslationUnit
 import de.fosd.typechef.typesystem.CUnknown
@@ -18,7 +25,6 @@ import de.fosd.typechef.typesystem.CFunction
 import de.fosd.typechef.conditional.One
 import de.fosd.typechef.parser.c.Id
 import de.fosd.typechef.conditional.Opt
-import java.util
 
 
 trait DefaultRename extends Refactoring with Evaluation {
@@ -246,6 +252,21 @@ trait DefaultRename extends Refactoring with Evaluation {
         //     case One => // code from below.
         // Alternatively, use ConditionalLib.items to get a list of featureExpr/type and reason about it afterwards.
         // Anyhow, the could would be a lot easier afterwards.
+
+        // determine types of affected AST elems
+        // replaces addChoice and addOne
+        def traverseTypesAndCount(c: Conditional[_], id: Id): Unit = {
+            val tautTypes = ConditionalLib.items(c).filter { entry => entry._1.isTautology(morpheus.getFM) }
+            tautTypes.map(_._2).foreach {
+                case o@One((CUnknown(_), _, _)) => logger.warn("Unknown Type " + id + " " + o)
+                case One((CFunction(_, _), _, _)) => foundTypes + "FunctionName"
+                case One((CType(CFunction(_, _), _, _, _), _, _, _)) => foundTypes + "FunctionName"
+                case One((_, KEnumVar, _, _)) => foundTypes + "Enum"
+                case One((CType(_, _, _, _), _, _, _)) => foundTypes + "Variable"
+                case o => logger.warn("Unknown Type " + id + " " + o)
+            }
+        }
+
         def addChoice(c: Choice[_], id: Id, ft: FeatureExpr = FeatureExprFactory.True): Unit = {
             c match {
                 case Choice(cft, o1@One(_), o2@One(_)) =>
