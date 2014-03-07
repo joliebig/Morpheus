@@ -30,7 +30,6 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             return cachedSelectedElements
 
         lastSelection = selection
-
         val ids = filterASTElementsForFile[Id](
             filterASTElems[Id](morpheus.getTranslationUnit).par.filter(x => isPartOfSelection(x, selection)).toList, selection.getFilePath)
 

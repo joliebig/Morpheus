@@ -53,12 +53,17 @@ trait ASTSelection extends Logging {
         val endRow = selection.getRowEnd
 
         if (!(isInRange(element.getPositionFrom.getLine, startLine, endLine)
-            && isInRange(element.getPositionTo.getLine, startLine, endLine))) false
-        else if (element.getPositionFrom.getLine == startLine) isInRange(element.getPositionFrom.getColumn, scala.math.min(startRow, endRow), scala.math.max(startRow, endRow))
+            && isInRange(element.getPositionTo.getLine, startLine, endLine)))
+            false
+        else if (element.getPositionFrom.getLine == startLine)
+            isInRange(element.getPositionFrom.getColumn,
+                scala.math.min(startRow, endRow),
+                scala.math.max(startRow, endRow))
         else if (element.getPositionTo.getLine == endLine)
             isInRange(element.getPositionTo.getColumn,
                 scala.math.min(startRow, endRow),
                 scala.math.max(startRow, endRow))
-        else true
+        else
+            true
     }
 }
