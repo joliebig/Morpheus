@@ -34,6 +34,12 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             filterASTElems[Id](morpheus.getTranslationUnit).par.filter(x => isPartOfSelection(x, selection)).toList, selection.getFilePath)
 
         // TODO: @andreas What is this function doing?
+        // @JL: this function tries to find the greatest statement of a selection: for example:
+        // if (1) {
+        //     i++;
+        // }
+        // in case the whole if statement is selected we don't want to add the i++ statement to our selection list,
+        // as it is already part of the if statement
         def exploitStatements(statement: Statement): Statement = {
             try {
                 parentAST(statement, morpheus.getASTEnv) match {
