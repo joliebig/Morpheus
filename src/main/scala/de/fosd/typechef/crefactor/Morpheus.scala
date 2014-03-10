@@ -41,6 +41,12 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
 
     def isInUseDeclMap(id: Id) = getUseDeclMap.containsKey(id)
 
+    // retrieves all missed but referenced id uses passed in the argument id list
+    def getExternalUses(ids: List[Id]) = getExternalVariableReferences(ids, getUses)
+
+    // retrieves all missed but referenced id declarations passed in the argument id list
+    def getExternalDefs(ids: List[Id]) = getExternalVariableReferences(ids, getDecls)
+
     // determines reference information between id uses and id declarations
     def getReferences(id: Id): List[Opt[Id]] = {
         if (idRefsCache.containsKey(id))
@@ -102,11 +108,9 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
 
     def getTypeSystem = ts
 
-    // TODO make private and replace all references
-    def getDeclUseMap = getTypeSystem.getDeclUseMap
+    private def getDeclUseMap = getTypeSystem.getDeclUseMap
 
-    // TODO make private and replace all references
-    def getUseDeclMap = getTypeSystem.getUseDeclMap
+    private def getUseDeclMap = getTypeSystem.getUseDeclMap
 
     // reference information (declaration-use) in the typesystem are determined without the feature model
     // solely on the basis of annotations in the source code
@@ -116,6 +120,27 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
             List()
         else
             map.get(key).filter { entry => getASTEnv.featureExpr(entry) and getASTEnv.featureExpr(key) isSatisfiable getFM }
+    }
+
+
+    private def getExternalVariableReferences(ids: List[Id], getReferences: (Id) => List[Id]) = {
+        ids.flatMap(id => {
+            if (!isPartOfFuncCall(id)) {
+                val external = getReferences(id).par.flatMap(refId => {
+                    if (ids.par.exists(oId => oId.eq(refId))) None
+                    else Some(refId)
+                }).toList
+                if (external.isEmpty) None
+                else Some(id, external)
+            } else None
+        }).toList
+    }
+
+    private def isPartOfFuncCall(id: Id): Boolean = {
+        getASTEnv.parent(id) match {
+            case PostfixExpr(`id`, FunctionCall(_)) => true
+            case _ => false
+        }
     }
 
 }

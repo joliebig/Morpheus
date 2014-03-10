@@ -194,8 +194,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
              */
             val startTime = new StopClock
 
-            val externalUses = externalOccurrences(selectedIds, morpheus.getDeclUseMap, morpheus)
-            val externalDefs = externalOccurrences(selectedIds, morpheus.getUseDeclMap, morpheus)
+            val externalUses = morpheus.getExternalUses(selectedIds)
+            val externalDefs = morpheus.getExternalDefs(selectedIds)
             val allExtRefIds = externalDefs.flatMap(x => Some(x._1))
             val extRefIds = uniqueExtRefIds(externalDefs, externalUses)
             val toDeclare = getIdsToDeclare(externalUses)
@@ -253,8 +253,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     private def hasInvisibleEnumerations(selection: List[AST], morpheus: Morpheus): Boolean = {
 
         val selectedIds = filterAllASTElems[Id](selection)
-        val externalUses = externalOccurrences(selectedIds, morpheus.getDeclUseMap, morpheus)
-        val externalDefs = externalOccurrences(selectedIds, morpheus.getUseDeclMap, morpheus)
+        val externalUses = morpheus.getExternalUses(selectedIds)
+        val externalDefs = morpheus.getExternalDefs(selectedIds)
         val liveIds = uniqueExtRefIds(externalDefs, externalUses)
 
         val invisibleEnums = liveIds.exists(liveId => {
@@ -281,7 +281,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
     private def hasIdsWithDifferentScope(selection: List[AST], morpheus: Morpheus): Boolean = {
         val selectedIds = filterAllASTElems[Id](selection)
-        val externalUses = externalOccurrences(selectedIds, morpheus.getDeclUseMap, morpheus)
+        val externalUses = morpheus.getExternalUses(selectedIds)
         val idsToDeclare = getIdsToDeclare(externalUses)
 
         if (!idsToDeclare.isEmpty) logger.error("Invalid selection for: " + selection +
@@ -565,26 +565,6 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             replaceInAST(curStatements, id, PointerDerefExpr(id)))
         CompoundStatement(idsAsPointer)
     }
-
-    private def isPartOfFuncCall(id: Id, morpheus: Morpheus): Boolean = {
-        morpheus.getASTEnv.parent(id) match {
-            case PostfixExpr(`id`, FunctionCall(_)) => true
-            case _ => false
-        }
-    }
-
-    // TODO Rewrite Method without old usedecl and decluse usage
-    private def externalOccurrences(ids: List[Id], map: IdentityIdHashMap, morpheus: Morpheus) =
-        ids.par.flatMap(id => {
-            if (map.containsKey(id) && !isPartOfFuncCall(id, morpheus)) {
-                val external = map.get(id).par.flatMap(aId => {
-                    if (ids.par.exists(oId => oId.eq(aId))) None
-                    else Some(aId)
-                }).toList
-                if (external.isEmpty) None
-                else Some(id, external)
-            } else None
-        }).toList
 
     private def isElementOfEqCompStmt(element: AST, compStmt: CompoundStatement, morpheus: Morpheus) =
         getCompoundStatement(element, morpheus).eq(compStmt)
