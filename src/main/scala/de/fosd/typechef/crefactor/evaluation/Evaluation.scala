@@ -43,7 +43,7 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
     val FORCE_VARIABILITY: Boolean
     val FORCE_LINKING: Boolean
 
-    val maxConfigs: Int = 1000
+    val maxConfigs: Int = 100
 
 
     /**
