@@ -385,6 +385,10 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
         out.close()
     }
 
+    def removeFilePrefix(originalFilePath: String) =
+        if (originalFilePath.startsWith("file")) originalFilePath.substring(5)
+        else originalFilePath
+
     def getFileName(originalFilePath: String) = originalFilePath.substring(originalFilePath.lastIndexOf(File.separatorChar), originalFilePath.length).replace("/", "")
 
     def getResultDir(originalFilePath: String, run: Int): File = {

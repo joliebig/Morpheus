@@ -10,12 +10,7 @@ import scala.collection.mutable
 import de.fosd.typechef.error.Position
 import java.io.File
 import de.fosd.typechef.typesystem._
-import scala.Some
 import de.fosd.typechef.conditional._
-import de.fosd.typechef.parser.c.TranslationUnit
-import de.fosd.typechef.typesystem.CUnknown
-import de.fosd.typechef.typesystem.CFunction
-import de.fosd.typechef.parser.c.Id
 import java.util
 import scala.Some
 import de.fosd.typechef.conditional.Choice
@@ -53,7 +48,7 @@ trait DefaultRename extends Refactoring with Evaluation {
                 runMorpheus = new Morpheus(refactoredRun._2, morpheus.getFM, morpheus.getModuleInterface, morpheus.getFile)
 
                 refactoredRun._4.foreach(
-                    entry => linkedRenamedFiles.put(getFileName(entry._1), new Morpheus(entry._2, runMorpheus.getFM, entry._1)))
+                    entry => linkedRenamedFiles.put(removeFilePrefix(entry._1), new Morpheus(entry._2, runMorpheus.getFM, removeFilePrefix(entry._1))))
 
                 writeRunResult(run, runMorpheus, refactoredRun._4)
                 logger.info("Run " + run + " affected features: " + refactoredRun._3)
@@ -63,7 +58,7 @@ trait DefaultRename extends Refactoring with Evaluation {
         }
 
         (succ, runMorpheus.getTranslationUnit, affectedFeatures.distinct,
-            linkedRenamedFiles.toList.map(entry => (entry._1, entry._2.getTranslationUnit)))
+            linkedRenamedFiles.toList.map(entry => (removeFilePrefix(entry._1), entry._2.getTranslationUnit)))
     }
 
     // this function applies a single renaming, after checking different predicates
@@ -229,12 +224,12 @@ trait DefaultRename extends Refactoring with Evaluation {
         }
 
         val refactorChain = affectedFiles.foldLeft(List[(Morpheus, Position)]())((list, entry) => {
-            linkedRenamedFiles.get(getFileName(entry._1)) match {
+            linkedRenamedFiles.get(removeFilePrefix(entry._1)) match {
                 case Some(morpheus) =>
                     list :+(morpheus, entry._2)
                 case _ =>
-                    val linked = CRefactorFrontend.parseOrLoadTUnit(entry._1)
-                    list :+(new Morpheus(linked._1, linked._2, entry._1), entry._2)
+                    val linked = CRefactorFrontend.parseOrLoadTUnit(removeFilePrefix(entry._1))
+                    list :+(new Morpheus(linked._1, linked._2, removeFilePrefix(entry._1)), entry._2)
             }
         })
 
