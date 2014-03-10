@@ -43,8 +43,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         def exploitStatements(statement: Statement): Statement = {
             try {
                 parentAST(statement, morpheus.getASTEnv) match {
-                    // TODO: @andreas Suggestion for a better error message. "No proper selection for extract function."
-                    case null => throw new RefactorException("An error occurred during determining preconditions.")
+                    case null => throw new RefactorException("No proper selection for extract function.")
                     case _: FunctionDef => statement
                     case _: NestedFunctionDef => statement
                     case p =>
