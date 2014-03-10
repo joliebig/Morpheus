@@ -95,7 +95,6 @@ trait DefaultExtract extends Refactoring with Evaluation {
                     (true, a, List(features), List())
                 }
                 case Left(s) => {
-                    // TODO Correct Error Handling
                     logger.error(s)
                     writeError("Refactor Error:\n" + s, path + "ref")
                     if (depth < RETRIES) refactor(morpheus, depth + 1)

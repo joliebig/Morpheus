@@ -113,6 +113,7 @@ trait DefaultRename extends Refactoring with Evaluation {
             // writable. I'd rather see that we shuffle the list upfront and then only take elements one-by-one from it,
             // until the list is empty and then resort to nonRefactoredIds. Maybe use function shuffle of the random class
             // http://www.scala-lang.org/api/2.10.3/index.html#scala.util.Random$
+            // @jl i will rewrite this function.
             def getRandomID(depth: Int = 0): Id = {
                 if (FORCE_VARIABILITY && variableIds.size < depth)
                     return null
@@ -247,6 +248,7 @@ trait DefaultRename extends Refactoring with Evaluation {
         val foundTypes = mutable.Set[String]()
 
         // TODO @andreas: There is a lot of duplicated code here
+        // @JL i will rewrite this code.
         // Maybe rewrite the code to
         // def addConditional(c: Conditional[_], id: Id, ft: FeatureExpr = FeatureExprFactory.True): Unit = {
         //  c match {
