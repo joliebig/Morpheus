@@ -105,6 +105,7 @@ trait Verification extends Evaluation {
         }
     }
 
+    // TODO @andreas: return type List[List[SingleFeatureExpr]] -> List[SimpleConfiguration]
     def variabilityCoverage(existingConfigs: File, fm: FeatureModel, affectedFeatures: List[List[FeatureExpr]],
                             startCounter: Int = 0) = {
         var genCounter = startCounter

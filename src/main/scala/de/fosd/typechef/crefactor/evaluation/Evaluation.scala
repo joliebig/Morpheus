@@ -56,6 +56,8 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
     /** List of all features found in the currently processed file */
     var features: List[SingleFeatureExpr] = null
 
+
+    // TODO @andreas: remove this class and use SimpleConfiguration from subproject Sampling
     // representation of a product configuration that can be dumped into a file
     // and loaded at further runs
     class SimpleConfiguration(private val config: scala.collection.immutable.BitSet) extends scala.Serializable {
