@@ -103,6 +103,7 @@ trait Verification extends Evaluation {
 
     def variabilityCoverage(ff: FileFeatures, existingConfigs: File, fm: FeatureModel, affectedFeatures: List[List[FeatureExpr]],
                             startCounter: Int = 0)  = {
+        val generatedSimpleConfigurations = new scala.collection.mutable.TreeSet[SimpleConfiguration]
         var genCounter = startCounter
         logger.info("Loading from " + existingConfigs.getCanonicalPath + " following configs: " + existingConfigs.listFiles())
         existingConfigs.listFiles().flatMap(config => {
@@ -115,9 +116,19 @@ trait Verification extends Evaluation {
                         else {
                             val generated =
                                 genAllConfigVariantsForFeatures(
-                                    ff, enabledFeatures, singleAffectedFeatures, fm, genCounter).distinct
-                            genCounter += generated.size
-                            genConfigs ::: generated
+                                    ff, enabledFeatures, singleAffectedFeatures, fm, genCounter)
+
+                            val filteredGenerated =
+                                generated.flatMap(genConfig => {
+                                    if (!generatedSimpleConfigurations.contains(genConfig)) {
+                                        generatedSimpleConfigurations.add(genConfig)
+                                        Some(genConfig)
+                                    }
+                                    else None
+                                })
+
+                            genCounter += filteredGenerated.size
+                            genConfigs ::: filteredGenerated
                         }
                     })
                 Some(config, genConfigs)
