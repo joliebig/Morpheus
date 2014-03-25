@@ -136,7 +136,7 @@ trait Verification extends Evaluation {
         })
     }
 
-    private def genAllConfigVariantsForFeatures(ff: FileFeatures, enabledFeatures: List[SingleFeatureExpr],
+    private def genAllConfigVariantsForFeatures(ff: KnownFeatures, enabledFeatures: List[SingleFeatureExpr],
                                                 affectedFeatures: List[FeatureExpr], fm: FeatureModel,
                                                 startCounter: Int = 0): List[SimpleConfiguration] = {
 
