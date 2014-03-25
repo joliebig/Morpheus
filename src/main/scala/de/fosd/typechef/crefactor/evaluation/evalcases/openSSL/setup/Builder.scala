@@ -7,7 +7,7 @@ import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.OpenSSLEvaluation
 import de.fosd.typechef.featureexpr.{SingleFeatureExpr, FeatureModel}
 import java.nio.file.{Paths, Files}
 import scala.io.Source
-import de.fosd.typechef.{ConfigurationHandling, FileFeatures}
+import de.fosd.typechef.{TUnitFeatures, ConfigurationHandling}
 
 
 object Builder extends OpenSSLEvaluation with Building {
@@ -21,7 +21,7 @@ object Builder extends OpenSSLEvaluation with Building {
         val resultDir = new File(currentFile.getCanonicalPath.replace(evalName, "result") + "/")
         resultDir.mkdirs()
 
-        val fileFeatures = new FileFeatures(tunit)
+        val fileFeatures = new TUnitFeatures(tunit)
         val pairWiseConfigs = ConfigurationHandling.loadConfigurationsFromCSVFile(new File(pairWiseFeaturesFile), new File(featureModel_DIMACS), fileFeatures, fm)
 
         def buildAndTest(file: File, ext: String): Boolean = {
