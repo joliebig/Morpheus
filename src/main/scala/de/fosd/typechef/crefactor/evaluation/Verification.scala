@@ -5,7 +5,6 @@ import java.io.File
 import de.fosd.typechef.parser.c.TranslationUnit
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.{SimpleConfiguration, FileFeatures, ConfigurationHandling}
-import de.fosd.typechef
 
 trait Verification extends Evaluation {
 
@@ -39,7 +38,7 @@ trait Verification extends Evaluation {
         evaluateScriptResult(result)
     }
 
-    def writeConfig(config: typechef.SimpleConfiguration, dir: File, name: String): Unit = writeConfig(config.getTrueSet, dir, name)
+    def writeConfig(config: SimpleConfiguration, dir: File, name: String): Unit = writeConfig(config.getTrueSet, dir, name)
 
     def writeConfig(config: Set[SingleFeatureExpr], dir: File, name: String): Unit = writeConfig(config.toList, dir, name)
 
