@@ -2,9 +2,10 @@ package de.fosd.typechef.crefactor.evaluation
 
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, SingleFeatureExpr, FeatureExpr, FeatureModel}
 import java.io.File
-import de.fosd.typechef.parser.c.TranslationUnit
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
-import de.fosd.typechef.{SimpleConfiguration, FileFeatures, ConfigurationHandling}
+import de.fosd.typechef._
+import scala.Some
+import de.fosd.typechef.parser.c.TranslationUnit
 
 trait Verification extends Evaluation {
 
@@ -65,21 +66,20 @@ trait Verification extends Evaluation {
         val resultDir = getResultDir(originalFilePath)
 
         val existingConfigs = new File(existingConfigsDir)
-        val fileFeatures = new FileFeatures(tunit)
+        val tUnitFeatures = new TUnitFeatures(tunit)
 
-        val generatedConfigs = variabilityCoverage(fileFeatures, existingConfigs, fm, affectedFeatures)
+        val generatedConfigs = variabilityCoverage(existingConfigs, fm, affectedFeatures)
 
         if (generatedConfigs.size > maxConfigs) {
-            val ff = new FileFeatures(tunit)
             val codeCoverage =
-                ConfigurationHandling.configurationCoverage(tunit, fm, ff, List(), preferDisabledFeatures = false)
+                ConfigurationHandling.configurationCoverage(tunit, fm, tUnitFeatures, List(), preferDisabledFeatures = false)
             codeCoverage._1.foldLeft(0)((counter, coverageConf) => {
                 writeConfig(coverageConf, resultDir, counter + "coverage.config")
                 counter + 1
             })
 
             val pairWiseConfigs =
-                ConfigurationHandling.loadConfigurationsFromCSVFile(new File(pairWiseFeaturesFile), new File(featureModel_DIMACS), fileFeatures, fm, "CONFIG_")
+                ConfigurationHandling.loadConfigurationsFromCSVFile(new File(pairWiseFeaturesFile), new File(featureModel_DIMACS), tUnitFeatures, fm, "CONFIG_")
 
             var pairCounter = 0
 
@@ -100,7 +100,7 @@ trait Verification extends Evaluation {
         }
     }
 
-    def variabilityCoverage(ff: FileFeatures, existingConfigs: File, fm: FeatureModel, affectedFeatures: List[List[FeatureExpr]],
+    def variabilityCoverage(existingConfigs: File, fm: FeatureModel, affectedFeatures: List[List[FeatureExpr]],
                             startCounter: Int = 0)  = {
         val generatedSimpleConfigurations = new scala.collection.mutable.HashSet[SimpleConfiguration]
         var genCounter = startCounter
@@ -109,13 +109,14 @@ trait Verification extends Evaluation {
             if (genCounter > maxConfigs) None
             else {
                 val enabledFeatures = getEnabledFeaturesFromConfigFile(fm, config)
+                val confFeatures = new ConfigFeatures(enabledFeatures)
                 val genConfigs =
                     affectedFeatures.foldLeft(List[SimpleConfiguration]())((genConfigs, singleAffectedFeatures) => {
                         if (genCounter > maxConfigs) genConfigs
                         else {
                             val generated =
                                 genAllConfigVariantsForFeatures(
-                                    ff, enabledFeatures, singleAffectedFeatures, fm, genCounter)
+                                    confFeatures, enabledFeatures, singleAffectedFeatures, fm, genCounter)
 
                             val filteredGenerated =
                                 generated.flatMap(genConfig => {
