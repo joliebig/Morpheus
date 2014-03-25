@@ -4,7 +4,7 @@ import de.fosd.typechef.featureexpr.{FeatureExprFactory, SingleFeatureExpr, Feat
 import java.io.File
 import de.fosd.typechef.parser.c.TranslationUnit
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
-import de.fosd.typechef.{FileFeatures, ConfigurationHandling}
+import de.fosd.typechef.{SimpleConfiguration, FileFeatures, ConfigurationHandling}
 import de.fosd.typechef
 
 trait Verification extends Evaluation {
@@ -66,12 +66,9 @@ trait Verification extends Evaluation {
         val resultDir = getResultDir(originalFilePath)
 
         val existingConfigs = new File(existingConfigsDir)
-        //val pwConfig = ConfigurationHandling.buildConfigurationsPairwise(tunit, ff, fm, null, null, "busybox", List())
+        val fileFeatures = new FileFeatures(tunit)
 
-        // TOOD Ask Jörg move to config handling
-
-
-        val generatedConfigs = variabilityCoverage(existingConfigs, fm, affectedFeatures)
+        val generatedConfigs = variabilityCoverage(fileFeatures, existingConfigs, fm, affectedFeatures)
 
         if (generatedConfigs.size > maxConfigs) {
             val ff = new FileFeatures(tunit)
@@ -82,9 +79,8 @@ trait Verification extends Evaluation {
                 counter + 1
             })
 
-            initializeFeatureList(tunit)
             val pairWiseConfigs =
-                loadConfigurationsFromCSVFile(new File(pairWiseFeaturesFile), new File(featureModel_DIMACS), features, fm, "CONFIG_")
+                ConfigurationHandling.loadConfigurationsFromCSVFile(new File(pairWiseFeaturesFile), new File(featureModel_DIMACS), fileFeatures, fm, "CONFIG_")
 
             var pairCounter = 0
 
@@ -94,7 +90,7 @@ trait Verification extends Evaluation {
                 pairCounter += 1
             })
         } else {
-            generatedConfigs.distinct.foreach(genConfigs => {
+            generatedConfigs.foreach(genConfigs => {
                 var configNumber = 0
                 val name = genConfigs._1.getName
                 genConfigs._2.foreach(genConfig => {
@@ -105,9 +101,8 @@ trait Verification extends Evaluation {
         }
     }
 
-    // TODO @andreas: return type List[List[SingleFeatureExpr]] -> List[SimpleConfiguration]
-    def variabilityCoverage(existingConfigs: File, fm: FeatureModel, affectedFeatures: List[List[FeatureExpr]],
-                            startCounter: Int = 0) = {
+    def variabilityCoverage(ff: FileFeatures, existingConfigs: File, fm: FeatureModel, affectedFeatures: List[List[FeatureExpr]],
+                            startCounter: Int = 0)  = {
         var genCounter = startCounter
         logger.info("Loading from " + existingConfigs.getCanonicalPath + " following configs: " + existingConfigs.listFiles())
         existingConfigs.listFiles().flatMap(config => {
@@ -115,12 +110,12 @@ trait Verification extends Evaluation {
             else {
                 val enabledFeatures = getEnabledFeaturesFromConfigFile(fm, config)
                 val genConfigs =
-                    affectedFeatures.foldLeft(List[List[SingleFeatureExpr]]())((genConfigs, singleAffectedFeatures) => {
+                    affectedFeatures.foldLeft(List[SimpleConfiguration]())((genConfigs, singleAffectedFeatures) => {
                         if (genCounter > maxConfigs) genConfigs
                         else {
                             val generated =
                                 genAllConfigVariantsForFeatures(
-                                    enabledFeatures, singleAffectedFeatures, fm, genCounter).distinct
+                                    ff, enabledFeatures, singleAffectedFeatures, fm, genCounter).distinct
                             genCounter += generated.size
                             genConfigs ::: generated
                         }
@@ -130,9 +125,9 @@ trait Verification extends Evaluation {
         })
     }
 
-    private def genAllConfigVariantsForFeatures(enabledFeatures: List[SingleFeatureExpr],
+    private def genAllConfigVariantsForFeatures(ff: FileFeatures, enabledFeatures: List[SingleFeatureExpr],
                                                 affectedFeatures: List[FeatureExpr], fm: FeatureModel,
-                                                startCounter: Int = 0): List[List[SingleFeatureExpr]] = {
+                                                startCounter: Int = 0): List[SimpleConfiguration] = {
 
         val singleAffectedFeatures =
             affectedFeatures.flatMap(_.collectDistinctFeatureObjects.filterNot(
@@ -141,30 +136,31 @@ trait Verification extends Evaluation {
         logger.info("Single AffectedFeatures: " + singleAffectedFeatures.size)
 
         // default start config, it all starts from this config
-        val startConfig = List(enabledFeatures)
+
+        val startConfig = new SimpleConfiguration(ff, enabledFeatures, List())
         var genCounter = startCounter
         var wrongCounter = 0
 
         // iterate over every affected feature and activate or deactivate it on all configs and generated configes
-        singleAffectedFeatures.foldLeft(startConfig)((configs, singleAffectFeature) => {
+        singleAffectedFeatures.foldLeft(List(startConfig))((configs, singleAffectFeature) => {
             if (genCounter > maxConfigs) return configs
             logger.info("Generating configs for single affected feature: " + singleAffectFeature)
             configs ::: configs.flatMap(config => {
                 if (genCounter > maxConfigs) None
                 else {
                     val genTime = new StopClock
-                    var generatedConfig: List[SingleFeatureExpr] = List()
-                    if (config.contains(singleAffectFeature)) generatedConfig = config.diff(List(singleAffectFeature))
-                    else generatedConfig = singleAffectFeature :: config
+                    val genTrueSet: List[SingleFeatureExpr] =
+                        if (config.trueSet.contains(singleAffectFeature)) config.trueSet.diff(List(singleAffectFeature))
+                        else singleAffectFeature :: config.trueSet
 
-                    val generatedFeatureExpr = generatedConfig.foldLeft(FeatureExprFactory.True)((fExpr, singleFxpr) => {
+                    val generatedFeatureExpr = genTrueSet.foldLeft(FeatureExprFactory.True)((fExpr, singleFxpr) => {
                         fExpr.and(singleFxpr)
                     })
 
                     if (generatedFeatureExpr.isSatisfiable(fm)) {
                         genCounter += 1
                         logger.info("Generated config number: " + genCounter + " in " + genTime.getTime + "ms.")
-                        Some(generatedConfig.sortBy(_.feature))
+                        Some(new SimpleConfiguration(ff, genTrueSet, List()))
                     }
                     else {
                         wrongCounter += 1

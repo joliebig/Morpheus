@@ -1,14 +1,14 @@
 package de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.setup
 
 import de.fosd.typechef.crefactor.evaluation.setup.Building
-import de.fosd.typechef.parser.c.AST
+import de.fosd.typechef.parser.c.TranslationUnit
 import java.io.File
 import de.fosd.typechef.crefactor.evaluation.sqlite.SQLiteEvaluation
 import de.fosd.typechef.featureexpr.FeatureModel
 
 
 object Builder extends SQLiteEvaluation with Building {
-    def canBuild(ast: AST, fm: FeatureModel, file: String): Boolean = {
+    def canBuild(tunit: TranslationUnit, fm: FeatureModel, file: String): Boolean = {
         val currentFile = new File(file)
         // clean dir first
         runScript("./clean.sh", sourcePath)
@@ -30,10 +30,10 @@ object Builder extends SQLiteEvaluation with Building {
         runScript("./clean.sh", sourcePath)
 
         // write AST in current result dir
-        writePrettyPrintedTUnit(ast, refFile.getCanonicalPath)
+        writePrettyPrintedTUnit(tunit, refFile.getCanonicalPath)
         println("+++ Saving result to: " + refFile.getPath)
         println("+++ Updating file: " + currentFile.getCanonicalPath)
-        writePrettyPrintedTUnit(ast, currentFile.getCanonicalPath)
+        writePrettyPrintedTUnit(tunit, currentFile.getCanonicalPath)
 
         val ppp = buildAndTest(currentFile, "_ppp")
 

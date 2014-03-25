@@ -1,6 +1,6 @@
 package de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.building
 
-import de.fosd.typechef.parser.c.AST
+import de.fosd.typechef.parser.c.TranslationUnit
 import java.io.File
 import de.fosd.typechef.crefactor.evaluation.setup.Building
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.BusyBoxEvaluation
@@ -8,7 +8,7 @@ import de.fosd.typechef.featureexpr.FeatureModel
 
 object Builder extends BusyBoxEvaluation with Building {
 
-    def canBuild(ast: AST, fm: FeatureModel, file: String): Boolean = {
+    def canBuild(tunit: TranslationUnit, fm: FeatureModel, file: String): Boolean = {
         val currentFile = new File(file)
 
         // clean dir first
@@ -19,8 +19,8 @@ object Builder extends BusyBoxEvaluation with Building {
         resultDir.mkdirs()
 
         // write AST in current result dir
-        writePrettyPrintedTUnit(ast, refFile.getCanonicalPath.replace(".pi", ".c"))
-        writePrettyPrintedTUnit(ast, currentFile.getCanonicalPath)
+        writePrettyPrintedTUnit(tunit, refFile.getCanonicalPath.replace(".pi", ".c"))
+        writePrettyPrintedTUnit(tunit, currentFile.getCanonicalPath)
 
         def buildAndTest(busyBoxFile: File, ext: String): (Boolean, String) = {
             val buildResult = build

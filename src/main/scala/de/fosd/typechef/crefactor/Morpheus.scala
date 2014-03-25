@@ -122,7 +122,6 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
             map.get(key).filter { entry => getASTEnv.featureExpr(entry) and getASTEnv.featureExpr(key) isSatisfiable getFM }
     }
 
-
     private def getExternalVariableReferences(ids: List[Id], getReferences: (Id) => List[Id]) = {
         ids.flatMap(id => {
             if (!isPartOfFuncCall(id)) {

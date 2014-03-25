@@ -5,7 +5,7 @@ import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.featureexpr.FeatureModel
 import de.fosd.typechef.options.{RefactorType, FrontendOptions, OptionException, FrontendOptionsWithConfigFiles}
-import de.fosd.typechef.{lexer, ErrorXML}
+import de.fosd.typechef.lexer
 import java.io._
 import de.fosd.typechef.parser.TokenReader
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
@@ -151,7 +151,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
 
         tUnit
     }
-    private def testBuildingAndTesting(ast: AST, fm: FeatureModel, opt: FrontendOptions) {
+    private def testBuildingAndTesting(tunit: TranslationUnit, fm: FeatureModel, opt: FrontendOptions) {
         val builder: Building = {
             if (opt.getRefStudy.equalsIgnoreCase("busybox")) de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.building.Builder
             else if (opt.getRefStudy.equalsIgnoreCase("openssl")) de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.setup.Builder
@@ -159,7 +159,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
             else null
         }
 
-        val canBuild = builder.canBuild(ast, fm, opt.getFile)
+        val canBuild = builder.canBuild(tunit, fm, opt.getFile)
         logger.info("Can build " + new File(opt.getFile).getName + " : " + canBuild)
     }
     private def refactorEval(opt: FrontendOptions, tunit: TranslationUnit,
