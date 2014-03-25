@@ -1,18 +1,18 @@
 package de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.setup
 
 import de.fosd.typechef.crefactor.evaluation.setup.Building
-import de.fosd.typechef.parser.c.AST
+import de.fosd.typechef.parser.c.TranslationUnit
 import java.io.File
 import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.OpenSSLEvaluation
 import de.fosd.typechef.featureexpr.{SingleFeatureExpr, FeatureModel}
 import java.nio.file.{Paths, Files}
 import scala.io.Source
+import de.fosd.typechef.{ConfigurationHandling, FileFeatures}
 
 
 object Builder extends OpenSSLEvaluation with Building {
 
-
-    def canBuild(ast: AST, fm: FeatureModel, file: String): Boolean = {
+    def canBuild(tunit: TranslationUnit, fm: FeatureModel, file: String): Boolean = {
         val currentFile = new File(file)
         // clean dir first
         runScript("./clean.sh", sourcePath)
@@ -21,8 +21,8 @@ object Builder extends OpenSSLEvaluation with Building {
         val resultDir = new File(currentFile.getCanonicalPath.replace(evalName, "result") + "/")
         resultDir.mkdirs()
 
-        initializeFeatureList(ast)
-        val pairWiseConfigs = loadConfigurationsFromCSVFile(new File(pairWiseFeaturesFile), new File(featureModel_DIMACS), features, fm)
+        val fileFeatures = new FileFeatures(tunit)
+        val pairWiseConfigs = ConfigurationHandling.loadConfigurationsFromCSVFile(new File(pairWiseFeaturesFile), new File(featureModel_DIMACS), fileFeatures, fm)
 
         def buildAndTest(file: File, ext: String): Boolean = {
             val dir = new File(resultDir.getCanonicalPath + "/" + ext)
@@ -103,10 +103,10 @@ object Builder extends OpenSSLEvaluation with Building {
         runScript("./clean.sh", sourcePath)
 
         // write AST in current result dir
-        writePrettyPrintedTUnit(ast, refFile.getCanonicalPath)
+        writePrettyPrintedTUnit(tunit, refFile.getCanonicalPath)
         println("+++ Saving result to: " + refFile.getPath)
         println("+++ Updating file: " + currentFile.getCanonicalPath.replace(".pi", ".c"))
-        writePrettyPrintedTUnit(ast, currentFile.getCanonicalPath.replace(".pi", ".c"))
+        writePrettyPrintedTUnit(tunit, currentFile.getCanonicalPath.replace(".pi", ".c"))
 
         val ppp = buildAndTest(currentFile, "_ppp")
 
