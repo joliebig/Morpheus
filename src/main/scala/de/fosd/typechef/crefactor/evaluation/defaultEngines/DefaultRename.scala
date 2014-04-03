@@ -102,10 +102,10 @@ trait DefaultRename extends Refactoring with Evaluation {
             }
 
             val randomIDs =
-                if (FORCE_VARIABILITY) Random.shuffle(variableIds).toList
-                else Random.shuffle(nonRefactoredIds).toList
+                if (FORCE_VARIABILITY) Random.shuffle(variableIds.toList)
+                else Random.shuffle(nonRefactoredIds.toList)
 
-            def getRandomID(randomIds :List[Id]) : Id = {
+            def getRandomID(randomIds : List[Id]) : Id = {
                 randomIDs match {
                     case Nil => null
                     case headId :: tail =>
