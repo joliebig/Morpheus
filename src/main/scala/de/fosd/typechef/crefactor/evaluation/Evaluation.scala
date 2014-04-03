@@ -9,6 +9,7 @@ import de.fosd.typechef.crefactor.{Morpheus, Logging}
 import java.util.{TimerTask, Timer, IdentityHashMap}
 import de.fosd.typechef.crefactor.evaluation.setup.BuildCondition
 import de.fosd.typechef.typesystem.linker.SystemLinker
+import de.fosd.typechef.conditional.Opt
 
 trait Evaluation extends Logging with BuildCondition with ASTNavigation with ConditionalNavigation {
 
@@ -361,5 +362,20 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
         arg + " " + filterArgs + dFeatures.map(feature => "-D" + feature).mkString(" ")
     }
 
-    def isSystemLinkedName(name : String) = SystemLinker.allLibs.par.contains(name)
+    def isSystemLinkedName(name: String) = SystemLinker.allLibs.par.contains(name)
+
+    def isExternalVariable(id: Id, morpheus: Morpheus): Boolean = {
+        if ((morpheus.getModuleInterface != null)
+            && morpheus.getModuleInterface.isListed(Opt(parentOpt(id, morpheus.getASTEnv).feature, id.name), morpheus.getFM))
+            false
+        else
+            morpheus.getDecls(id).exists(
+                findPriorASTElem[Declaration](_, morpheus.getASTEnv) match {
+                    case Some(entry) => entry.declSpecs.exists(_.entry match {
+                        case ExternSpecifier => true
+                        case _ => false
+                    })
+                    case _ => false
+                })
+    }
 }
