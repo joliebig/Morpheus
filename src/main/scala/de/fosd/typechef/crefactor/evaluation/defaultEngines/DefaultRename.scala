@@ -254,9 +254,7 @@ trait DefaultRename extends Refactoring with Evaluation {
         val foundTypes = ids.flatMap(id => {
             try {
                 // only lookup variables
-                val count = traverseTypesAndCount(morpheus.getEnv(id.entry).varEnv.lookup(id.entry.name), id.entry)
-                if (count.isEmpty) None
-                else Some(count)
+                traverseTypesAndCount(morpheus.getEnv(id.entry).varEnv.lookup(id.entry.name), id.entry)
             } catch {
                 case _: Throwable => Some("TypeDef")
             }
