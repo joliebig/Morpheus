@@ -72,7 +72,7 @@ trait Verification extends Evaluation {
 
         if (generatedConfigs.size > maxConfigs) {
             val codeCoverage =
-                ConfigurationHandling.configurationCoverage(tunit, fm, tUnitFeatures, List(), preferDisabledFeatures = false)
+                ConfigurationHandling.codeCoverage(tunit, fm, tUnitFeatures, List(), preferDisabledFeatures = false)
             codeCoverage._1.foldLeft(0)((counter, coverageConf) => {
                 writeConfig(coverageConf, resultDir, counter + "coverage.config")
                 counter + 1
