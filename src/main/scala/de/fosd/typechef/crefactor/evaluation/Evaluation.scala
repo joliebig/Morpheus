@@ -364,7 +364,7 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
 
     def isSystemLinkedName(name: String) = SystemLinker.allLibs.par.contains(name)
 
-    def isExternalVariable(id: Id, morpheus: Morpheus): Boolean = {
+    def isExternalDeclWithNoLinkingInformation(id: Id, morpheus: Morpheus): Boolean = {
         if ((morpheus.getModuleInterface != null)
             && morpheus.getModuleInterface.isListed(Opt(parentOpt(id, morpheus.getASTEnv).feature, id.name), morpheus.getFM))
             false
