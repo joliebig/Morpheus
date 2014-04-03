@@ -372,7 +372,7 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
             morpheus.getDecls(id).exists(
                 findPriorASTElem[Declaration](_, morpheus.getASTEnv) match {
                     case Some(entry) => entry.declSpecs.exists(_.entry match {
-                        case ExternSpecifier => true
+                        case ExternSpecifier() => true
                         case _ => false
                     })
                     case _ => false
