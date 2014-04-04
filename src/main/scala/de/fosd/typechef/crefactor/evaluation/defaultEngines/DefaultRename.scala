@@ -72,7 +72,7 @@ trait DefaultRename extends Refactoring with Evaluation {
             def isValidId(id: Id): Boolean = !id.name.contains("_main") && !isSystemLinkedName(id.name) && {
                 if (moduleInterface != null) !(moduleInterface.isBlackListed(id.name) || renameLink.contains(id.name))
                 else true
-            }  && !isExternalDeclWithNoLinkingInformation(id, morpheus)
+            } && !isExternalDeclWithNoLinkingInformation(id, morpheus)
 
             // TODO Fix Bug in OpenSSL for functions without body
             // We check the writable property here already in order to maximize the number of possible refactorings.
