@@ -104,12 +104,12 @@ trait DefaultRename extends Refactoring with Evaluation {
                 if (FORCE_VARIABILITY) Random.shuffle(variableIds.toList)
                 else Random.shuffle(nonRefactoredIds.toList)
 
-            def getRandomID(randomIds : List[Id]) : Id = {
-                randomIDs match {
+            def getRandomID(ids : List[Id]) : Id = {
+                ids match {
                     case Nil => null
                     case headId :: tail =>
                         if (isWritable(headId)) headId
-                        else getRandomID(randomIDs.tail) // TODO ASK Jörg why tail does not match.
+                        else getRandomID(ids)
                 }
             }
 
