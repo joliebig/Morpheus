@@ -109,7 +109,7 @@ trait DefaultRename extends Refactoring with Evaluation {
                     case Nil => null
                     case headId :: tail =>
                         if (isWritable(headId)) headId
-                        else getRandomID(tail.tail) // TODO ASK Jörg why tail does not match.
+                        else getRandomID(randomIDs.tail) // TODO ASK Jörg why tail does not match.
                 }
             }
 
