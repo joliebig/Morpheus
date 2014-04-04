@@ -16,7 +16,6 @@ import scala.Some
 import de.fosd.typechef.parser.c.TranslationUnit
 import de.fosd.typechef.typesystem.CUnknown
 import de.fosd.typechef.typesystem.CFunction
-import de.fosd.typechef.conditional.One
 import de.fosd.typechef.parser.c.Id
 import de.fosd.typechef.conditional.Opt
 import scala.util.Random
@@ -233,13 +232,13 @@ trait DefaultRename extends Refactoring with Evaluation {
         def traverseTypesAndCount(c: Conditional[_], id: Id) = {
             val tautTypes = ConditionalLib.items(c).filter { entry => entry._1.isTautology(morpheus.getFM) }
             tautTypes.map(_._2).flatMap({
-                case o@One((CUnknown(_), _, _)) =>
-                    logger.warn("Unknown Type " + id + " " + o)
+                case c@(CUnknown(_), _, _) =>
+                    logger.warn("Is unkown " + id + " " + c)
                     None
-                case One((CFunction(_, _), _, _)) => Some("FunctionName")
-                case One((CType(CFunction(_, _), _, _, _), _, _, _)) => Some("FunctionName")
-                case One((_, KEnumVar, _, _)) => Some("Enum")
-                case One((CType(_, _, _, _), _, _, _)) => Some("Variable")
+                case (CFunction(_, _), _, _) => Some("FunctionName")
+                case (CType(CFunction(_, _), _, _, _), _, _, _) => Some("FunctionName")
+                case (_, KEnumVar, _, _) => Some("Enum")
+                case (CType(_, _, _, _), _, _, _) => Some("Variable")
                 case o =>
                     logger.warn("Unknown Type " + id + " " + o)
                     None
