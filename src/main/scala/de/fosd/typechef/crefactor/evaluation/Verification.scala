@@ -109,7 +109,7 @@ trait Verification extends Evaluation {
             if (genCounter > maxConfigs) None
             else {
                 val enabledFeatures = getEnabledFeaturesFromConfigFile(fm, config)
-                val confFeatures = new ConfigFeatures(enabledFeatures)
+                val confFeatures = new ConfigFeatures(getAllFeaturesFromConfigFile(fm, config)._1)
                 val genConfigs =
                     affectedFeatures.foldLeft(List[SimpleConfiguration]())((genConfigs, singleAffectedFeatures) => {
                         if (genCounter > maxConfigs) genConfigs
