@@ -322,7 +322,7 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
                 }
             }
         }
-        (trueFeatures.toList, assignValues)
+        ((trueFeatures ++ falseFeatures).toList, assignValues)
     }
 
     def constantSlice[T](list: List[T], start: Int, end: Int) = list.drop(start).take(end - start)
