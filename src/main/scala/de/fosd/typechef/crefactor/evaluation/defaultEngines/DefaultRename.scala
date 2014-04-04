@@ -105,6 +105,7 @@ trait DefaultRename extends Refactoring with Evaluation {
                 else Random.shuffle(nonRefactoredIds.toList)
 
             def getRandomID(randomIds : List[Id]) : Id = {
+                logger.info(randomIds.size)
                 randomIDs match {
                     case Nil => null
                     case headId :: tail =>
