@@ -114,13 +114,12 @@ trait DefaultRename extends Refactoring with Evaluation {
             }
 
             val id = getRandomID(randomIDs)
-
+            logger.info("Run " + run + ": Found Id: " + id)
             if (id == null)
                 return null
 
             val associatedIds = morpheus.getReferences(id)
             addType(associatedIds, morpheus, run)
-            logger.info("Run " + run + ": Found Id: " + id)
             (id, associatedIds.length, associatedIds.map(id => morpheus.getASTEnv.featureExpr(id.entry)).distinct)
         }
 
