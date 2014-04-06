@@ -1,13 +1,13 @@
 package de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5
 
 import java.io.{FilenameFilter, File}
-import de.fosd.typechef.featureexpr.FeatureModel
+import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
 import de.fosd.typechef.crefactor.evaluation.{StatsCan, Verification}
 import de.fosd.typechef.crefactor.evaluation.Stats._
 
 object BusyBoxVerification extends BusyBoxEvaluation with Verification {
 
-    override def verify(evalFile: String, fm: FeatureModel, mode: String): Unit = {
+    override def verify(evalFile: String, fm: FeatureModel, mode: String, affectedFeatures : List[FeatureExpr] = List()): Unit = {
         val resultDir = new File(evalFile.replaceAll(evalName, "result"))
         val configs = resultDir.listFiles(new FilenameFilter {
             def accept(input: File, file: String): Boolean = file.endsWith(".config")

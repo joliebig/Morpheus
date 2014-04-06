@@ -24,7 +24,7 @@ object OpenSSLRefactor extends OpenSSLEvaluation with Refactor {
         val path = resultDir.getCanonicalPath + File.separatorChar
         val resDir = new File(path)
         resDir.mkdirs()
-        if (tunit == null) println("+++ AST is null! +++")
+        if (tunit == null) println("+++ TUNIT is null! +++")
         else if (blackListFiles.exists(getFileName(file).equalsIgnoreCase)) println("+++ File is blacklisted and cannot be build +++")
         else {
             try {
