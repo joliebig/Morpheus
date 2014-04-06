@@ -131,7 +131,6 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         else if (!selection.par.forall(checkAstElemForCFGDisruption(_, selection, morpheus))) false
         else if (hasIdsWithDifferentScope(selection, morpheus)) false
         else if (hasInvisibleEnumerations(selection, morpheus)) false
-        // else if (!isConditionalComplete(selection, getParentFunction(selection, morpheus), morpheus)) false // Not Relevant?
         else true
     }
 
@@ -537,7 +536,10 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                     val declarator = getDeclartor(declDeclPointerMap.get(decl))
                     val paramDecl = Opt(feature, ParameterDeclarationD(filteredDeclSpecs,
                         declarator, List()))
-                    val expr = Opt(feature, PointerCreationExpr(Id(id.name)))
+                    val expr =  {
+                        if (isArray(id, morpheus)) Opt(feature, Id(id.name))
+                        else Opt(feature, PointerCreationExpr(Id(id.name)))
+                    }
                     Some((paramDecl, expr, id))
             }
         })
@@ -570,17 +572,32 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
     private def genCompoundStatement(statements: List[Opt[Statement]], externalRef: List[Id],
                                      parameters: List[Id], morpheus: Morpheus): CompoundStatement = {
-        def isPartOfParameter(id: Id, morpheus: Morpheus): Boolean = {
-            if (!morpheus.isInUseDeclMap(id)) false
-            morpheus.getDecls(id).exists(decl => parameters.exists(param => param.eq(decl)))
-        }
-
-        val variables = externalRef.par.filter(isPartOfParameter(_, morpheus))
+        val variables = externalRef.par.filter(isPartOfParameter(_, parameters, morpheus)).filter(!isArray(_, morpheus))
 
         // transform input ids into pointer expressions
         val idsAsPointer = variables.foldLeft(statements)((curStatements, id) =>
             replaceInAST(curStatements, id, PointerDerefExpr(id)))
         CompoundStatement(idsAsPointer)
+    }
+
+    private def isPartOfParameter(id: Id, parameters: List[Id], morpheus: Morpheus): Boolean = {
+        if (!morpheus.isInUseDeclMap(id)) false
+        morpheus.getDecls(id).exists(decl => parameters.exists(param => param.eq(decl)))
+    }
+
+    private def isArray(id: Id, morpheus: Morpheus) : Boolean = {
+        if (!morpheus.isInUseDeclMap(id)) {
+            findPriorASTElem[Declarator](id, morpheus.getASTEnv) match {
+                case Some(entry) => entry.extensions.exists { extension =>
+                    extension.entry match {
+                        case d: DeclArrayAccess => true
+                        case _ => false
+                    }
+                }
+                case _ => false
+            }
+        }
+        else morpheus.getDecls(id).exists(isArray(_, morpheus))
     }
 
     private def isElementOfEqCompStmt(element: AST, compStmt: CompoundStatement, morpheus: Morpheus) =
