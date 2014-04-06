@@ -7,20 +7,32 @@ import java.io.File
 
 object OpenSSLVerification extends OpenSSLEvaluation with Verification {
 
-    override def verify(evalFile: String, fm: FeatureModel, mode: String, affectedFeatures : List[FeatureExpr] = List()) = {
+    override def verify(evalFile: String, fm: FeatureModel, mode: String, affectedFeatures: List[FeatureExpr] = List()) = {
         val resultDir = new File(evalFile.replaceAll(evalName, "result") + "/" + mode + "/")
         if (!resultDir.exists) resultDir.mkdirs
 
-        val buildResult = build
+        // Default Config
+        buildAndTestOpenSSL(resultDir, "", -1, mode)
+
+        // Affected Configs // TODO Sampling
+        affectedFeatures.zipWithIndex.foreach {
+            case (singleFexpr, i) => buildAndTestOpenSSL(resultDir, singleFexpr.collectDistinctFeatures.mkString(" "), i, mode)
+        }
+
+    }
+
+    private def buildAndTestOpenSSL(resultDir: File, features: String, run: Int, mode: String) = {
+        val result = runScript(buildScript, sourcePath, features, runTimeout)
+        val buildResult = evaluateScriptResult(result)
         val testResult = test
 
-        writeResult(buildResult._2, resultDir.getCanonicalPath + "/" + "build")
-        if (!buildResult._1) writeResult(buildResult._3, resultDir.getCanonicalPath + "/" + "buildErr")
+        writeResult(buildResult._2, resultDir.getCanonicalPath + "/" + run + mode + ".build")
+        if (!buildResult._1) writeResult(buildResult._3, resultDir.getCanonicalPath + "/" + run + mode + "buildErr")
 
-        writeResult(testResult._2, resultDir.getCanonicalPath + "/" + "test")
-        if (!testResult._1) writeResult(testResult._3, resultDir.getCanonicalPath + "/" + "testError")
+        writeResult(testResult._2, resultDir.getCanonicalPath + "/" + run + mode + "test")
+        if (!testResult._1) writeResult(testResult._3, resultDir.getCanonicalPath + "/" + run + mode + "testError")
 
-        writeResult((testResult._1 && buildResult._1).toString, resultDir.getCanonicalPath + "/" + "result")
+        writeResult((testResult._1 && buildResult._1).toString, resultDir.getCanonicalPath + "/" + run + mode + "result")
     }
 
 }
