@@ -13,7 +13,7 @@ trait Verification extends Evaluation {
     val testScript: String = "./runtest.sh"
     val cleanScript: String = "./clean.sh"
 
-    def verify(evalFile: String, fm: FeatureModel, mode: String) = {
+    def verify(evalFile: String, fm: FeatureModel, mode: String, affectedFeatures : List[FeatureExpr] = List()) = {
         val resultDir = new File(evalFile.replaceAll(evalName, "result") + "/" + mode + "/")
         if (!resultDir.exists) resultDir.mkdirs
 
@@ -41,9 +41,9 @@ trait Verification extends Evaluation {
 
     def writeConfig(config: SimpleConfiguration, dir: File, name: String): Unit = writeConfig(config.getTrueSet, dir, name)
 
-    def writeConfig(config: Set[SingleFeatureExpr], dir: File, name: String): Unit = writeConfig(config.toList, dir, name)
+    def writeConfig(config: Set[SingleFeatureExpr], dir: File, name: String): Unit = writeKConfig(config.toList, dir, name)
 
-    def writeConfig(config: List[SingleFeatureExpr], dir: File, name: String) {
+    def writeKConfig(config: List[SingleFeatureExpr], dir: File, name: String) {
         val out = new java.io.FileWriter(dir.getCanonicalPath + File.separatorChar + name)
         val disabledFeatures = allFeatures._1.diff(config)
         config.foreach(feature => {
