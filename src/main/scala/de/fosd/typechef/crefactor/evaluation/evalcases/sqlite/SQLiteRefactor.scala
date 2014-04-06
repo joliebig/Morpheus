@@ -38,7 +38,9 @@ object SQLiteRefactor extends SQLiteEvaluation with Refactor {
                     write(result._2, morpheus.getFile)
                     val time = new StopClock
                     StatsCan.addStat(file, AffectedFeatures, result._2)
-                    SQLiteVerification.verify(morpheus.getFile, morpheus.getFM, "first")
+                    SQLiteVerification.verify(morpheus.getFile, morpheus.getFM, "_ref")
+                    runScript("./clean.sh", sourcePath)
+                    SQLiteVerification.verify(morpheus.getFile, morpheus.getFM, "_org")
                     runScript("./clean.sh", sourcePath)
                     StatsCan.addStat(file, TestingTime, time.getTime)
                 } else writeError("Could not engine file.", path)
