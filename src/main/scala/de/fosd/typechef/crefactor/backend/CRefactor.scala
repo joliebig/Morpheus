@@ -126,7 +126,7 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
     }
 
     /**
-     * Replace a list of ids in AST with copied instance with new names.
+     * Replace a list of ids in AST with copied instance with as pointer.
      */
     def replaceIdsWithPointers[T <: Product](t: T, ids: List[Id]): T = {
         val r = manybu(rule {
