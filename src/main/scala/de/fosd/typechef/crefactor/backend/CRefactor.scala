@@ -210,6 +210,13 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         r(t).get.asInstanceOf[T]
     }
 
+    def replaceCompoundStatementInTUnit[T <: Product](t: T, mark: CompoundStatement, replace: CompoundStatement)(implicit m: Manifest[T]): T = {
+        val r = manybu(rule {
+            case c: CompoundStatement => if (c eq mark) replace else c
+        })
+        r(t).get.asInstanceOf[T]
+    }
+
     def replaceInAST[T <: Product](t: T, e: Id, n: Expr)(implicit m: Manifest[T]): T = {
         val r = manybu(rule {
             case i: Id => if (isPartOf(i, e)) n else i
@@ -253,7 +260,7 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         parent.entry match {
             case f: FunctionDef => replaceInASTOnceTD(morpheus.getTranslationUnit, parent,
                 parent.copy(entry = f.copy(stmt = workingCallCompStmt)))
-            case c: CompoundStatement => replaceInAST(morpheus.getTranslationUnit, c,
+            case c: CompoundStatement => replaceCompoundStatementInTUnit(morpheus.getTranslationUnit, c,
                 c.copy(innerStatements = workingCallCompStmt.innerStatements))
                 .asInstanceOf[TranslationUnit]
             case x =>
