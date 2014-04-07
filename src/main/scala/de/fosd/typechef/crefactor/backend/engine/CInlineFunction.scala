@@ -62,9 +62,9 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
      * @param rename indicates if variables should be renamed
      * @return the refactored tunit
      */
-    def inline(morpheus: Morpheus, id: Id, rename: Boolean, once: Boolean = false):
+    def inline(morpheus: Morpheus, id: Id, rename: Boolean, keepDeclaration : Boolean):
     Either[String, TranslationUnit] = {
-        val (fCalls, _, fDefs, callExpr) = divideCallDeclDef(id, morpheus)
+        val (fCalls, fDecls, fDefs, callExpr) = divideCallDeclDef(id, morpheus)
 
         if (fDefs.isEmpty)
             Left("Inlining of external function definitions is not supported.")
@@ -77,13 +77,19 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                 (curTunit, expr) => inlineFuncCallExpr(curTunit,
                     new Morpheus(curTunit, morpheus.getFM), expr, fDefs, rename))
 
+        // Remove old definition and declarations (note may cause linking error)
+        if (!keepDeclaration) {
+            tunitRefactored = fDefs.foldLeft(tunitRefactored)((workingAST, x) => removeFromAST(workingAST, x))
+            tunitRefactored = fDecls.foldLeft(tunitRefactored)((workingAST, x) => removeFromAST(workingAST, x))
+        }
+
         Right(tunitRefactored)
     }
 
     def divideCallDeclDef(callId: Id, morpheus: Morpheus): (List[Opt[Statement]], List[Opt[AST]],
         List[Opt[FunctionDef]], List[Opt[AST]]) = {
         var fCallStmts = List[Opt[Statement]]()
-        var decls = List[Opt[AST]]()
+        var fDecls = List[Opt[AST]]()
         var fDefs = List[Opt[FunctionDef]]()
         var fCallExprs = List[Opt[AST]]()
 
@@ -96,20 +102,20 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                 case _: FunctionDef => fDefs ::= parent.asInstanceOf[Opt[FunctionDef]]
                 case iI: InitDeclaratorI =>
                     iI.i match {
-                        case None => decls ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[AST]]
+                        case None => fDecls ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[AST]]
                         case _ => parentAST(parentAST(id, morpheus.getASTEnv), morpheus.getASTEnv) match {
                             case a: ArrayAccess => println("array " + a + " " + parent) // TODO ArrayAccess
                             case _ => fCallStmts ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[DeclarationStatement]]
                         }
                     }
-                case _: InitDeclaratorE => decls ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[AST]]
+                case _: InitDeclaratorE => fDecls ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[AST]]
                 case _: Expr => fCallExprs ::= parent.asInstanceOf[Opt[AST]]
                 case _: NArySubExpr => fCallExprs ::= parent.asInstanceOf[Opt[AST]]
                 case _ => assert(false, "Invalid function found!")
             }
         })
 
-        (fCallStmts, decls, fDefs, fCallExprs)
+        (fCallStmts, fDecls, fDefs, fCallExprs)
     }
 
     private def getFunctionIdentifier(function: AST, astEnv: ASTEnv): Id = {

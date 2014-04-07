@@ -8,8 +8,9 @@ public class CInlineDialog extends JDialog {
     private JButton buttonOK;
     private JButton buttonCancel;
     private JCheckBox renameIDs;
+    private JCheckBox keepFunctionDecls;
     private boolean rename = false;
-    private boolean once = false;
+    private boolean keepDeclartions = false;
     private boolean refactor = false;
 
     public CInlineDialog() {
@@ -45,6 +46,7 @@ public class CInlineDialog extends JDialog {
 
     private void onOK() {
         rename = renameIDs.isSelected();
+        keepDeclartions = keepFunctionDecls.isSelected();
         refactor = true;
         dispose();
     }
@@ -57,18 +59,11 @@ public class CInlineDialog extends JDialog {
         return refactor;
     }
 
-    public boolean isOnce() {
-        return once;
+    public boolean isKeepDeclarations() {
+        return keepDeclartions;
     }
 
     public boolean isRename() {
         return rename;
-    }
-
-    public static void main(String[] args) {
-        CInlineDialog dialog = new CInlineDialog();
-        dialog.pack();
-        dialog.setVisible(true);
-        System.exit(0);
     }
 }
