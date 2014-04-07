@@ -92,7 +92,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 case s: Some[Statement] =>
                     uniqueSelectedStatements.add(s.get)
                     uniqueSelectedStatements.add(lookupControlStatements(s.get))
-                case x => logger.info("There may have been an expression! " + x)
+                case x => // logger.info("There may have been an expression! " + x)
             }
         })
 
