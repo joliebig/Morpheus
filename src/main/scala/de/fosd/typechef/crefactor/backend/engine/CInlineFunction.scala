@@ -8,7 +8,7 @@ import de.fosd.typechef.typesystem._
 import de.fosd.typechef.conditional._
 import scala._
 import scala.Some
-import de.fosd.typechef.crefactor.frontend.util.Selection
+import de.fosd.typechef.crefactor.frontend.util.CodeSelection
 import de.fosd.typechef.crewrite.IntraCFG
 
 /**
@@ -16,7 +16,7 @@ import de.fosd.typechef.crewrite.IntraCFG
  */
 object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
 
-    def getSelectedElements(morpheus: Morpheus, selection: Selection): List[AST] = {
+    def getSelectedElements(morpheus: Morpheus, selection: CodeSelection): List[AST] = {
         val functions = (filterASTElems[FunctionDef](morpheus.getTranslationUnit) :::
             filterASTElems[FunctionCall](morpheus.getTranslationUnit) :::
             filterAllASTElems[NestedFunctionDef](morpheus.getTranslationUnit)).filter(isSelected(_, morpheus.getASTEnv, selection))
@@ -24,12 +24,12 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
         filterASTElementsForFile(functions, selection.getFilePath).sortWith(comparePosition)
     }
 
-    def getAvailableIdentifiers(morpheus: Morpheus, selection: Selection): List[Id] = {
+    def getAvailableIdentifiers(morpheus: Morpheus, selection: CodeSelection): List[Id] = {
         val ids = getSelectedElements(morpheus, selection).map(getFunctionIdentifier(_, morpheus.getASTEnv))
         ids.sortWith(comparePosition)
     }
 
-    def isAvailable(morpheus: Morpheus, selection: Selection): Boolean =
+    def isAvailable(morpheus: Morpheus, selection: CodeSelection): Boolean =
         getAvailableIdentifiers(morpheus, selection).nonEmpty
 
     def isAvailable(morpheus: Morpheus, call: Id): Boolean = {
@@ -132,7 +132,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
         }
     }
 
-    private def isSelected(element: AST, astEnv: ASTEnv, selection: Selection): Boolean = {
+    private def isSelected(element: AST, astEnv: ASTEnv, selection: CodeSelection): Boolean = {
         element match {
             case f: FunctionDef => isPartOfSelection(f.declarator.getId, selection)
             case n: NestedFunctionDef => isPartOfSelection(n.declarator.getId, selection)

@@ -4,7 +4,7 @@ import java.util.Collections
 
 import de.fosd.typechef.crefactor.backend.{RefactorException, CRefactor, ASTSelection}
 import de.fosd.typechef.parser.c._
-import de.fosd.typechef.crefactor.frontend.util.Selection
+import de.fosd.typechef.crefactor.frontend.util.CodeSelection
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.evaluation_utils.Configuration
 import de.fosd.typechef.typesystem._
@@ -21,11 +21,11 @@ import de.fosd.typechef.crewrite.IntraCFG
  */
 object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
-    private var lastSelection: Selection = null
+    private var lastSelection: CodeSelection = null
 
     private var cachedSelectedElements: List[AST] = null
 
-    def getSelectedElements(morpheus: Morpheus, selection: Selection): List[AST] = {
+    def getSelectedElements(morpheus: Morpheus, selection: CodeSelection): List[AST] = {
         if (lastSelection.eq(selection))
             return cachedSelectedElements
 
@@ -114,7 +114,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         cachedSelectedElements
     }
 
-    def getAvailableIdentifiers(morpheus: Morpheus, selection: Selection): List[Id] =
+    def getAvailableIdentifiers(morpheus: Morpheus, selection: CodeSelection): List[Id] =
         getSelectedElements(morpheus, selection).isEmpty match {
             case true => null
             case false => List[Id]() // returns a empty list to signalize a valid selection was found
@@ -134,7 +134,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         else true
     }
 
-    def isAvailable(morpheus: Morpheus, selection: Selection): Boolean =
+    def isAvailable(morpheus: Morpheus, selection: CodeSelection): Boolean =
         isAvailable(morpheus, getSelectedElements(morpheus, selection))
 
     def extract(morpheus: Morpheus, selection: List[AST], funName: String):

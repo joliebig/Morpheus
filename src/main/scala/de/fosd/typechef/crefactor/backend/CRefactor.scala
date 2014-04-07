@@ -4,7 +4,7 @@ import de.fosd.typechef.typesystem.{CType, CEnvCache}
 import de.fosd.typechef.crefactor.{Logging, Morpheus}
 import org.kiama.rewriting.Rewriter._
 import de.fosd.typechef.parser.c._
-import de.fosd.typechef.crefactor.frontend.util.Selection
+import de.fosd.typechef.crefactor.frontend.util.CodeSelection
 import de.fosd.typechef.conditional._
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 import de.fosd.typechef.typesystem.linker.SystemLinker
@@ -19,7 +19,7 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         "typedef", "union", "unsigned", "void", "volatile", "while", "_Alignas", "_Alignof", "_Atomic",
         "_Bool", "_Complex", "_Generic", "_Imaginary", "_Noreturn", "_Static_assert", "_Thread_local")
 
-    def isAvailable(morpheus: Morpheus, selection: Selection): Boolean
+    def isAvailable(morpheus: Morpheus, selection: CodeSelection): Boolean
 
     /**
      * Checks if the name of a variable is compatible to the iso c standard. See 6.4.2 of the iso standard

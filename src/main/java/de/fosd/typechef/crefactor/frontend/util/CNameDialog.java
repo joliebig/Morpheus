@@ -9,7 +9,7 @@ import java.awt.event.*;
 /**
  * Inputbox for renaming an callId.
  */
-public class RefactorNameInputBox extends JDialog {
+public class CNameDialog extends JDialog {
 
     /**
      * Entered text.
@@ -19,7 +19,7 @@ public class RefactorNameInputBox extends JDialog {
     /**
      * Constructs a new inputbox.
      */
-    public RefactorNameInputBox() {
+    public CNameDialog() {
         this.input = null;
     }
 
@@ -31,7 +31,6 @@ public class RefactorNameInputBox extends JDialog {
      * @param preDefinedText Predefined text for the input box.
      */
     public void createAndShowInputBox(final String title, final String description, final String preDefinedText) {
-        // TODO Refactor
         super.setTitle(title);
         super.setModal(true);
         super.setModalityType(ModalityType.APPLICATION_MODAL);

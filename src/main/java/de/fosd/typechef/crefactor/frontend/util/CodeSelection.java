@@ -5,11 +5,11 @@ import de.fosd.typechef.crefactor.frontend.Editor;
 import javax.swing.text.BadLocationException;
 
 /**
- * Selection object for storing the current selection start and end.
+ * CodeSelection object for storing the current selection start and end.
  *
  * @author Andreas Janker
  */
-public class Selection {
+public class CodeSelection {
 
     /**
      * The currently referenced editor.
@@ -21,7 +21,7 @@ public class Selection {
      *
      * @param editor the editor instance.
      */
-    public Selection(final Editor editor) {
+    public CodeSelection(final Editor editor) {
         this.editor = editor;
     }
 

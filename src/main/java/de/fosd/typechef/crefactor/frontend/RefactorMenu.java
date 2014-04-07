@@ -5,8 +5,8 @@ import de.fosd.typechef.crefactor.backend.engine.CExtractFunction;
 import de.fosd.typechef.crefactor.backend.engine.CInlineFunction;
 import de.fosd.typechef.crefactor.backend.engine.CRenameIdentifier;
 import de.fosd.typechef.crefactor.evaluation_utils.Configuration;
-import de.fosd.typechef.crefactor.frontend.actions.refactor.RefactorAction;
-import de.fosd.typechef.crefactor.frontend.util.Selection;
+import de.fosd.typechef.crefactor.frontend.actions.refactor.CRefactorAction;
+import de.fosd.typechef.crefactor.frontend.util.CodeSelection;
 import de.fosd.typechef.parser.c.AST;
 import de.fosd.typechef.parser.c.Id;
 import scala.collection.Iterator;
@@ -47,7 +47,7 @@ public class RefactorMenu implements MenuListener {
     @Override
     public void menuSelected(MenuEvent menuEvent) {
         this.menu.removeAll();
-        final Selection selection = new Selection(editor);
+        final CodeSelection codeSelection = new CodeSelection(editor);
         final Morpheus morpheus = this.editor.getMorpheus();
 
         // TODO Apply a nice design pattern
@@ -55,23 +55,23 @@ public class RefactorMenu implements MenuListener {
         /**
          * Refactor Renaming
          */
-        final List<Id> availableIds = CRenameIdentifier.getAvailableIdentifiers(morpheus, selection);
+        final List<Id> availableIds = CRenameIdentifier.getAvailableIdentifiers(morpheus, codeSelection);
         if (!availableIds.isEmpty()) {
             final JMenu rename = new JMenu(Configuration.getInstance().getConfig("refactor.rename.name"));
             this.menu.add(rename);
             addRenamingsToMenu(availableIds, rename);
 
 
-            if (CExtractFunction.isAvailable(morpheus, selection)) {
-                final List<AST> extractSelection = CExtractFunction.getSelectedElements(morpheus, selection);
-                final JMenuItem extract = new JMenuItem(RefactorAction.getExtractFunction(morpheus, extractSelection));
+            if (CExtractFunction.isAvailable(morpheus, codeSelection)) {
+                final List<AST> extractSelection = CExtractFunction.getSelectedElements(morpheus, codeSelection);
+                final JMenuItem extract = new JMenuItem(CRefactorAction.getExtractFunction(morpheus, extractSelection));
                 this.menu.add(extract);
             }
 
             /**
              * Inline Function
              */
-            final List<Id> availableFuncIDs = CInlineFunction.getAvailableIdentifiers(morpheus, selection);
+            final List<Id> availableFuncIDs = CInlineFunction.getAvailableIdentifiers(morpheus, codeSelection);
             if (!availableFuncIDs.isEmpty()) {
                 final JMenu inline = new JMenu(Configuration.getInstance().getConfig("refactor.inline.name"));
                 this.menu.add(inline);
@@ -99,14 +99,14 @@ public class RefactorMenu implements MenuListener {
     private void addRenamingsToMenu(final List<Id> selectedIDs, final JMenu menu) {
         final Iterator<Id> it = selectedIDs.iterator();
         while (it.hasNext()) {
-            menu.add(RefactorAction.getRenameAction(this.editor.getMorpheus(), it.next()));
+            menu.add(CRefactorAction.getRenameAction(this.editor.getMorpheus(), it.next()));
         }
     }
 
     private void addInliningToMenu(final List<Id> selectedIDs, final JMenu menu) {
         final Iterator<Id> it = selectedIDs.iterator();
         while (it.hasNext()) {
-            menu.add(RefactorAction.getInlineFunctionAction(this.editor.getMorpheus(), it.next()));
+            menu.add(CRefactorAction.getInlineFunctionAction(this.editor.getMorpheus(), it.next()));
         }
     }
 }
