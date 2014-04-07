@@ -389,9 +389,6 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
             val resPointers = decl.init.foldLeft(genPointers) {(currentPointers, declInit) => declInit.entry.declarator.pointers ::: currentPointers}
 
-            //if (array)
-            // AtomicNamedDeclarator(pointer, Id(param.name),
-            // List[Opt[DeclaratorExtension]](Opt(FeatureExprFactory.True, DeclArrayAccess(None))))
             AtomicNamedDeclarator(resPointers, Id(param.name), List[Opt[DeclaratorExtension]]())
         }
 
@@ -572,11 +569,11 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
     private def genCompoundStatement(statements: List[Opt[Statement]], externalRef: List[Id],
                                      parameters: List[Id], morpheus: Morpheus): CompoundStatement = {
-        val variables = externalRef.par.filter(isPartOfParameter(_, parameters, morpheus)).filter(!isArray(_, morpheus))
-
+        val variables = externalRef.par.filter(isPartOfParameter(_, parameters, morpheus)).filter(!isArray(_, morpheus)).toList
         // transform input ids into pointer expressions
-        val idsAsPointer = variables.foldLeft(statements)((curStatements, id) =>
-            replaceInAST(curStatements, id, PointerDerefExpr(id)))
+        val idsAsPointer = replaceIdsWithPointers(statements, variables)
+        //val idsAsPointer = variables.foldLeft(statements)((curStatements, id) =>
+            //replaceInAST(curStatements, id, PointerDerefExpr(id)))
         CompoundStatement(idsAsPointer)
     }
 
