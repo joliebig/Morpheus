@@ -184,10 +184,20 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         r(t).get.asInstanceOf[T]
     }
 
+    def replaceStmtInCompoundStatement(ccStmt: CompoundStatement,mark: Opt[Statement], replace: Opt[Statement]) = {
+        val newInnerStmts = ccStmt.innerStatements.map { innerStmt =>
+            if (innerStmt.eq(mark)) replace
+            else innerStmt
+        }
+        ccStmt.copy(innerStatements = newInnerStmts)
+    }
+
     def replaceInASTOnceTD[T <: Product](t: T, mark: Opt[_], replace: Opt[_])(implicit m: Manifest[T]): T = {
         val r = oncetd(rule {
             case l: List[Opt[_]] => l.flatMap(x => if (x.eq(mark)) replace :: Nil else x :: Nil)
         })
+        println(mark)
+        println(replace)
         r(t).get.asInstanceOf[T]
     }
 
