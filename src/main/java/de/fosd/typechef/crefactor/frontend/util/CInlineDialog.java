@@ -7,6 +7,10 @@ public class CInlineDialog extends JDialog {
     private JPanel contentPane;
     private JButton buttonOK;
     private JButton buttonCancel;
+    private JCheckBox renameIDs;
+    private boolean rename = false;
+    private boolean once = false;
+    private boolean refactor = false;
 
     public CInlineDialog() {
         setContentPane(contentPane);
@@ -25,7 +29,6 @@ public class CInlineDialog extends JDialog {
             }
         });
 
-// call onCancel() when cross is clicked
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
@@ -33,7 +36,6 @@ public class CInlineDialog extends JDialog {
             }
         });
 
-// call onCancel() on ESCAPE
         contentPane.registerKeyboardAction(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 onCancel();
@@ -42,25 +44,25 @@ public class CInlineDialog extends JDialog {
     }
 
     private void onOK() {
-// add your code here
+        rename = renameIDs.isSelected();
+        refactor = true;
         dispose();
     }
 
     private void onCancel() {
-// add your code here if necessary
         dispose();
     }
 
     public boolean isRefactor() {
-        return true;
+        return refactor;
     }
 
     public boolean isOnce() {
-        return false;
+        return once;
     }
 
     public boolean isRename() {
-        return true;
+        return rename;
     }
 
     public static void main(String[] args) {
