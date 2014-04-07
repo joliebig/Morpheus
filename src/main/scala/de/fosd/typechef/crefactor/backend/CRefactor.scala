@@ -130,7 +130,7 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
      */
     def replaceIdsWithPointers[T <: Product](t: T, ids: List[Id]): T = {
         val r = manybu(rule {
-            case id: Id => if (ids.exists(isPartOf(id, _))) PointerDerefExpr(id) else id
+            case id: Id => if (ids.exists(_ eq id)) PointerDerefExpr(id) else id
             case x => x
         })
         r(t).get.asInstanceOf[T]
@@ -142,7 +142,7 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
     def replaceCompoundStmt[T <: Product](t: T, cStmt: CompoundStatement,
                                           newInnerStmt: List[Opt[Statement]]): T = {
         val r = manybu(rule {
-            case cc: CompoundStatement => if (isPartOf(cStmt, cc)) cc.copy(innerStatements = newInnerStmt) else cc
+            case cc: CompoundStatement => if (cc eq cStmt) cc.copy(innerStatements = newInnerStmt) else cc
             case x => x
         })
         r(t).get.asInstanceOf[T]
