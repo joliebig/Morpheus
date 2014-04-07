@@ -1,17 +1,17 @@
 package de.fosd.typechef.crefactor.backend
 
 import de.fosd.typechef.parser.c.{Id, AST}
-import de.fosd.typechef.crefactor.frontend.util.Selection
+import de.fosd.typechef.crefactor.frontend.util.CodeSelection
 import de.fosd.typechef.crefactor.{Logging, Morpheus}
 import de.fosd.typechef.conditional.Opt
 
 trait ASTSelection extends Logging {
 
-    def getSelectedElements(morpheus: Morpheus, selection: Selection): List[AST]
+    def getSelectedElements(morpheus: Morpheus, selection: CodeSelection): List[AST]
 
-    def getAvailableIdentifiers(morpheus: Morpheus, selection: Selection): List[Id]
+    def getAvailableIdentifiers(morpheus: Morpheus, selection: CodeSelection): List[Id]
 
-    def isPartOfSelection(value: AST, selection: Selection): Boolean = {
+    def isPartOfSelection(value: AST, selection: CodeSelection): Boolean = {
         /**
          * Annotated tunit elements have often the same starting line. As workaround we only identify
          * the element by its end value.
@@ -46,7 +46,7 @@ trait ASTSelection extends Logging {
     def isPartOfFile[T <: AST](element: T, file: String) =
         element.getFile.get.regionMatches(true, 5, file, 0, file.length())
 
-    def isElementOfSelectionRange(element: AST, selection: Selection): Boolean = {
+    def isElementOfSelectionRange(element: AST, selection: CodeSelection): Boolean = {
         val startLine = selection.getLineStart
         val endLine = selection.getLineEnd
         val startRow = selection.getRowStart
