@@ -3,12 +3,12 @@ package de.fosd.typechef.crefactor.frontend.util;
 import javax.swing.*;
 import java.awt.event.*;
 
-public class Test2000 extends JDialog {
+public class CInlineDialog extends JDialog {
     private JPanel contentPane;
     private JButton buttonOK;
     private JButton buttonCancel;
 
-    public Test2000() {
+    public CInlineDialog() {
         setContentPane(contentPane);
         setModal(true);
         getRootPane().setDefaultButton(buttonOK);
@@ -64,7 +64,7 @@ public class Test2000 extends JDialog {
     }
 
     public static void main(String[] args) {
-        Test2000 dialog = new Test2000();
+        CInlineDialog dialog = new CInlineDialog();
         dialog.pack();
         dialog.setVisible(true);
         System.exit(0);

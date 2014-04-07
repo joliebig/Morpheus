@@ -6,8 +6,8 @@ import de.fosd.typechef.crefactor.backend.engine.CExtractFunction;
 import de.fosd.typechef.crefactor.backend.engine.CInlineFunction;
 import de.fosd.typechef.crefactor.backend.engine.CRenameIdentifier;
 import de.fosd.typechef.crefactor.evaluation_utils.Configuration;
+import de.fosd.typechef.crefactor.frontend.util.CInlineDialog;
 import de.fosd.typechef.crefactor.frontend.util.RefactorNameInputBox;
-import de.fosd.typechef.crefactor.frontend.util.Test2000;
 import de.fosd.typechef.parser.c.AST;
 import de.fosd.typechef.parser.c.Id;
 import de.fosd.typechef.parser.c.TranslationUnit;
@@ -88,7 +88,7 @@ public class RefactorAction {
                 if (CInlineFunction.isFunctionCall(morpheus, id)) {
                     logger.info("InlineOnce");
                 }
-                final Test2000 dialog = new Test2000();
+                final CInlineDialog dialog = new CInlineDialog();
                 dialog.pack();
                 dialog.setVisible(true);
 
