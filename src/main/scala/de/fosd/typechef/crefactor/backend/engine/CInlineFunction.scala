@@ -263,16 +263,16 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                 case o@One(entry) =>
                     inlineInOne(entry, expr, o, call, inlineChoice)
                 case c@Choice(_, c1@Choice(_, _, _), c2@Choice(_, _, _)) =>
-                    c.copy(thenBBranch = inlineInCorrectConditionalStmt(c1, call, expr, inlineChoice),
+                    c.copy(thenBranch = inlineInCorrectConditionalStmt(c1, call, expr, inlineChoice),
                         elseBranch = inlineInCorrectConditionalStmt(c2, call, expr, inlineChoice))
                 case c@Choice(_, o1@One(_), c2@Choice(_, _, _)) =>
-                    c.copy(thenBBranch = inlineInCorrectConditionalStmt(o1, call, expr, inlineChoice),
+                    c.copy(thenBranch = inlineInCorrectConditionalStmt(o1, call, expr, inlineChoice),
                         elseBranch = inlineInCorrectConditionalStmt(c2, call, expr, inlineChoice))
                 case c@Choice(_, c1@Choice(_, _, _), o2@One(_)) =>
-                    c.copy(thenBBranch = inlineInCorrectConditionalStmt(c1, call, expr, inlineChoice),
+                    c.copy(thenBranch = inlineInCorrectConditionalStmt(c1, call, expr, inlineChoice),
                         elseBranch = inlineInCorrectConditionalStmt(o2, call, expr, inlineChoice))
                 case c@Choice(_, o1@One(_), o2@One(_)) =>
-                    c.copy(thenBBranch = inlineInCorrectConditionalStmt(o1, call, expr, inlineChoice),
+                    c.copy(thenBranch = inlineInCorrectConditionalStmt(o1, call, expr, inlineChoice),
                         elseBranch = inlineInCorrectConditionalStmt(o2, call, expr, inlineChoice))
                 case _ => current
             }
