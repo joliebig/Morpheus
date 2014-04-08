@@ -57,8 +57,8 @@ object OpenSSLVerification extends OpenSSLEvaluation with Verification {
         }
 
     private def configOpenSSL(configuration: SimpleConfiguration): Boolean = {
-        val features = configuration.getTrueSet.mkString("-D", " -D", "")
-        val run = runScript(confScript, features, sourcePath, runTimeout)
+        val features = configuration.getTrueSet.map(_.feature).mkString("-D", " -D", "")
+        val run = runScript(confScript, sourcePath, features, runTimeout)
         evaluateScriptResult(run)._1
     }
 
