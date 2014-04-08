@@ -283,9 +283,6 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         val externalUses = morpheus.getExternalUses(selectedIds)
         val idsToDeclare = getIdsToDeclare(externalUses)
 
-        if (!idsToDeclare.isEmpty) logger.error("Invalid selection for: " + selection +
-            " with following ids to declare: " + idsToDeclare)
-
         !idsToDeclare.isEmpty
     }
 
