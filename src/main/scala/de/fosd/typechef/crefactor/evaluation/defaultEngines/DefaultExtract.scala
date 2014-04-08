@@ -49,7 +49,7 @@ trait DefaultExtract extends Refactoring with Evaluation {
 
             // Test all available combinations for extraction
             def getAvailableInnerStatments(opts: List[Opt[Statement]], i: Int, length: Int): List[List[AST]] = {
-                (i to length).par.foldLeft(List[List[AST]]())((l, x) => {
+                (i to length).foldLeft(List[List[AST]]())((l, x) => {
                     val selectedElements = constantSlice(opts, i, x).map(_.entry)
                     if (CExtractFunction.isAvailable(morpheus, selectedElements)) selectedElements :: l
                     else l
@@ -65,7 +65,7 @@ trait DefaultExtract extends Refactoring with Evaluation {
             def getExtractStatements: List[AST] = {
                 logger.info("Start brute force.")
                 val startTime = new StopClock
-                val availableStmtsToExtract = compStmts.par.flatMap(compSmt => getAvailableExtractStatements(compSmt)).filterNot(x => x.isEmpty)
+                val availableStmtsToExtract = compStmts.flatMap(compSmt => getAvailableExtractStatements(compSmt)).filterNot(x => x.isEmpty)
                 logger.info("Time to determine statements: " + startTime.getTime)
                 // Pick a random available element from the resulting array
                 if (!availableStmtsToExtract.isEmpty) availableStmtsToExtract.apply(util.Random.nextInt(availableStmtsToExtract.length))
