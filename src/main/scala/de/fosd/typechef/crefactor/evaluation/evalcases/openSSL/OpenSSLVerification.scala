@@ -1,38 +1,41 @@
 package de.fosd.typechef.crefactor.evaluation.evalcases.openSSL
 
 import de.fosd.typechef.crefactor.evaluation.Verification
-import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
+import de.fosd.typechef.featureexpr.{SingleFeatureExpr, FeatureExpr, FeatureModel}
 import java.io.File
+import de.fosd.typechef.{KnownFeatures, ConfigFeatures, SimpleConfiguration}
+import de.fosd.typechef.crefactor.evaluation.util.StopClock
 
 
 object OpenSSLVerification extends OpenSSLEvaluation with Verification {
 
     override def singleVerify(evalFile: String, fm: FeatureModel, mode: String, affectedFeatures: List[FeatureExpr] = List()) = {
-        val resultDir = new File(evalFile.replaceAll(evalName, "result") + "/" + mode + "/")
-        if (!resultDir.exists) resultDir.mkdirs
-
-        // Default Config
-        buildAndTestOpenSSL(resultDir, "", -1, mode)
-
-        // Affected Configs
-        affectedFeatures.zipWithIndex.foreach {
-            case (singleFexpr, i) => buildAndTestOpenSSL(resultDir, singleFexpr.collectDistinctFeatures.mkString(" "), i, mode)
-        }
-
+        // not supported
     }
 
-    override def completeVerify(evalFile: String, fm: FeatureModel, affectedFeatures : List[FeatureExpr] = List()) = {
+    override def completeVerify(evalFile: String, fm: FeatureModel, affectedFeatures: List[FeatureExpr] = List()) = {
         val resultDir = new File(evalFile.replaceAll(evalName, "result") + "/")
         if (!resultDir.exists) resultDir.mkdirs
 
+        val confFeatures = new ConfigFeatures(allFeatures._1)
+
         // get features
+        val featureCombinations = getFeatureCombinations(confFeatures, affectedFeatures)
+
+        // run refacotred run first
+
+        // clean up the refactor mess
+
+        // run original
         // make config
         // make depend
         // make test
 
+        // cleanup and log result
+
     }
 
-    private def buildAndTestOpenSSL(resultDir: File, features: String, run: Int, mode: String) : Boolean = {
+    private def buildAndTestOpenSSL(resultDir: File, features: String, run: Int, mode: String): Boolean = {
         val result = runScript(buildScript, sourcePath, features, runTimeout)
         val buildResult = evaluateScriptResult(result)
         val testResult = test
@@ -43,7 +46,7 @@ object OpenSSLVerification extends OpenSSLEvaluation with Verification {
         writeResult(testResult._2, resultDir.getCanonicalPath + "/" + run + mode + "test")
         if (!testResult._1) writeResult(testResult._3, resultDir.getCanonicalPath + "/" + run + mode + "testError")
 
-        logger.info("Pass build: "+ buildResult._1)
+        logger.info("Pass build: " + buildResult._1)
         logger.info("Pass test: " + testResult._1)
 
         writeResult((testResult._1 && buildResult._1).toString, resultDir.getCanonicalPath + "/" + run + mode + "result")

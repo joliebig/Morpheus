@@ -72,7 +72,7 @@ trait Verification extends Evaluation {
 
         val generatedConfigs = variabilityCoverage(existingConfigs, fm, affectedFeatures)
 
-        if (generatedConfigs.size > maxConfigs) {
+        if (generatedConfigs.size > maxConfigs - 1) {
             val codeCoverage =
                 ConfigurationHandling.codeCoverage(tunit, fm, tUnitFeatures, List(), preferDisabledFeatures = false)
             codeCoverage._1.foldLeft(0)((counter, coverageConf) => {
@@ -183,5 +183,21 @@ trait Verification extends Evaluation {
                 }
             }).distinct
         })
+    }
+
+    def getFeatureCombinations(ff: KnownFeatures, affectedFeatures: List[FeatureExpr]): List[SimpleConfiguration] = {
+        affectedFeatures.flatMap(affectedFeature => {
+            affectedFeature.collectDistinctFeatureObjects.foldRight(List[SimpleConfiguration]())((feature, genConfigs) => {
+                if (genConfigs.isEmpty) List(new SimpleConfiguration(ff, List(feature), List()))
+                else {
+                    genConfigs ::: genConfigs.flatMap(config => {
+                        val genTrueSet: List[SingleFeatureExpr] =
+                            if (config.trueSet.contains(feature)) config.trueSet.diff(List(feature))
+                            else feature :: config.trueSet
+                        Some(new SimpleConfiguration(ff, genTrueSet, List()))
+                    })
+                }
+            })
+        }).distinct
     }
 }
