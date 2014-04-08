@@ -23,20 +23,47 @@ object OpenSSLVerification extends OpenSSLEvaluation with Verification {
         val featureCombinations = getFeatureCombinations(confFeatures, affectedFeatures)
 
         // run refacotred run first
+        //first defConfig
+        val defRef = buildAndTestOpenSSL(resultDir, -1, "_ref")
+        logger.info("Can build and test " + evalFile + " in def config and ref: " + defRef)
+        singleConfigAndBuildRun(evalFile, resultDir, featureCombinations, "_ref")
 
         // clean up the refactor mess
+        runScript(cleanScript, sourcePath)
 
         // run original
-        // make config
-        // make depend
-        // make test
+        //first defConfig
+        val defOrg = buildAndTestOpenSSL(resultDir, -1, "_org")
+        logger.info("Can build and test " + evalFile + " in def config and org: " + defOrg)
+        singleConfigAndBuildRun(evalFile, resultDir, featureCombinations, "_org")
 
-        // cleanup and log result
+        // cleanup
+        runScript(cleanScript, sourcePath)
 
     }
 
-    private def buildAndTestOpenSSL(resultDir: File, features: String, run: Int, mode: String): Boolean = {
-        val result = runScript(buildScript, sourcePath, features, runTimeout)
+    private def singleConfigAndBuildRun(evalFile: String, resultDir: File,
+                                        featureCombinations : List[SimpleConfiguration], mode : String) = {
+        featureCombinations.zipWithIndex.foreach {
+            case (config, index) => {
+                val conf = configOpenSSL(config)
+                logger.info(config.getTrueSet + " can be configured: " + conf)
+                if (conf) {
+                    val build = buildAndTestOpenSSL(resultDir, index, mode)
+                    logger.info("Can build and test " + evalFile + " as " + mode + ": " + build)
+                }
+            }
+        }
+    }
+
+    private def configOpenSSL(configuration: SimpleConfiguration) : Boolean = {
+        val features = configuration.getTrueSet.mkString("-D", " -D", "")
+        val run = runScript(confScript, features, sourcePath, runTimeout)
+        evaluateScriptResult(run)._1
+    }
+
+    private def buildAndTestOpenSSL(resultDir: File, run: Int, mode: String): Boolean = {
+        val result = runScript(buildScript, sourcePath, runTimeout)
         val buildResult = evaluateScriptResult(result)
         val testResult = test
 
