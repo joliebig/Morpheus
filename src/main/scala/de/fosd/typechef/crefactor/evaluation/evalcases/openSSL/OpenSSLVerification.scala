@@ -7,7 +7,7 @@ import java.io.File
 
 object OpenSSLVerification extends OpenSSLEvaluation with Verification {
 
-    override def verify(evalFile: String, fm: FeatureModel, mode: String, affectedFeatures: List[FeatureExpr] = List()) = {
+    override def singleVerify(evalFile: String, fm: FeatureModel, mode: String, affectedFeatures: List[FeatureExpr] = List()) = {
         val resultDir = new File(evalFile.replaceAll(evalName, "result") + "/" + mode + "/")
         if (!resultDir.exists) resultDir.mkdirs
 
