@@ -11,6 +11,7 @@ trait Verification extends Evaluation {
 
     val buildScript: String = "./build.sh"
     val testScript: String = "./runtest.sh"
+    val confScript: String = "./genConfig.sh"
     val cleanScript: String = "./clean.sh"
 
     def singleVerify(evalFile: String, fm: FeatureModel, mode: String, affectedFeatures : List[FeatureExpr] = List()) = {
