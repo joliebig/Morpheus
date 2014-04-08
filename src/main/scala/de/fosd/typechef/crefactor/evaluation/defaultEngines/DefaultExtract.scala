@@ -12,9 +12,9 @@ import java.io.File
 
 trait DefaultExtract extends Refactoring with Evaluation {
 
-    val MAX_REC_DEPTH: Int = 1000
+    val MAX_REC_DEPTH: Int = 100
 
-    val RETRIES: Int = 3
+    val RETRIES: Int = 10
 
     val NAME = "refactored_func"
 
@@ -43,7 +43,7 @@ trait DefaultExtract extends Refactoring with Evaluation {
 
             def getRandomVariableStatements(depth: Int = 0): List[AST] = {
                 val statements = getRandomStatements()
-                if ((statements.isEmpty || !statements.par.exists(isVariable(_))) && (depth < MAX_REC_DEPTH)) getRandomVariableStatements(depth + 1)
+                if ((statements.isEmpty || !statements.par.exists(isVariable(_))) && (depth < RETRIES)) getRandomVariableStatements(depth + 1)
                 else statements
             }
             // End real random approach
@@ -98,8 +98,7 @@ trait DefaultExtract extends Refactoring with Evaluation {
                 case Left(s) => {
                     logger.error(s)
                     writeError("Refactor Error:\n" + s, path + "ref")
-                    if (depth < RETRIES) refactor(morpheus, depth + 1)
-                    else (false, null, List(), List())
+                    (false, null, List(), List())
                 }
 
             }
