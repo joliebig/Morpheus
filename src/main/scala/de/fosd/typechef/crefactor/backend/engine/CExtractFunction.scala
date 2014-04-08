@@ -132,7 +132,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         else if (!selection.par.forall(checkAstElemForCFGDisruption(_, selection, morpheus))) false
         else if (hasIdsWithDifferentScope(selection, morpheus)) false
         else if (hasInvisibleEnumerations(selection, morpheus)) false
-        else if (hasDeclaredRegisterVars(selection, morpheus)) false
+        else if (hasVariablesDeclaredWithRegisterSpecifier(selection, morpheus)) false
         else true
     }
 
@@ -251,7 +251,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         }
     }
 
-    private def hasDeclaredRegisterVars(selection: List[AST], morpheus: Morpheus): Boolean = {
+    private def hasVariablesDeclaredWithRegisterSpecifier(selection: List[AST], morpheus: Morpheus): Boolean = {
         def containsRegisterSpecifier(specs : List[Opt[Specifier]]) : Boolean = {
              specs.exists(_.entry match {
                  case r: RegisterSpecifier => true
