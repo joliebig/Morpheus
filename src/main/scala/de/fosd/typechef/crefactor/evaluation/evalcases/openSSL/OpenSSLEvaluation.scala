@@ -3,6 +3,10 @@ package de.fosd.typechef.crefactor.evaluation.evalcases.openSSL
 import de.fosd.typechef.crefactor.evaluation.Evaluation
 import de.fosd.typechef.parser.c.{ConditionalNavigation, ASTNavigation}
 import java.io.File
+import scala.io.Source
+import de.fosd.typechef.featureexpr.FeatureExprFactory
+import java.util.IdentityHashMap
+import java.util
 
 
 trait OpenSSLEvaluation extends Evaluation with ASTNavigation with ConditionalNavigation {
@@ -21,8 +25,8 @@ trait OpenSSLEvaluation extends Evaluation with ASTNavigation with ConditionalNa
     val result = "/result/"
 
     val filterFeatures = List()
-    val allFeaturesFile = null
-    val allFeatures = null
+    val allFeaturesFile = completePath + "/allFeatures"
+    val allFeatures = getAllFeaturesFromUniqueFeatureFile
     val pairWiseFeaturesFile = sourcePath + "/openssl_pairwise_configs.csv"
     val existingConfigsDir: String = completePath + "/existing_configs/"
 
@@ -38,5 +42,6 @@ trait OpenSSLEvaluation extends Evaluation with ASTNavigation with ConditionalNa
     val openSSLFeaturePrefix = "OPENSSL_"
     val buildSystem = "linux-x86_64"
 
-
+    private def getAllFeaturesFromUniqueFeatureFile =
+        (Source.fromFile(allFeaturesFile).getLines().map(FeatureExprFactory.createDefinedExternal).toList, new util.IdentityHashMap[String, String]())
 }
