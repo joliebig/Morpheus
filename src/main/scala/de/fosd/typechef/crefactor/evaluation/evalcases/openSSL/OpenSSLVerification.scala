@@ -24,6 +24,7 @@ object OpenSSLVerification extends OpenSSLEvaluation with Verification {
 
         // run refacotred run first
         //first defConfig
+        configOpenSSL()
         val defRef = buildAndTestOpenSSL(resultDir, -1, "_ref")
         logger.info("Can build and test " + evalFile + " in def config and ref: " + defRef)
         configureBuildAndTestFeatureCombinations(evalFile, resultDir, featureCombinations, "_ref")
@@ -33,6 +34,7 @@ object OpenSSLVerification extends OpenSSLEvaluation with Verification {
 
         // run original
         //first defConfig
+        configOpenSSL()
         val defOrg = buildAndTestOpenSSL(resultDir, -1, "_org")
         logger.info("Can build and test " + evalFile + " in def config and org: " + defOrg)
         configureBuildAndTestFeatureCombinations(evalFile, resultDir, featureCombinations, "_org")
@@ -57,6 +59,11 @@ object OpenSSLVerification extends OpenSSLEvaluation with Verification {
     private def configOpenSSL(configuration: SimpleConfiguration): Boolean = {
         val features = configuration.getTrueSet.mkString("-D", " -D", "")
         val run = runScript(confScript, features, sourcePath, runTimeout)
+        evaluateScriptResult(run)._1
+    }
+
+    private def configOpenSSL(): Boolean = {
+        val run = runScript(confScript, sourcePath, runTimeout)
         evaluateScriptResult(run)._1
     }
 

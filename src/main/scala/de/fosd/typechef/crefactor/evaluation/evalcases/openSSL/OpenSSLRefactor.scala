@@ -37,6 +37,7 @@ object OpenSSLRefactor extends OpenSSLEvaluation with Refactor {
                     val time = new StopClock
                     StatsCan.addStat(file, AffectedFeatures, result._3)
                     val affectedFeatureExpr = result._3.foldRight(List[FeatureExpr]()) {(l, c) => l ::: c}.distinct
+                    logger.info("Starting verification.")
                     OpenSSLVerification.completeVerify(morpheus.getFile, morpheus.getFM, affectedFeatureExpr)
                     runScript("./clean.sh", sourcePath)
                     StatsCan.addStat(file, TestingTime, time.getTime)
