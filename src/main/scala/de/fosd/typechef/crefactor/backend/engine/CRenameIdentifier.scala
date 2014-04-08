@@ -15,13 +15,13 @@ import de.fosd.typechef.conditional.Opt
  */
 object CRenameIdentifier extends ASTSelection with CRefactor {
 
-    def getSelectedElements(morpheus: Morpheus, selection: CodeSelection): List[AST]
-    = getAvailableIdentifiers(morpheus, selection)
+    def getSelectedElements(morpheus: Morpheus, selection: CodeSelection): List[AST] =
+        getAvailableIdentifiers(morpheus, selection)
 
     def getAvailableIdentifiers(morpheus: Morpheus, selection: CodeSelection): List[Id] =
         filterASTElems[Id](morpheus.getTranslationUnit).
-            par.filter(x => isPartOfSelection(x, selection)).
-            toList.filter(x => isPartOfFile(x, selection.getFilePath))
+            par.filter(x => isPartOfSelection(x, selection))
+            .filter(x => isPartOfFile(x, selection.getFilePath)).toList
 
     def isAvailable(morpheus: Morpheus, selection: CodeSelection): Boolean =
         !getAvailableIdentifiers(morpheus, selection).isEmpty

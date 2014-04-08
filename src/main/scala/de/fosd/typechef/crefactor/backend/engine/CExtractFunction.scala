@@ -120,6 +120,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             case false => List[Id]() // returns a empty list to signalize a valid selection was found
         }
 
+
     def isAvailable(morpheus: Morpheus, selection: List[AST]): Boolean = {
         if (selection.isEmpty)
             false
@@ -131,6 +132,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         else if (!selection.par.forall(checkAstElemForCFGDisruption(_, selection, morpheus))) false
         else if (hasIdsWithDifferentScope(selection, morpheus)) false
         else if (hasInvisibleEnumerations(selection, morpheus)) false
+        else if (hasDeclaredRegisterVars(selection, morpheus)) false
         else true
     }
 
@@ -247,6 +249,41 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 Left(x.getMessage)
             }
         }
+    }
+
+    private def hasDeclaredRegisterVars(selection: List[AST], morpheus: Morpheus): Boolean = {
+        def containsRegisterSpecifier(specs : List[Opt[Specifier]]) : Boolean = {
+             specs.exists(_.entry match {
+                 case r: RegisterSpecifier => true
+                 case _ => false
+             })
+        }
+
+        val selectedIds = filterAllASTElems[Id](selection)
+        val externalUses = morpheus.getExternalUses(selectedIds)
+        val externalDefs = morpheus.getExternalDefs(selectedIds)
+        val extRefIds = uniqueExtRefIds(externalDefs, externalUses)
+
+        extRefIds.exists(id => morpheus.getDecls(id).exists(decl => {
+            val declaration = findPriorASTElem[Declaration](decl, morpheus.getASTEnv)
+            val registeredInDecl = {
+                declaration match {
+                    case Some(entry) => containsRegisterSpecifier(entry.declSpecs)
+                    case _ => false
+                }
+            }
+
+            val paramDecl = findPriorASTElem[ParameterDeclaration](decl, morpheus.getASTEnv)
+            val registerInParamDecl = {
+                paramDecl match {
+                    case Some(entry) => containsRegisterSpecifier(entry.specifiers)
+                    case _ => false
+                }
+            }
+
+            registerInParamDecl || registeredInDecl
+
+        }))
     }
 
     private def hasInvisibleEnumerations(selection: List[AST], morpheus: Morpheus): Boolean = {
@@ -569,8 +606,6 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         val variables = externalRef.par.filter(isPartOfParameter(_, parameters, morpheus)).filter(!isArray(_, morpheus)).toList
         // transform input ids into pointer expressions
         val idsAsPointer = replaceIdsWithPointers(statements, variables)
-        //val idsAsPointer = variables.foldLeft(statements)((curStatements, id) =>
-            //replaceInAST(curStatements, id, PointerDerefExpr(id)))
         CompoundStatement(idsAsPointer)
     }
 
