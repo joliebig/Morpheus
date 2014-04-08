@@ -11,7 +11,7 @@ import de.fosd.typechef.parser.TokenReader
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.typesystem.linker.InterfaceWriter
 import de.fosd.typechef.crefactor.evaluation.{Refactor, StatsCan}
-import de.fosd.typechef.crefactor.evaluation.setup.{Building, BuildCondition}
+import de.fosd.typechef.crefactor.evaluation.setup.{CLinkingInterfaceGenerator, Building, BuildCondition}
 import java.util.zip.{GZIPOutputStream, GZIPInputStream}
 import de.fosd.typechef.parser.c.CTypeContext
 import de.fosd.typechef.typesystem.{CDeclUse, CTypeCache, CTypeSystemFrontend}
@@ -28,21 +28,21 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
 
     private var runOpt: FrontendOptions = new FrontendOptions()
 
-    override def main(args: Array[String]): Unit = parseOrLoadTUnitandProcess(args, true)
-
-    def parseOrLoadTUnitandProcess(args: Array[String], saveArg: Boolean = false) = {
-        // Parsing MorphFrontend is adapted by the original typechef frontend
+    override def main(args: Array[String]): Unit = {
         runOpt = new FrontendOptionsWithConfigFiles()
 
         try {
             runOpt.parseOptions(args)
         } catch {
-            case o: OptionException =>
-                println("Invocation error: " + o.getMessage)
-                println("use parameter --help for more information.")
-                System.exit(-1)
+            case o: OptionException => printInvokationErrorAndExit(o.getMessage)
         }
 
+        if (runOpt.writeProjectInterface) writeProjectInterface(runOpt)
+
+        if (runOpt.parse) parseOrLoadTUnitandProcess(true)
+    }
+
+    def parseOrLoadTUnitandProcess(saveArg: Boolean = false) = {
         // Current re-run hack - storing the initial arguments for parsing further files then the initial with the same arguments
         if (saveArg) command = args.foldLeft(List[String]())((args, arg) => {
             if (arg.equalsIgnoreCase(runOpt.getFile)) args
@@ -93,13 +93,29 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         (tunit, fm)
     }
 
+    private def writeProjectInterface(options: FrontendOptions) = {
+        val linkInf = {
+            if (options.refLink) new CModuleInterface(options.getLinkingInterfaceFile)
+            else null
+        }
+
+        if (linkInf == null) printInvokationErrorAndExit("No valid interface specified.")
+
+        val linker: CLinkingInterfaceGenerator = {
+            if (options.getRefStudy.equalsIgnoreCase("busybox")) de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking.BusyBoxLinkInterfaceGenerator
+            else if (options.getRefStudy.equalsIgnoreCase("openssl")) de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.setup.OpenSSLLinkInterfaceGenerator
+            else null
+        }
+
+        linker.main(Array())
+    }
+
     private def processFile(tunit: TranslationUnit, fm: FeatureModel, opt: FrontendOptions) = {
         val linkInf = {
             if (opt.refLink) new CModuleInterface(opt.getLinkingInterfaceFile)
             else null
         }
 
-        // val preparedTunit = prepareAST(tunit)
         if (opt.writeBuildCondition) writeBuildCondition(opt.getFile)
 
         if (opt.serializeAST) serializeTUnit(tunit, opt.getSerializedTUnitFilename)
@@ -216,5 +232,11 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
                 editor.setVisible(true)
             }
         })
+    }
+
+    private def printInvokationErrorAndExit(message : String) = {
+        println("Invocation error: " + message)
+        println("use parameter --help for more information.")
+        System.exit(-1)
     }
 }

@@ -15,7 +15,6 @@ object OpenSSLVerification extends OpenSSLEvaluation with Verification {
         buildAndTestOpenSSL(resultDir, "", -1, mode)
 
         // Affected Configs
-        // TODO Sampling
         affectedFeatures.zipWithIndex.foreach {
             case (singleFexpr, i) => buildAndTestOpenSSL(resultDir, singleFexpr.collectDistinctFeatures.mkString(" "), i, mode)
         }
