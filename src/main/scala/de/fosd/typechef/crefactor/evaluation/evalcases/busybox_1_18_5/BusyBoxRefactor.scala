@@ -40,9 +40,9 @@ object BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
                     StatsCan.addStat(file, AffectedFeatures, result._3)
                     val time = new StopClock
                     // run refactored first
-                    BusyBoxVerification.verify(file, fm, "_ref")
+                    BusyBoxVerification.singleVerify(file, fm, "_ref")
                     runScript("./cleanAndReset.sh", sourcePath)
-                    BusyBoxVerification.verify(file, fm, "_org")
+                    BusyBoxVerification.singleVerify(file, fm, "_org")
                     runScript("./cleanAndReset.sh", sourcePath)
                     StatsCan.addStat(file, TestingTime, time.getTime)
                 } else writeError("Could not engine file.", path)

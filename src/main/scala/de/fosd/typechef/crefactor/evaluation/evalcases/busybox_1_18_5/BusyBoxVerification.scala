@@ -7,7 +7,7 @@ import de.fosd.typechef.crefactor.evaluation.Stats._
 
 object BusyBoxVerification extends BusyBoxEvaluation with Verification {
 
-    override def verify(evalFile: String, fm: FeatureModel, mode: String, affectedFeatures : List[FeatureExpr] = List()): Unit = {
+    override def singleVerify(evalFile: String, fm: FeatureModel, mode: String, affectedFeatures : List[FeatureExpr] = List()): Unit = {
         val resultDir = new File(evalFile.replaceAll(evalName, "result"))
         val configs = resultDir.listFiles(new FilenameFilter {
             def accept(input: File, file: String): Boolean = file.endsWith(".config")
