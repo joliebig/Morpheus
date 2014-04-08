@@ -28,7 +28,6 @@ trait DefaultExtract extends Refactoring with Evaluation {
 
             // Real random approach
             def getRandomStatements(depth: Int = 0): List[AST] = {
-                logger.info(depth)
                 val compStmt = compStmts.apply(util.Random.nextInt(compStmts.length))
                 // Ignore empty compound statements
                 if (compStmt.innerStatements.length <= 0) return getRandomStatements(depth)
@@ -64,6 +63,7 @@ trait DefaultExtract extends Refactoring with Evaluation {
             }
 
             def getExtractStatements: List[AST] = {
+                logger.info("Start brute force.")
                 val startTime = new StopClock
                 val availableStmtsToExtract = compStmts.par.flatMap(compSmt => getAvailableExtractStatements(compSmt)).filterNot(x => x.isEmpty)
                 logger.info("Time to determine statements: " + startTime.getTime)
