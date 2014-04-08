@@ -39,10 +39,10 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
 
         if (runOpt.writeProjectInterface) writeProjectInterface(runOpt)
 
-        if (runOpt.parse) parseOrLoadTUnitandProcess(true)
+        if (runOpt.parse) parseOrLoadTUnitandProcess(args, true)
     }
 
-    def parseOrLoadTUnitandProcess(saveArg: Boolean = false) = {
+    def parseOrLoadTUnitandProcess(args: Array[String], saveArg: Boolean = false) = {
         // Current re-run hack - storing the initial arguments for parsing further files then the initial with the same arguments
         if (saveArg) command = args.foldLeft(List[String]())((args, arg) => {
             if (arg.equalsIgnoreCase(runOpt.getFile)) args

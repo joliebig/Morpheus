@@ -21,6 +21,17 @@ object OpenSSLVerification extends OpenSSLEvaluation with Verification {
 
     }
 
+    override def completeVerify(evalFile: String, fm: FeatureModel, affectedFeatures : List[FeatureExpr] = List()) = {
+        val resultDir = new File(evalFile.replaceAll(evalName, "result") + "/")
+        if (!resultDir.exists) resultDir.mkdirs
+
+        // get features
+        // make config
+        // make depend
+        // make test
+
+    }
+
     private def buildAndTestOpenSSL(resultDir: File, features: String, run: Int, mode: String) : Boolean = {
         val result = runScript(buildScript, sourcePath, features, runTimeout)
         val buildResult = evaluateScriptResult(result)
