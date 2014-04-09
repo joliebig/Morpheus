@@ -36,15 +36,26 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
         if (!isFunctionCall(morpheus, call))
             return false
 
-        val defs = divideCallDeclDef(call, morpheus)._3
-        if (defs.isEmpty)
-            return false
+        val callsDeclDef = divideCallDeclDef(call, morpheus)
+        val fDefs = callsDeclDef._3
+        val calls = callsDeclDef._1
 
-        if (defs.exists(func => hasIncompatibleCFG(func.entry, morpheus)
+        if (fDefs.isEmpty)
+            false
+
+        else if (fDefs.exists(func => hasIncompatibleCFG(func.entry, morpheus)
             || isRecursive(func.entry)))
-            return false
+            false
 
-        true
+        else if (calls.exists(fCall => {
+            fDefs.exists(fDef => {
+                val callCompStmt = getCallCompStatement(fCall, morpheus.getASTEnv)
+                val ids = filterAllASTElems[Id](fDef)
+                ids.exists(hasIncompatibleDoubleScopes(_, callCompStmt, morpheus))
+            })}))
+            false
+        else
+            true
     }
 
     def isFunctionCall(morpheus: Morpheus, id: Id): Boolean = {
@@ -497,7 +508,6 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
 
         var workingStatement = compStmt
         val idsToRename = getIdsToRename(fDef.entry, fCall.entry, workingStatement, morpheus)
-        // TODO Do not rename global variables
         val renamed = renameShadowedIds(idsToRename, fDef, fCall, morpheus)
         val initializer = getInitializers(fCall, renamed._2, morpheus)
 
@@ -554,7 +564,37 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
         CompoundStatement(initializer ::: stmts)
     }
 
+    private def hasIncompatibleDoubleScopes(id: Id, compStmt: CompoundStatement, morpheus: Morpheus): Boolean = {
+        val env = morpheus.getEnv(compStmt.innerStatements.last.entry)
+        val condScope = env.varEnv.lookupScope(id.name)
+        val doubleScope = -1
+
+        def checkConditional(conditional: Conditional[Int]): Boolean = {
+            def checkScopes(condScope: Conditional[Int]): Int = {
+                condScope match {
+                    case Choice(_, thenB, elseB) =>
+                        val thenScope = checkScopes(thenB)
+                        val elseScope = checkScopes(elseB)
+
+                        if (thenScope == doubleScope || elseScope == doubleScope) doubleScope
+                        else if (thenScope != elseScope) doubleScope
+                        else thenScope
+                    case One(scope) => scope
+                }
+            }
+            
+            checkScopes(conditional) != doubleScope
+        }
+
+        condScope match {
+            case One(scope) => false
+            case _ => checkConditional(condScope)
+        }
+    } 
+
     private def isDeclared(id: Id, env: Env, compStmt: CompoundStatement, morpheus: Morpheus): Boolean = {
+
+        val globalScope = 0
 
         def checkOne(one: Conditional[(CType, DeclarationKind, Int, Linkage)],
                      recursive: Boolean = false): Boolean = {
@@ -575,7 +615,8 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                         }
                     }
                     else
-                        true
+                        // only rename variables with are not in a global scope
+                        x._3 != globalScope
                 case _ => true
             }
         }
