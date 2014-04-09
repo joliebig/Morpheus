@@ -39,7 +39,7 @@ trait DefaultInline extends Refactoring with Evaluation {
 
         try {
             val refTime = new StopClock
-            val refAST = CInlineFunction.inline(morpheus, callIdToInline, true, true)
+            val refAST = CInlineFunction.inline(morpheus, callIdToInline, true)
 
             refAST match {
                 case Left(errmsg) => {
