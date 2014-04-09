@@ -99,8 +99,8 @@ public class CRefactorAction {
                 try {
                     final ThreadMXBean tb = ManagementFactory.getThreadMXBean();
                     final long startTime = tb.getCurrentThreadCpuTime();
-                    final Either<String, TranslationUnit> inlineResult = CInlineFunction.inline(morpheus, id,
-                            dialog.isRename(), dialog.isKeepDeclarations());
+                    final Either<String, TranslationUnit> inlineResult = CInlineFunction.inline(morpheus, id
+                            , dialog.isKeepDeclarations());
                     logger.info("Duration for transforming: "
                             + ((tb.getCurrentThreadCpuTime() - startTime) / 1000000) + "ms");
 

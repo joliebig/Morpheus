@@ -59,10 +59,9 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
      *
      * @param morpheus the morpheus environment
      * @param id the function's identifier
-     * @param rename indicates if variables should be renamed
      * @return the refactored tunit
      */
-    def inline(morpheus: Morpheus, id: Id, rename: Boolean, keepDeclaration : Boolean):
+    def inline(morpheus: Morpheus, id: Id, keepDeclaration : Boolean):
     Either[String, TranslationUnit] = {
         val (fCalls, fDecls, fDefs, callExpr) = divideCallDeclDef(id, morpheus)
 
@@ -70,12 +69,12 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
             Left("Inlining of external function definitions is not supported.")
 
         var tunitRefactored = fCalls.foldLeft(morpheus.getTranslationUnit)((curTunit, curFCall) =>
-            inlineFuncCall(curTunit, new Morpheus(curTunit, morpheus.getFM), curFCall, fDefs, rename))
+            inlineFuncCall(curTunit, new Morpheus(curTunit, morpheus.getFM), curFCall, fDefs))
 
         tunitRefactored =
             callExpr.foldLeft(tunitRefactored)(
                 (curTunit, expr) => inlineFuncCallExpr(curTunit,
-                    new Morpheus(curTunit, morpheus.getFM), expr, fDefs, rename))
+                    new Morpheus(curTunit, morpheus.getFM), expr, fDefs))
 
         // Remove old definition and declarations (note may cause linking error)
         if (!keepDeclaration) {
@@ -221,13 +220,13 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
     }
 
     private def inlineFuncCallExpr(ast: AST, morpheus: Morpheus, call: Opt[AST],
-                                   fDefs: List[Opt[_]], rename: Boolean): TranslationUnit = {
+                                   fDefs: List[Opt[_]]): TranslationUnit = {
         val workingCallCompStmt = getCallCompStatement(call, morpheus.getASTEnv)
 
         def generateInlineExprStmts: List[(CompoundStatementExpr, FeatureExpr)] = {
             fDefs.flatMap({
                 case f: Opt[FunctionDef] =>
-                    val inlineExpr = inlineFDefInExpr(workingCallCompStmt, f, call, morpheus, rename)
+                    val inlineExpr = inlineFDefInExpr(workingCallCompStmt, f, call, morpheus)
                     inlineExpr match {
                         case null => None
                         case _ => Some(CompoundStatementExpr(inlineExpr), f.feature.and(call.feature))
@@ -348,15 +347,14 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
         }
     }
 
-    // TODO: @andreas What is the parameter rename used for? Shoudn't we enforce renaming all the time, if necessary?
     private def inlineFuncCall(tunit: TranslationUnit, morpheus: Morpheus, call: Opt[Statement],
-                               fDefs: List[Opt[_]], rename: Boolean): TranslationUnit = {
+                               fDefs: List[Opt[_]]): TranslationUnit = {
         var workingCallCompStmt = getCallCompStatement(call, morpheus.getASTEnv)
 
         def inlineIfStmt(funcDefs: List[Opt[_]], callCompStmt: CompoundStatement): CompoundStatement = {
             val inlineExprStatements = funcDefs.flatMap({
                 case f: Opt[FunctionDef] =>
-                    val inlineStmt = inlineFDefInExprStmt(callCompStmt, morpheus, call, f, rename)
+                    val inlineStmt = inlineFDefInExprStmt(callCompStmt, morpheus, call, f)
                     inlineStmt match {
                         case null => None
                         case _ => Some(inlineStmt, f.feature.and(call.feature))
@@ -374,7 +372,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
             val workingCallCompStmt =
                 fDefs.foldLeft(callCompStmt)(
                     (curStmt, fDef) => fDef match {
-                        case f: Opt[FunctionDef] => inlineFDefInCompStmt(curStmt, morpheus, call, f, rename)
+                        case f: Opt[FunctionDef] => inlineFDefInCompStmt(curStmt, morpheus, call, f)
                         case _ =>
                             println("Forgotten definition")
                             curStmt
@@ -493,15 +491,13 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
     }
 
     private def inlineFDefInCompStmt(compStmt: CompoundStatement, morpheus: Morpheus, fCall: Opt[Statement],
-                                     fDef: Opt[FunctionDef], rename: Boolean): CompoundStatement = {
+                                     fDef: Opt[FunctionDef]): CompoundStatement = {
         if (!isValidFDef(fDef, fCall, compStmt, morpheus))
             return compStmt
 
         var workingStatement = compStmt
         val idsToRename = getIdsToRename(fDef.entry, fCall.entry, workingStatement, morpheus)
-        if (!rename && !idsToRename.isEmpty)
-            assert(false, "Can not inline - variables need to be renamed")
-
+        // TODO Do not rename global variables
         val renamed = renameShadowedIds(idsToRename, fDef, fCall, morpheus)
         val initializer = getInitializers(fCall, renamed._2, morpheus)
 
@@ -520,12 +516,12 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
     }
 
     private def inlineFDefInExprStmt(compStmt: CompoundStatement, morpheus: Morpheus, fCall: Opt[AST],
-                                     fDef: Opt[FunctionDef], rename: Boolean): ExprStatement = {
+                                     fDef: Opt[FunctionDef]): ExprStatement = {
         if (!isValidFDef(fDef, fCall, compStmt, morpheus))
             return null
 
         val compoundStmtExpr: CompoundStatementExpr =
-            CompoundStatementExpr(inlineFDefInExpr(compStmt, fDef, fCall, morpheus, rename))
+            CompoundStatementExpr(inlineFDefInExpr(compStmt, fDef, fCall, morpheus))
 
         fCall.entry match {
             case ExprStatement(PostfixExpr(_, FunctionCall(_))) => ExprStatement(compoundStmtExpr)
@@ -538,12 +534,10 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
 
 
     private def inlineFDefInExpr(compStmt: CompoundStatement, fDef: Opt[FunctionDef],
-                                 fCall: Opt[AST], morpheus: Morpheus, rename: Boolean): CompoundStatement = {
+                                 fCall: Opt[AST], morpheus: Morpheus): CompoundStatement = {
         val wStmt = compStmt
 
         val idsToRename = getIdsToRename(fDef.entry, fCall.entry, wStmt, morpheus)
-        if (!rename && !idsToRename.isEmpty)
-            assert(false, "Inline function not possible - some variables need to be renamed")
 
         val renamed = renameShadowedIds(idsToRename, fDef, fCall, morpheus)
         val initializer = getInitializers(fCall, renamed._2, morpheus)

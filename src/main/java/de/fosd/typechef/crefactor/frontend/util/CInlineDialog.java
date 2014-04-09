@@ -7,7 +7,6 @@ public class CInlineDialog extends JDialog {
     private JPanel contentPane;
     private JButton buttonOK;
     private JButton buttonCancel;
-    private JCheckBox renameIDs;
     private JCheckBox keepFunctionDecls;
     private boolean rename = false;
     private boolean keepDeclartions = false;
@@ -45,7 +44,6 @@ public class CInlineDialog extends JDialog {
     }
 
     private void onOK() {
-        rename = renameIDs.isSelected();
         keepDeclartions = keepFunctionDecls.isSelected();
         refactor = true;
         dispose();
@@ -63,7 +61,4 @@ public class CInlineDialog extends JDialog {
         return keepDeclartions;
     }
 
-    public boolean isRename() {
-        return rename;
-    }
 }
