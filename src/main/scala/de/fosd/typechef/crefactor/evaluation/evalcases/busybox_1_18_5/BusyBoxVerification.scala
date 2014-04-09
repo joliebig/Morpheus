@@ -4,6 +4,7 @@ import java.io.{FilenameFilter, File}
 import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
 import de.fosd.typechef.crefactor.evaluation.{StatsCan, Verification}
 import de.fosd.typechef.crefactor.evaluation.Stats._
+import de.fosd.typechef.SimpleConfiguration
 
 object BusyBoxVerification extends BusyBoxEvaluation with Verification {
 
@@ -66,5 +67,6 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
         val result = runScript("./buildBusyBox.sh", sourcePath)
         evaluateScriptResult(result)
     }
-
+    override def configure(configuration: SimpleConfiguration) = false
+    override def configure() = false
 }
