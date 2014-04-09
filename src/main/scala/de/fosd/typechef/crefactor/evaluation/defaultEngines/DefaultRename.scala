@@ -208,6 +208,11 @@ trait DefaultRename extends Refactoring with Evaluation {
             if (getFileName(pos.getFile).equalsIgnoreCase(getFileName(morpheus.getFile))) map
             else map += (pos.getFile -> pos))
 
+        if (affectedFiles.isEmpty && linked.nonEmpty) {
+            logger.info("Id is recognized as to be linked, but no corresponding file was found.")
+            return null
+        }
+
         if (affectedFiles.keySet.exists(file => blackListFiles.exists(getFileName(file).equalsIgnoreCase)
             || (!evalFiles.exists(getFileName(file).equalsIgnoreCase)))) {
             logger.info("One or more file is blacklisted or is not a member of the valid files list and cannot be build.")
