@@ -13,6 +13,7 @@ object SQLiteVerification extends SQLiteEvaluation with Verification {
 
     override def configure(configuration: SimpleConfiguration) = {
         // TODO Enable them in config script.
+        configuration.getTrueSet foreach(println)
         val features = ""
         val run = runScript(confScript, sourcePath, features, runTimeout)
         evaluateScriptResult(run)._1
