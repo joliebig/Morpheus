@@ -50,9 +50,10 @@ class CModuleInterface(linkPath: String) extends Logging {
     private def nameIsListed(name: String) = idLinkExpMap.containsKey(name) || idLinkPosMap.containsKey(name)
 
     def isListed(id: Opt[String], fm: FeatureModel): Boolean = {
-        if (idLinkExpMap.containsKey(id.entry))
+        if (idLinkExpMap.containsKey(id.entry)) {
+            logger.info("islisted")
             idLinkExpMap.get(id.entry).exists(_.fexpr.implies(id.feature).isTautology(fm))
-        else
+        } else
             false
     }
 
