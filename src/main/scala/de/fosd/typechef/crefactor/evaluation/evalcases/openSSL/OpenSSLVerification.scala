@@ -15,14 +15,15 @@ object OpenSSLVerification extends OpenSSLEvaluation with Verification {
 
     override def completeVerify(evalFile: String, fm: FeatureModel, affectedFeatures: List[FeatureExpr] = List()) = {
         val resultDir = new File(evalFile.replaceAll(evalName, "result") + "/")
-        if (!resultDir.exists) resultDir.mkdirs
+        if (!resultDir.exists)
+            resultDir.mkdirs
 
         val confFeatures = new ConfigFeatures(allFeatures._1)
 
         // get features
         val featureCombinations = getFeatureCombinations(confFeatures, affectedFeatures)
 
-        // run refacotred run first
+        // run refactored run first
         //first defConfig
         configOpenSSL()
         val defRef = buildAndTestOpenSSL(resultDir, -1, "_ref")
@@ -73,10 +74,12 @@ object OpenSSLVerification extends OpenSSLEvaluation with Verification {
         val testResult = test
 
         writeResult(buildResult._2, resultDir.getCanonicalPath + "/" + run + mode + ".build")
-        if (!buildResult._1) writeResult(buildResult._3, resultDir.getCanonicalPath + "/" + run + mode + "buildErr")
+        if (!buildResult._1)
+            writeResult(buildResult._3, resultDir.getCanonicalPath + "/" + run + mode + "buildErr")
 
         writeResult(testResult._2, resultDir.getCanonicalPath + "/" + run + mode + "test")
-        if (!testResult._1) writeResult(testResult._3, resultDir.getCanonicalPath + "/" + run + mode + "testError")
+        if (!testResult._1)
+            writeResult(testResult._3, resultDir.getCanonicalPath + "/" + run + mode + "testError")
 
         logger.info("Pass build: " + buildResult._1)
         logger.info("Pass test: " + testResult._1)
