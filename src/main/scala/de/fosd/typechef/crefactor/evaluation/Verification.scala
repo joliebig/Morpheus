@@ -30,7 +30,49 @@ trait Verification extends Evaluation {
         writeResult((testResult._1 && buildResult._1).toString, resultDir.getCanonicalPath + "/mode" + ".result")
     }
 
-    def completeVerify(evalFile: String, fm: FeatureModel, affectedFeatures : List[FeatureExpr] = List()) = {}
+    def completeVerify(evalFile: String, fm: FeatureModel, affectedFeatures: List[FeatureExpr] = List()) = {
+        val resultDir = new File(evalFile.replaceAll(evalName, "result") + "/")
+        if (!resultDir.exists)
+            resultDir.mkdirs
+
+        val confFeatures = new ConfigFeatures(allFeatures._1)
+
+        // get features
+        val featureCombinations = getFeatureCombinations(confFeatures, affectedFeatures)
+
+        // run refactored run first
+        //first defConfig
+        configure()
+        val defRef = buildAndTest(resultDir, -1, "_ref")
+        logger.info("Can build and test " + evalFile + " in def config and ref: " + defRef)
+        configureBuildAndTestFeatureCombinations(evalFile, resultDir, featureCombinations, "_ref")
+
+        // clean up the refactor mess
+        runScript(cleanScript, sourcePath)
+
+        // run original
+        //first defConfig
+        configure()
+        val defOrg = buildAndTest(resultDir, -1, "_org")
+        logger.info("Can build and test " + evalFile + " in def config and org: " + defOrg)
+        configureBuildAndTestFeatureCombinations(evalFile, resultDir, featureCombinations, "_org")
+
+        // cleanup
+        runScript(cleanScript, sourcePath)
+    }
+
+    def configureBuildAndTestFeatureCombinations(evalFile: String, resultDir: File,
+                                                 featureCombinations: List[SimpleConfiguration], mode: String) =
+        featureCombinations.zipWithIndex.foreach {
+            case (config, index) => {
+                val conf = configure(config)
+                logger.info(config.getTrueSet + " can be configured: " + conf)
+                if (conf) {
+                    val build = buildAndTest(resultDir, index, mode)
+                    logger.info("Can build and test " + evalFile + " as " + mode + ": " + build)
+                }
+            }
+        }
 
     def test: (Boolean, String, String) = {
         val result = runScript(testScript, testPath)
