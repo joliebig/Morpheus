@@ -33,7 +33,10 @@ trait DefaultExtract extends Refactoring with Evaluation {
                 if (compStmt.innerStatements.length <= 0) return getRandomStatements(depth)
                 val rand1 = util.Random.nextInt(compStmt.innerStatements.length)
                 val rand2 = util.Random.nextInt(compStmt.innerStatements.length)
-                val statements = if (rand1 < rand2) constantSlice(compStmt.innerStatements, rand1, rand2).map(_.entry) else constantSlice(compStmt.innerStatements, rand2, rand1).map(_.entry)
+                val statements = if (rand1 < rand2)
+                                     constantSlice(compStmt.innerStatements, rand1, rand2).map(_.entry)
+                                 else
+                                     constantSlice(compStmt.innerStatements, rand2, rand1).map(_.entry)
 
                 if (CExtractFunction.isAvailable(morpheus, statements)) statements
                 else if (depth > MAX_REC_DEPTH) List[AST]()
@@ -42,13 +45,15 @@ trait DefaultExtract extends Refactoring with Evaluation {
 
             def getRandomVariableStatements(depth: Int = 0): List[AST] = {
                 val statements = getRandomStatements()
-                if ((statements.isEmpty || !statements.par.exists(isVariable(_))) && (depth < RETRIES)) getRandomVariableStatements(depth + 1)
-                else statements
+                if ((statements.isEmpty || !statements.par.exists(isVariable(_))) && (depth < RETRIES))
+                    getRandomVariableStatements(depth + 1)
+                else
+                    statements
             }
             // End real random approach
 
             // Test all available combinations for extraction
-            def getAvailableInnerStatments(opts: List[Opt[Statement]], i: Int, length: Int): List[List[AST]] = {
+            def getAvailableInnerStatements(opts: List[Opt[Statement]], i: Int, length: Int): List[List[AST]] = {
                 (i to length).foldLeft(List[List[AST]]())((l, x) => {
                     val selectedElements = constantSlice(opts, i, x).map(_.entry)
                     if (CExtractFunction.isAvailable(morpheus, selectedElements)) selectedElements :: l
@@ -59,7 +64,7 @@ trait DefaultExtract extends Refactoring with Evaluation {
             def getAvailableExtractStatements(compStmt: CompoundStatement): List[List[AST]] = {
                 val length = compStmt.innerStatements.length - 1
                 if (compStmt.innerStatements.isEmpty) List()
-                else (0 to length).foldLeft(List[List[AST]]())((l, i) => l ::: getAvailableInnerStatments(compStmt.innerStatements, i, length))
+                else (0 to length).foldLeft(List[List[AST]]())((l, i) => l ::: getAvailableInnerStatements(compStmt.innerStatements, i, length))
             }
 
             def getExtractStatements: List[AST] = {
