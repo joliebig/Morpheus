@@ -63,10 +63,6 @@ object OpenSSLVerification extends OpenSSLEvaluation with Verification {
         evaluateScriptResult(run)._1
     }
 
-    override def configure(): Boolean = {
-        val run = runScript(confScript, sourcePath, runTimeout)
-        evaluateScriptResult(run)._1
-    }
 
 
 }
