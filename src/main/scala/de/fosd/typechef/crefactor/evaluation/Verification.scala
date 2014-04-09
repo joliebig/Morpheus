@@ -92,16 +92,16 @@ trait Verification extends Evaluation {
 
         writeResult(buildResult._2, resultDir.getCanonicalPath + "/" + run + mode + ".build")
         if (!buildResult._1)
-            writeResult(buildResult._3, resultDir.getCanonicalPath + "/" + run + mode + "buildErr")
+            writeResult(buildResult._3, resultDir.getCanonicalPath + "/" + run + mode + ".buildErr")
 
-        writeResult(testResult._2, resultDir.getCanonicalPath + "/" + run + mode + "test")
+        writeResult(testResult._2, resultDir.getCanonicalPath + "/" + run + mode + ".test")
         if (!testResult._1)
-            writeResult(testResult._3, resultDir.getCanonicalPath + "/" + run + mode + "testError")
+            writeResult(testResult._3, resultDir.getCanonicalPath + "/" + run + mode + ".testError")
 
         logger.info("Pass build: " + buildResult._1)
         logger.info("Pass test: " + testResult._1)
 
-        writeResult((testResult._1 && buildResult._1).toString, resultDir.getCanonicalPath + "/" + run + mode + "result")
+        writeResult((testResult._1 && buildResult._1).toString, resultDir.getCanonicalPath + "/" + run + mode + ".result")
         testResult._1 && buildResult._1
     }
 
