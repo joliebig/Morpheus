@@ -71,7 +71,7 @@ trait CLinkingInterfaceGenerator extends Evaluation with App with Logging {
     }) */
 
     val linkingClock = new StopClock
-    val finalInterface = linkTreewise(interfaces).packWithOutElimination //.andFM(fm_constraints)
+    val finalInterface = linkTreewise(interfaces)//.packWithOutElimination //.andFM(fm_constraints)
     logger.info("Linked interfaces in " + linkingClock.getTime + "ms.")
 
     logger.info("Linked interface is complete:\t" + finalInterface.isComplete)
