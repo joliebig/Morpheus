@@ -8,7 +8,6 @@ public class CInlineDialog extends JDialog {
     private JButton buttonOK;
     private JButton buttonCancel;
     private JCheckBox keepFunctionDecls;
-    private boolean rename = false;
     private boolean keepDeclartions = false;
     private boolean refactor = false;
 
