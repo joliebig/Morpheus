@@ -24,13 +24,22 @@ object SQLiteVerification extends SQLiteEvaluation with Verification {
 
         // ref first
         // default (build + test)
+        configure()
+        val defRef = buildAndTest(resultDir, -1, "_ref")
+        logger.info("Can build and test " + evalFile + " in def config and ref: " + defRef)
         // feature combos
 
-        // clean
+        // clean up the refactor mess
+        runScript(cleanScript, sourcePath)
 
         //org second
         // default (build + test)
+        configure()
+        val defOrg = buildAndTest(resultDir, -1, "_org")
+        logger.info("Can build and test " + evalFile + " in def config and org: " + defOrg)
         // feature combos
+
+        runScript(cleanScript, sourcePath)
 
     }
 

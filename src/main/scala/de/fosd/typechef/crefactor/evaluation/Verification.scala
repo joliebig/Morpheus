@@ -64,7 +64,10 @@ trait Verification extends Evaluation {
 
     def configure(configuration: SimpleConfiguration): Boolean
 
-    def configure(): Boolean
+     def configure(): Boolean = {
+        val run = runScript(confScript, sourcePath, runTimeout)
+        evaluateScriptResult(run)._1
+    }
 
     def writeConfig(config: SimpleConfiguration, dir: File, name: String): Unit = writeConfig(config.getTrueSet, dir, name)
 
