@@ -3,7 +3,7 @@ package de.fosd.typechef.crefactor.evaluation.evalcases.sqlite
 import de.fosd.typechef.crefactor.evaluation.Verification
 import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
 import java.io.File
-import de.fosd.typechef.ConfigFeatures
+import de.fosd.typechef.{SimpleConfiguration, ConfigFeatures}
 
 
 object SQLiteVerification extends SQLiteEvaluation with Verification {
@@ -18,7 +18,24 @@ object SQLiteVerification extends SQLiteEvaluation with Verification {
             resultDir.mkdirs
 
         val confFeatures = new ConfigFeatures(allFeatures._1)
+
+        // get features
+        val featureCombinations = getFeatureCombinations(confFeatures, affectedFeatures)
+
+        // ref first
+        // default (build + test)
+        // feature combos
+
+        // clean
+
+        //org second
+        // default (build + test)
+        // feature combos
+
     }
+
+    override def configure(configuration: SimpleConfiguration) = false
+    override def configure() = false
 
 
 }

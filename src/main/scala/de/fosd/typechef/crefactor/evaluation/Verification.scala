@@ -42,6 +42,30 @@ trait Verification extends Evaluation {
         evaluateScriptResult(result)
     }
 
+    def buildAndTest(resultDir: File, run: Int, mode: String): Boolean = {
+        val result = runScript(buildScript, sourcePath, runTimeout)
+        val buildResult = evaluateScriptResult(result)
+        val testResult = test
+
+        writeResult(buildResult._2, resultDir.getCanonicalPath + "/" + run + mode + ".build")
+        if (!buildResult._1)
+            writeResult(buildResult._3, resultDir.getCanonicalPath + "/" + run + mode + "buildErr")
+
+        writeResult(testResult._2, resultDir.getCanonicalPath + "/" + run + mode + "test")
+        if (!testResult._1)
+            writeResult(testResult._3, resultDir.getCanonicalPath + "/" + run + mode + "testError")
+
+        logger.info("Pass build: " + buildResult._1)
+        logger.info("Pass test: " + testResult._1)
+
+        writeResult((testResult._1 && buildResult._1).toString, resultDir.getCanonicalPath + "/" + run + mode + "result")
+        testResult._1 && buildResult._1
+    }
+
+    def configure(configuration: SimpleConfiguration): Boolean
+
+    def configure(): Boolean
+
     def writeConfig(config: SimpleConfiguration, dir: File, name: String): Unit = writeConfig(config.getTrueSet, dir, name)
 
     def writeConfig(config: Set[SingleFeatureExpr], dir: File, name: String): Unit = writeKConfig(config.toList, dir, name)
