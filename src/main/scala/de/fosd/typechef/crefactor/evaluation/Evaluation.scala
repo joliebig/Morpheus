@@ -10,6 +10,7 @@ import java.util.{TimerTask, Timer, IdentityHashMap}
 import de.fosd.typechef.crefactor.evaluation.setup.BuildCondition
 import de.fosd.typechef.typesystem.linker.SystemLinker
 import de.fosd.typechef.conditional.Opt
+import java.util
 
 trait Evaluation extends Logging with BuildCondition with ASTNavigation with ConditionalNavigation {
 
@@ -380,4 +381,7 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
                     case _ => false
                 })
     }
+
+    def getAllFeaturesFromUniqueFeatureFile =
+        (Source.fromFile(allFeaturesFile).getLines().map(FeatureExprFactory.createDefinedExternal).toList, new java.util.IdentityHashMap[String, String]())
 }

@@ -1,6 +1,5 @@
 package de.fosd.typechef.crefactor.evaluation.evalcases.sqlite
 
-import de.fosd.typechef.crefactor.evaluation.sqlite.SQLiteEvaluation
 import de.fosd.typechef.crefactor.evaluation.Verification
 import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
 import java.io.File

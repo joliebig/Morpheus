@@ -41,7 +41,4 @@ trait OpenSSLEvaluation extends Evaluation with ASTNavigation with ConditionalNa
     val openSSLNoFeaturePrefix = "OPENSSL_NO"
     val openSSLFeaturePrefix = "OPENSSL_"
     val buildSystem = "linux-x86_64"
-
-    private def getAllFeaturesFromUniqueFeatureFile =
-        (Source.fromFile(allFeaturesFile).getLines().map(FeatureExprFactory.createDefinedExternal).toList, new util.IdentityHashMap[String, String]())
 }

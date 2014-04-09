@@ -1,4 +1,4 @@
-package de.fosd.typechef.crefactor.evaluation.sqlite
+package de.fosd.typechef.crefactor.evaluation.evalcases.sqlite
 
 import de.fosd.typechef.parser.c.{ConditionalNavigation, ASTNavigation}
 import java.io.File
@@ -19,8 +19,8 @@ trait SQLiteEvaluation extends Evaluation with ASTNavigation with ConditionalNav
     val result = "/result/"
 
     val filterFeatures = List()
-    val allFeaturesFile = null
-    val allFeatures = null
+    val allFeaturesFile = completePath + "/allFeatures"
+    val allFeatures = getAllFeaturesFromUniqueFeatureFile
     val pairWiseFeaturesFile = null
     val existingConfigsDir: String = completePath + "/existing_configs/"
 
