@@ -85,9 +85,6 @@ public class CRefactorAction {
 
             @Override
             public void actionPerformed(final ActionEvent actionEvent) {
-                if (CInlineFunction.isFunctionCall(morpheus, id)) {
-                    logger.info("InlineOnce");
-                }
                 final CInlineDialog dialog = new CInlineDialog();
                 dialog.pack();
                 dialog.setVisible(true);
