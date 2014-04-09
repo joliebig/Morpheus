@@ -42,6 +42,7 @@ trait Verification extends Evaluation {
 
         // run refactored run first
         //first defConfig
+        featureCombinations foreach(_.getTrueSet foreach(println))
         configure()
         val defRef = buildAndTest(resultDir, -1, "_ref")
         logger.info("Can build and test " + evalFile + " in def config and ref: " + defRef)
