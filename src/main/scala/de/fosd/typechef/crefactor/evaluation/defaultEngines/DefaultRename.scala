@@ -152,7 +152,6 @@ trait DefaultRename extends Refactoring with Evaluation {
         val startRenaming = new StopClock
         val refactored = CRenameIdentifier.rename(id, name, morpheus)
         val renamingTime = startRenaming.getTime
-        logger.info("Run " + run + ": Renaming time : " + renamingTime)
 
         StatsCan.addStat(morpheus.getFile, run, RefactorTime, renamingTime)
 
