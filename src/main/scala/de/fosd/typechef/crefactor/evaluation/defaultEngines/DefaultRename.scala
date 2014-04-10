@@ -81,7 +81,6 @@ trait DefaultRename extends Refactoring with Evaluation {
                     isValidId(i) &&
                         (i.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile) ||
                             new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
-            logger.info(morpheus.getAllUses.size)
             val allIds = morpheus.getAllUses.par.filter(_.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile))
             val linkedIds = if (FORCE_LINKING && moduleInterface != null)
                 allIds.par.filter(id => moduleInterface.isListed(Opt(parentOpt(id, morpheus.getASTEnv).feature, id.name), morpheus.getFM))
