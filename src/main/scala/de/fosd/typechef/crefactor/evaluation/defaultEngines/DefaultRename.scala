@@ -149,8 +149,6 @@ trait DefaultRename extends Refactoring with Evaluation {
             logger.info("Run " + run + ": Is not linked.")
 
         val features = toRename._3
-        StatsCan.addStat(morpheus.getFile, run, AffectedFeatures, features)
-        StatsCan.addStat(morpheus.getFile, run, Amount, getVariableIdToRename._2)
 
         val startRenaming = new StopClock
         val refactored = CRenameIdentifier.rename(id, name, morpheus)
@@ -165,14 +163,20 @@ trait DefaultRename extends Refactoring with Evaluation {
                     val linkedId = findIdInAST(x._2, id, x._1.getTranslationUnit)
                     val time = new StopClock
                     val ref = CRenameIdentifier.rename(linkedId.get, name, x._1)
-                    StatsCan.addStat(x._1.getFile, run, RefactorTime, time.getTime)
                     ref match {
-                        case Right(refAST) => (x._1.getFile, refAST)
+                        case Right(refAST) => {
+                            StatsCan.addStat(x._1.getFile, run, RefactorTime, time.getTime)
+                            StatsCan.addStat(x._1.getFile, run, Amount, x._1.getReferences(linkedId.get).length)
+                            (x._1.getFile, refAST)
+                        }
                         case Left(s) =>
                             logger.error("Run " + run + ": Refactoring failed at file " + x._1.getFile + " with " + s + ".")
                             return (false, null, List(), List())
                     }
                 })
+                StatsCan.addStat(morpheus.getFile, run, AffectedFeatures, features)
+                StatsCan.addStat(morpheus.getFile, run, Amount, getVariableIdToRename._2)
+                logger.info("Run " + run + ": Renaming time : " + renamingTime)
                 logger.info("Run " + run + ": Refactoring at file " + morpheus.getFile + " successful.")
                 (true, ast, features, linkedRefactored)
             }
