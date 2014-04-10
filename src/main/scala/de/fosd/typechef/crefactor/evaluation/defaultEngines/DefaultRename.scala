@@ -174,7 +174,7 @@ trait DefaultRename extends Refactoring with Evaluation {
                     }
                 })
                 StatsCan.addStat(morpheus.getFile, run, AffectedFeatures, features)
-                StatsCan.addStat(morpheus.getFile, run, Amount, getVariableIdToRename._2)
+                StatsCan.addStat(morpheus.getFile, run, Amount, toRename._2)
                 logger.info("Run " + run + ": Renaming time : " + renamingTime)
                 logger.info("Run " + run + ": Refactoring at file " + morpheus.getFile + " successful.")
                 (true, ast, features, linkedRefactored)
