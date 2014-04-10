@@ -94,6 +94,8 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
     }
 
     private def writeProjectInterface(options: FrontendOptions) = {
+        // TODO ajanker: This method should generate a linking interface not requiring one, right?
+        // So linkInf is obsolete!
         val linkInf = {
             if (options.refLink) new CModuleInterface(options.getLinkingInterfaceFile)
             else null
@@ -102,8 +104,12 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         if (linkInf == null) printInvokationErrorAndExit("No valid interface specified.")
 
         val linker: CLinkingInterfaceGenerator = {
-            if (options.getRefStudy.equalsIgnoreCase("busybox")) de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking.BusyBoxLinkInterfaceGenerator
-            else if (options.getRefStudy.equalsIgnoreCase("openssl")) de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.setup.OpenSSLLinkInterfaceGenerator
+            if (options.getRefStudy.equalsIgnoreCase("busybox"))
+                de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking.BusyBoxLinkInterfaceGenerator
+            else if (options.getRefStudy.equalsIgnoreCase("openssl"))
+                de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.setup.OpenSSLLinkInterfaceGenerator
+            else if (options.getRefStudy.equalsIgnoreCase("sqlite"))
+                de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.setup.SQLiteInterfaceGenerator
             else null
         }
 
