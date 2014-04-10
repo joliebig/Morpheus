@@ -18,7 +18,7 @@ trait CLinkingInterfaceGenerator extends Evaluation with App with Logging {
     val dbgLinkExt = ".dbginterface"
 
     val fileList = io.Source.fromFile(filesToEval).getLines().toList
-    logger.info(fileList.size + " files to analyse for linking informations.")
+    logger.info(fileList.size + " files to analyse for linking information.")
 
     private def getFMConstraints: Iterator[FeatureExpr] =
         for (l: String <- io.Source.fromFile(featureModel).getLines(); if l != "")
@@ -76,7 +76,7 @@ trait CLinkingInterfaceGenerator extends Evaluation with App with Logging {
 
     logger.info("Linked interface is complete:\t" + finalInterface.isComplete)
     logger.info("Linked interface is fully configured:\t" + finalInterface.isFullyConfigured)
-    logger.info("Linked interface is wellformed:\t" + finalInterface.isWellformed)
+    logger.info("Linked interface is well-formed:\t" + finalInterface.isWellformed)
 
     logger.info(finalInterface.exports.size + " exports: " + finalInterface.exports)
     logger.info(finalInterface.imports.size + " imports: " + finalInterface.imports)
