@@ -150,6 +150,7 @@ trait DefaultRename extends Refactoring with Evaluation {
 
         val features = toRename._3
         StatsCan.addStat(morpheus.getFile, run, AffectedFeatures, features)
+        StatsCan.addStat(morpheus.getFile, run, Amount, getVariableIdToRename._2)
 
         val startRenaming = new StopClock
         val refactored = CRenameIdentifier.rename(id, name, morpheus)
