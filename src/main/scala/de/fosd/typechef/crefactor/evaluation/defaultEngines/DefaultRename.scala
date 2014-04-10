@@ -246,7 +246,7 @@ trait DefaultRename extends Refactoring with Evaluation {
                 case (CType(_, _, _, _), _, _, _) => Some("Variable")
                 case o =>
                     logger.warn("Unknown Type " + id + " " + o)
-                    None
+                    Some(o.toString)
             })
         }
         val foundTypes = ids.flatMap(id => {
