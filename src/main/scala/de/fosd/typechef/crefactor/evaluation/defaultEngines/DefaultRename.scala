@@ -164,6 +164,7 @@ trait DefaultRename extends Refactoring with Evaluation {
                     ref match {
                         case Right(refAST) => {
                             StatsCan.addStat(x._1.getFile, run, RefactorTime, time.getTime)
+                            StatsCan.addStat(x._1.getFile, run, RenamedId, id.name)
                             StatsCan.addStat(x._1.getFile, run, Amount, x._1.getReferences(linkedId.get).length)
                             (x._1.getFile, refAST)
                         }
