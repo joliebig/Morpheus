@@ -76,7 +76,7 @@ trait DefaultRename extends Refactoring with Evaluation {
 
             def hasSameFileName(id : Id) : Boolean = {
                 val entry = id.getFile.get.replaceFirst("file ", "")
-                (entry.equalsIgnoreCase(morpheus.getFile) || getFileName(entry).equalsIgnoreCase(morpheus.getFile))
+                (entry.equalsIgnoreCase(morpheus.getFile) || getFileName(entry).equalsIgnoreCase(getFileName(morpheus.getFile)))
             }
 
             // TODO Fix Bug in OpenSSL for functions without body
