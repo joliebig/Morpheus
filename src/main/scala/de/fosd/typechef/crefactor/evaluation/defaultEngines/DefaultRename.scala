@@ -86,9 +86,6 @@ trait DefaultRename extends Refactoring with Evaluation {
                     isValidId(i) &&
                         (hasSameFileName(i) || new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
             val allIds = morpheus.getAllUses.par.filter(hasSameFileName)
-            println(allIds.size)
-            println(morpheus.getAllUses.size)
-            println(morpheus.getFile)
 
             val linkedIds = if (FORCE_LINKING && moduleInterface != null)
                 allIds.par.filter(id => moduleInterface.isListed(Opt(parentOpt(id, morpheus.getASTEnv).feature, id.name), morpheus.getFM))
@@ -100,12 +97,6 @@ trait DefaultRename extends Refactoring with Evaluation {
 
             val nonRefactoredIds = ids.par.filterNot(id => id.name.startsWith(REFACTOR_NAME))
             val variableIds = nonRefactoredIds.par.filter(id => isVariable(parentOpt(id, morpheus.getASTEnv)))
-            val fexIds = nonRefactoredIds.foreach(id => {
-                println(id)
-                println(morpheus.getASTEnv.featureExpr(id))
-                println(isVariable(parentOpt(id, morpheus.getASTEnv)))
-            })
-
 
             logger.info("Run " + run + ": Variable IDs found: " + variableIds.size)
 
