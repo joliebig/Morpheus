@@ -167,7 +167,9 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
         else originalFilePath
 
     def getFileName(originalFilePath: String) =
-        originalFilePath.substring(originalFilePath.lastIndexOf(File.separatorChar), originalFilePath.length).replace("/", "")
+        if (originalFilePath.contains(File.separatorChar))
+            originalFilePath.substring(originalFilePath.lastIndexOf(File.separatorChar), originalFilePath.length).replace("/", "")
+        else originalFilePath
 
     def getResultDir(originalFilePath: String, run: Int): File = {
         val outputFilePath = originalFilePath.replace(evalName, "result")
