@@ -44,7 +44,7 @@ trait Verification extends Evaluation {
         //first defConfig
         featureCombinations foreach(_.getTrueSet foreach(println))
         configure()
-        val defRef = buildAndTest(resultDir, -1, "_ref")
+        val defRef = buildAndTest(resultDir, 0, "_ref")
         logger.info("Can build and test " + evalFile + " in def config and ref: " + defRef)
         //configureBuildAndTestFeatureCombinations(evalFile, resultDir, featureCombinations, "_ref")
 
@@ -54,7 +54,7 @@ trait Verification extends Evaluation {
         // run original
         //first defConfig
         configure()
-        val defOrg = buildAndTest(resultDir, -1, "_org")
+        val defOrg = buildAndTest(resultDir, 0, "_org")
         logger.info("Can build and test " + evalFile + " in def config and org: " + defOrg)
         //configureBuildAndTestFeatureCombinations(evalFile, resultDir, featureCombinations, "_org")
 
@@ -69,7 +69,7 @@ trait Verification extends Evaluation {
                 val conf = configure(config)
                 logger.info(config.getTrueSet + " can be configured: " + conf)
                 if (conf) {
-                    val build = buildAndTest(resultDir, index, mode)
+                    val build = buildAndTest(resultDir, index + 1, mode)
                     logger.info("Can build and test " + evalFile + " as " + mode + ": " + build)
                 }
             }
