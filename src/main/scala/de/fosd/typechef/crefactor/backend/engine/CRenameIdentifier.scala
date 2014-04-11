@@ -35,11 +35,25 @@ object CRenameIdentifier extends ASTSelection with CRefactor {
             Left(Configuration.getInstance().getConfig("default.error.invalidName"))
         else if (rid.exists(isValidInModule(nid, _, morpheus)))
             Left(Configuration.getInstance().getConfig("engine.rename.failed.shadowing"))
-        // isWritable
-        else if (!rid.par.forall(id => new File(id.getFile.get.replaceFirst("file ", "")).canWrite)) {
-            rid.foreach(id => println(id.getFile))
-            Left(Configuration.getInstance().getConfig("engine.rename.failed.rename")) }
+        // isWritable - with workaround for openssl casestudy with incomplete paths
+        else if (!rid.par.forall(id => {
+            val path =
+                if (hasSameFileName(id, morpheus)) morpheus.getFile
+                else id.getFile.get.replaceFirst("file ", "")
+            new File(path).canWrite
+        }))
+            Left(Configuration.getInstance().getConfig("engine.rename.failed.rename"))
         else
             Right(replaceIds(morpheus.getTranslationUnit, rid, nid))
     }
+
+    private def hasSameFileName(id : Id, morpheus : Morpheus) : Boolean = {
+        val entry = id.getFile.get.replaceFirst("file ", "")
+        (entry.equalsIgnoreCase(morpheus.getFile) || getFileName(entry).equalsIgnoreCase(getFileName(morpheus.getFile)))
+    }
+
+    private def getFileName(originalFilePath: String) =
+        if (originalFilePath.contains(File.separatorChar))
+            originalFilePath.substring(originalFilePath.lastIndexOf(File.separatorChar), originalFilePath.length).replace("/", "")
+        else originalFilePath
 }
