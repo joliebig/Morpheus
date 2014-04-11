@@ -21,6 +21,7 @@ import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.SQLiteRefactor
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.BusyBoxRefactor
 import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.OpenSSLRefactor
 import de.fosd.typechef.crefactor.backend.CModuleInterface
+import de.fosd.typechef.featureexpr.bdd.FeatureExprHelper
 
 object CRefactorFrontend extends App with InterfaceWriter with BuildCondition with Logging with EnforceTreeHelper {
 
@@ -40,6 +41,11 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         if (runOpt.writeProjectInterface) writeProjectInterface(runOpt)
 
         if (runOpt.parse) parseOrLoadTUnitandProcess(args, true)
+
+
+        println("# unique Sat calls: " + FeatureExprHelper.uniqueSatCalls)
+        println("# cached Sat calls: " + FeatureExprHelper.cachedSatCalls)
+        println("# all Sat calls: " + (FeatureExprHelper.uniqueSatCalls + FeatureExprHelper.cachedSatCalls))
     }
 
     def parseOrLoadTUnitandProcess(args: Array[String], saveArg: Boolean = false) = {
