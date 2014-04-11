@@ -36,8 +36,9 @@ object CRenameIdentifier extends ASTSelection with CRefactor {
         else if (rid.exists(isValidInModule(nid, _, morpheus)))
             Left(Configuration.getInstance().getConfig("engine.rename.failed.shadowing"))
         // isWritable
-        else if (!rid.par.forall(id => new File(id.getFile.get.replaceFirst("file ", "")).canWrite))
-            Left(Configuration.getInstance().getConfig("engine.rename.failed.rename"))
+        else if (!rid.par.forall(id => new File(id.getFile.get.replaceFirst("file ", "")).canWrite)) {
+            rid.foreach(id => println(id.getFile))
+            Left(Configuration.getInstance().getConfig("engine.rename.failed.rename")) }
         else
             Right(replaceIds(morpheus.getTranslationUnit, rid, nid))
     }
