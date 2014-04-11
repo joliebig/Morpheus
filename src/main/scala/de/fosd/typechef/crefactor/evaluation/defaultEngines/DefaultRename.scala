@@ -85,7 +85,7 @@ trait DefaultRename extends Refactoring with Evaluation {
                 morpheus.getReferences(id).map(_.entry).forall(i =>
                     isValidId(i) &&
                         (hasSameFileName(i) || new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
-            val allIds = morpheus.getAllUses.par.filter(_.getFile.get.replaceFirst("file ", "").equalsIgnoreCase(morpheus.getFile))
+            val allIds = morpheus.getAllUses.par.filter(hasSameFileName)
             println(allIds.size)
             println(morpheus.getAllUses.size)
             println(morpheus.getFile)
