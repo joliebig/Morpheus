@@ -14,6 +14,7 @@ trait DefaultExtract extends Refactoring with Evaluation {
 
     val MAX_REC_DEPTH: Int = 100
 
+    // TODO @ajanker: What is RETRIES for?
     val RETRIES: Int = 10
 
     val NAME = "refactored_func"
