@@ -92,6 +92,12 @@ trait DefaultRename extends Refactoring with Evaluation {
 
             val nonRefactoredIds = ids.par.filterNot(id => id.name.startsWith(REFACTOR_NAME))
             val variableIds = nonRefactoredIds.par.filter(id => isVariable(parentOpt(id, morpheus.getASTEnv)))
+            val fexIds = nonRefactoredIds.foreach(id => {
+                println(id)
+                println(morpheus.getASTEnv.featureExpr(id))
+                println(isVariable(parentOpt(id, morpheus.getASTEnv)))
+            })
+
 
             logger.info("Run " + run + ": Variable IDs found: " + variableIds.size)
 
