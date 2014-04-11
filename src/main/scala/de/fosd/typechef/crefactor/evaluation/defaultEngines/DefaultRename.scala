@@ -166,11 +166,16 @@ trait DefaultRename extends Refactoring with Evaluation {
                     val linkedId = findIdInAST(x._2, id, x._1.getTranslationUnit)
                     val time = new StopClock
                     val ref = CRenameIdentifier.rename(linkedId.get, name, x._1)
+                    val refTime = time.getTime
                     ref match {
                         case Right(refAST) => {
-                            StatsCan.addStat(x._1.getFile, run, RefactorTime, time.getTime)
+                            val references = x._1.getReferences(linkedId.get).length
+                            StatsCan.addStat(x._1.getFile, run, RefactorTime, refTime)
                             StatsCan.addStat(x._1.getFile, run, RenamedId, id.name)
-                            StatsCan.addStat(x._1.getFile, run, Amount, x._1.getReferences(linkedId.get).length)
+                            StatsCan.addStat(x._1.getFile, run, Amount, references)
+                            logger.info("Run " + run + ": Renaming time : " + renamingTime + "for linked file: " + x._1.getFile)
+                            logger.info("Run " + run + ": Id : " + id.name + "for linked file: " + x._1.getFile)
+                            logger.info("Run " + run + ": References : " + references + "for linked file: " + x._1.getFile)
                             (x._1.getFile, refAST)
                         }
                         case Left(s) =>
