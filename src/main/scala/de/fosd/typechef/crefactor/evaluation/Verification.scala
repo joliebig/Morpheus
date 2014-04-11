@@ -46,7 +46,7 @@ trait Verification extends Evaluation {
         configure()
         val defRef = buildAndTest(resultDir, -1, "_ref")
         logger.info("Can build and test " + evalFile + " in def config and ref: " + defRef)
-        configureBuildAndTestFeatureCombinations(evalFile, resultDir, featureCombinations, "_ref")
+        //configureBuildAndTestFeatureCombinations(evalFile, resultDir, featureCombinations, "_ref")
 
         // clean up the refactor mess
         runScript(cleanScript, sourcePath)
@@ -56,7 +56,7 @@ trait Verification extends Evaluation {
         configure()
         val defOrg = buildAndTest(resultDir, -1, "_org")
         logger.info("Can build and test " + evalFile + " in def config and org: " + defOrg)
-        configureBuildAndTestFeatureCombinations(evalFile, resultDir, featureCombinations, "_org")
+        //configureBuildAndTestFeatureCombinations(evalFile, resultDir, featureCombinations, "_org")
 
         // cleanup
         runScript(cleanScript, sourcePath)
