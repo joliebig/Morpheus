@@ -37,6 +37,8 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
             case o: OptionException => printInvokationErrorAndExit(o.getMessage)
         }
 
+        println(runOpt.getFile)
+
         if (runOpt.writeProjectInterface) writeProjectInterface(runOpt)
 
         if (runOpt.parse) parseOrLoadTUnitandProcess(args, true)
