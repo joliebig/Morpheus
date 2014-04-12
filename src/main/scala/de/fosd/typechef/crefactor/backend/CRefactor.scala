@@ -148,6 +148,17 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         r(t).get.asInstanceOf[T]
     }
 
+    /**
+     * Inserts one opt statement before and the after a mark in a translation unit.
+     */
+    def insertInOptBeforeAndAfter[T <: Product](t: T, mark: Opt[_], insertBefore: Opt[_], insertAfter: Opt[_])
+                                               (implicit m: Manifest[T]): T = {
+        val r = oncetd(rule {
+            case l: List[Opt[_]] => l.flatMap(x => if (x.eq(mark)) insertBefore :: x :: insertAfter :: Nil else x :: Nil)
+        })
+        r(t).get.asInstanceOf[T]
+    }
+
     // TODO Clean up tunit rewrite strategies
     def insertInAstBefore[T <: Product](t: T, mark: Opt[_], insert: Opt[_])(implicit m: Manifest[T]): T = {
         val r = oncetd(rule {

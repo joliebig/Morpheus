@@ -220,6 +220,10 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             val newFDef = genFDef(specifiers, declarator, compundStatement)
             val newFDefOpt = genFDefExternal(parentFunction, newFDef, morpheus)
 
+            // generate forward declaration
+            val newFDefForward = genFDefForward(parentFunction, morpheus, specifiers, declarator)
+            val newFDefForwardOpt = genFDefExternal(parentFunction, newFDefForward, morpheus)
+
             if (isValidInProgram(Opt(newFDefOpt.feature, funcName), morpheus))
                 return Left(Configuration.getInstance().getConfig("default.error.invalidName"))
 
@@ -234,8 +238,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             val tunitWithFCall = insertBefore(compStmt.innerStatements,
                 selectedOptStatements.head, functionCall)
             val ccStmtWithRemovedStmts = eqRemove(tunitWithFCall, selectedOptStatements)
-            val tunitWithFDef = insertInAstBefore(morpheus.getTranslationUnit,
-                parentFunctionOpt, newFDefOpt)
+            val tunitWithFDef = insertInOptBeforeAndAfter(morpheus.getTranslationUnit,
+                parentFunctionOpt, newFDefForwardOpt, newFDefOpt)
 
             val refAST = replaceCompoundStmt(tunitWithFDef, compStmt, ccStmtWithRemovedStmts)
             Right(refAST)
@@ -753,10 +757,19 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         FunctionDef(specs, decl, oldStyleParameters, stmts)
 
     /**
+     * Generate the forward declaration
+     */
+    private def genFDefForward(oldFDef: FunctionDef, morpheus : Morpheus,
+                               specs: List[Opt[Specifier]], decl: Declarator,
+                               attributes: List[Opt[AttributeSpecifier]] = List(), i: Option[Initializer] = None) =
+        Declaration(specs, List(Opt(morpheus.getASTEnv.featureExpr(oldFDef), InitDeclaratorI(decl, attributes, i))))
+
+
+    /**
      * Generates the opt node for the tunit.
      */
-    private def genFDefExternal(oldFDef: FunctionDef, newFDef: FunctionDef, morpheus: Morpheus) =
-        Opt[FunctionDef](morpheus.getASTEnv.featureExpr(oldFDef), newFDef)
+    private def genFDefExternal[T <: AST](oldFDef: FunctionDef, newFDef: T, morpheus: Morpheus) =
+        Opt[T](morpheus.getASTEnv.featureExpr(oldFDef), newFDef)
 
     /**
      * Generate the function declarator.
