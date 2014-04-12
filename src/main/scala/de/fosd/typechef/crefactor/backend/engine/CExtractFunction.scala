@@ -382,7 +382,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             }
         }
 
-        def addParameterFromParameter(id: Id, ft: FeatureExpr, featureExploit: Boolean = true) = {
+        def addParameterFromParameter(id: Id, ft: FeatureExpr, fallbackAllowed: Boolean = true, featureExploit: Boolean = true) = {
 
             def retrieveAllDeclParameterFeatures(paramDecl: Product, feature: FeatureExpr): FeatureExpr = {
                 // get up to DeclParameterDeclList to make sure ALL features are found
@@ -405,7 +405,10 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                     }
                     val genDeclFromPDecl = Declaration(p.specifiers, List(Opt(ft, InitDeclaratorI(p.decl, p.attr, None))))
                     addDeclToDeclsToGenerate(feature, genDeclFromPDecl, id)
-                case x => logger.error("Missed parameter decl pattern" + x)
+                case x =>
+                    // Fallback to other determination method -> no clear informations from type env.
+                    if (fallbackAllowed) addParameterFromDeclaration(id, ft, !fallbackAllowed, featureExploit)
+                    else logger.warn("Missed parameter decl pattern" + x)
             }
         }
 
@@ -468,8 +471,9 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             addParameterFromDeclaration(id, featureExpr, false)
         }
 
-        def addParameterFromDeclaration(id: Id, ft: FeatureExpr, featureExploit: Boolean = true) {
+        def addParameterFromDeclaration(id: Id, ft: FeatureExpr, fallBackAllowed: Boolean = true, featureExploit: Boolean = true) {
             val decl = findPriorASTElem[Declaration](id, morpheus.getASTEnv)
+            println(decl)
             decl match {
                 case Some(entry) => {
                     val feature = if (ft.equivalentTo(FeatureExprFactory.True))
@@ -487,8 +491,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 }
                 case none =>
                     // fallback as parameter from parameter...
-                    addParameterFromParameter(id, ft, featureExploit)
-                    logger.warn("Passed as parameter and detected as declaration but not as parameter: " + id)
+                    if (fallBackAllowed) addParameterFromParameter(id, ft, !fallBackAllowed, featureExploit)
+                    else logger.warn("Passed as parameter and detected as declaration but not as parameter: " + id)
             }
         }
 
