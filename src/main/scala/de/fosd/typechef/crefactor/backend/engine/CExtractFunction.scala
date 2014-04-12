@@ -473,7 +473,6 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
         def addParameterFromDeclaration(id: Id, ft: FeatureExpr, fallBackAllowed: Boolean = true, featureExploit: Boolean = true) {
             val decl = findPriorASTElem[Declaration](id, morpheus.getASTEnv)
-            println(decl)
             decl match {
                 case Some(entry) => {
                     val feature = if (ft.equivalentTo(FeatureExprFactory.True))
