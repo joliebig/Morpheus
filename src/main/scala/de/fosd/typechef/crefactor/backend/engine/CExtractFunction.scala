@@ -335,6 +335,16 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             new java.util.IdentityHashMap
         val declDeclPointerMap: java.util.IdentityHashMap[Declaration, List[Declarator]] =
             new java.util.IdentityHashMap
+        val idFeatureMap: java.util.HashMap[String, List[FeatureExpr]] =
+            new java.util.HashMap
+
+
+        def addToIdFeatureMap(id: Id, feature: FeatureExpr) = {
+            if (!idFeatureMap.containsKey(id.name))
+                idFeatureMap.put(id.name, List(feature))
+            else
+                idFeatureMap.put(id.name, feature :: idFeatureMap.get(id.name))
+        }
 
         def addTodeclIdMapMap(decl: Declaration, id: Id) = {
             if (declIdMap.containsKey(decl)) declIdMap.put(decl, id :: declIdMap.get(decl))
@@ -352,13 +362,24 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             else declDeclPointerMap.put(decl, declarator :: declDeclPointerMap.get(decl))
         }
 
+        def isAlreadyKnownAsParameter(id: Id, feature: FeatureExpr): Boolean = {
+            if (idFeatureMap.containsKey(id.name))
+                idFeatureMap.get(id.name).exists(fxpr =>
+                    feature.equivalentTo(fxpr, morpheus.getFM))
+            else
+                false
+        }
+
         /**
          * Adds usual decls to possible parameters
          */
         def addDeclToDeclsToGenerate(feature: FeatureExpr, decl: Declaration, id: Id): Any = {
-            addToDeclFeatureMap(decl, feature)
-            addTodeclDeclPointerMap(decl, generateInit(decl, id))
-            addTodeclIdMapMap(decl, id)
+            if (!isAlreadyKnownAsParameter(id, feature)) {
+                addToIdFeatureMap(id, feature)
+                addToDeclFeatureMap(decl, feature)
+                addTodeclDeclPointerMap(decl, generateInit(decl, id))
+                addTodeclIdMapMap(decl, id)
+            }
         }
 
         def addParameterFromParameter(id: Id, ft: FeatureExpr, featureExploit: Boolean = true) = {
@@ -457,9 +478,12 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                         ft
                     // TODO Possible Scala Bug?
                     // addDeclToDeclsToGenerate(feature, entry, id)
-                    addToDeclFeatureMap(entry, feature)
-                    addTodeclDeclPointerMap(entry, generateInit(entry, id))
-                    addTodeclIdMapMap(entry, id)
+                    if (!isAlreadyKnownAsParameter(id, feature)) {
+                        addToIdFeatureMap(id, feature)
+                        addToDeclFeatureMap(entry, feature)
+                        addTodeclDeclPointerMap(entry, generateInit(entry, id))
+                        addTodeclIdMapMap(entry, id)
+                    }
                 }
                 case none =>
                     // fallback as parameter from parameter...
@@ -497,7 +521,6 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         liveParamIds.foreach(liveId =>
             try {
                 // only lookup variables
-                println(morpheus.getEnv(liveId).varEnv.lookup(liveId.name))
                 morpheus.getEnv(liveId).varEnv.lookup(liveId.name) match {
                     case o@One(_) => addOne(o, liveId)
                     case c@Choice(_, _, _) =>
@@ -511,7 +534,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                     case x => logger.warn("Missed pattern choice? " + x)
                 }
             } catch {
-                case _: Throwable => logger.warn("No entry found for: " + liveId)
+                case x: Throwable => logger.warn("No entry found for: " + liveId)
             })
 
         val decls = declFeatureMap.keySet().toArray(Array[Declaration]()).toList

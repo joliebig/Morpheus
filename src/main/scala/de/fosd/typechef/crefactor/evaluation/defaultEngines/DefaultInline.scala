@@ -33,6 +33,9 @@ trait DefaultInline extends Refactoring with Evaluation {
         if (availableFuncCalls.isEmpty)
             return (false, null, List(), List())
 
+        // TODO Prefer var func calls
+        // val variableFuncCalls =
+
         val callIdToInline = availableFuncCalls(Random.nextInt(availableFuncCalls.size)).p.asInstanceOf[Id]
 
         logger.info("Trying to inline fcall: " + callIdToInline)
