@@ -586,6 +586,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
             // remove extern specifier in function argument.
             val filteredDeclSpecs = decl.declSpecs.filter(_.entry match {
+                case c: ConstSpecifier => true
                 case s: OtherSpecifier => false
                 case _ => true
             })
