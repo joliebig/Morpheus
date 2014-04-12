@@ -412,7 +412,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 case x =>
                     // Fallback to other determination method -> no clear informations from type env.
                     if (fallbackAllowed) addParameterFromDeclaration(id, ft, !fallbackAllowed, featureExploit)
-                    else logger.warn("Missed parameter decl pattern" + x)
+                    else logger.warn("Would have requiered fallback to declaration: " + id)
             }
         }
 
@@ -504,7 +504,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 case none =>
                     // fallback as parameter from parameter...
                     if (fallBackAllowed) addParameterFromParameter(id, ft, !fallBackAllowed, featureExploit)
-                    else logger.warn("Passed as parameter and detected as declaration but not as parameter: " + id)
+                    else logger.warn("Would have requiered fallback to parameter: " + id)
             }
         }
 
