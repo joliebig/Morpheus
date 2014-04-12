@@ -374,7 +374,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
          * Adds usual decls to possible parameters
          */
         def addDeclToDeclsToGenerate(feature: FeatureExpr, decl: Declaration, id: Id): Any = {
-            if (!isAlreadyKnownAsParameter(id, feature)) {
+            if (!isAlreadyKnownAsParameter(id, feature) && !containsEnumsSpecifier(decl)) {
                 addToIdFeatureMap(id, feature)
                 addToDeclFeatureMap(decl, feature)
                 addTodeclDeclPointerMap(decl, generateInit(decl, id))
@@ -464,11 +464,20 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             }
         }
 
+        /**
+         * Helping method for fake choice nodes retrieved from typesystem.
+         */
         def addChoiceOne(c: Choice[_], id: Id, ft: FeatureExpr = FeatureExprFactory.True) = {
             val orFeatures = getOrFeatures(c)
-            logger.info("OneChoiceFeature " + orFeatures)
             val featureExpr = ft.and(orFeatures)
-            addParameterFromDeclaration(id, featureExpr, false)
+            addParameterFromDeclaration(id, featureExpr, true, false)
+        }
+
+        def containsEnumsSpecifier(entry: Declaration): Boolean = {
+            entry.declSpecs.exists(_.entry match {
+                case _: EnumSpecifier => true
+                case _ => false
+            })
         }
 
         def addParameterFromDeclaration(id: Id, ft: FeatureExpr, fallBackAllowed: Boolean = true, featureExploit: Boolean = true) {
@@ -481,7 +490,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                         ft
                     // TODO Possible Scala Bug?
                     // addDeclToDeclsToGenerate(feature, entry, id)
-                    if (!isAlreadyKnownAsParameter(id, feature)) {
+                    if (!isAlreadyKnownAsParameter(id, feature) && !containsEnumsSpecifier(entry)) {
                         addToIdFeatureMap(id, feature)
                         addToDeclFeatureMap(entry, feature)
                         addTodeclDeclPointerMap(entry, generateInit(entry, id))
@@ -495,6 +504,15 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             }
         }
 
+        // direct enum use -> check for visibility only as enums are constant
+        // if not visible afterwards the refactoring can not be made.
+        def isInvisibleEnum(id: Id) =  {
+            morpheus.getDecls(id).exists(findPriorASTElem[CompoundStatement](_, morpheus.getASTEnv) match {
+                case None => false
+                case _ => true
+            })
+        }
+
         def addOne(o: One[_], id: Id, ft: FeatureExpr = FeatureExprFactory.True) = {
             if (ft.isTautology(morpheus.getFM)) {
                 o match {
@@ -503,14 +521,10 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                     case One((CFunction(_, _), _, _)) =>
                     case One((CType(CFunction(_, _), _, _, _), _, _, ExternalLinkage)) =>
                     case One((CType(CFunction(_, _), _, _, _), _, _, InternalLinkage)) =>
-                    case One((_, KEnumVar, _, _)) =>
-                        // direct enum use -> check for visibility only as enums are constant
-                        // if not visible afterwards the refactoring can not be made.
-                        if (morpheus.getDecls(id).exists(findPriorASTElem[CompoundStatement](_, morpheus.getASTEnv) match {
-                            case None => false
-                            case _ => true
-                        })) throw new RefactorException("Type Declaration for " + id.name +
+                    case One((_, KEnumVar, _, _)) => if (isInvisibleEnum(id)) {
+                        throw new RefactorException("Type Declaration for " + id.name +
                             " would be invisible after extraction!")
+                    }
                     case One((CType(_, _, _, _), KParameter, _, _)) =>
                         // Passed as parameter in parent function
                         addParameterFromParameter(id, ft)
