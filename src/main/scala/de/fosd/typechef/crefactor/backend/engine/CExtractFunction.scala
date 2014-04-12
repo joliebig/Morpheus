@@ -14,6 +14,7 @@ import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.StatsCan
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.crewrite.IntraCFG
+import scala.collection.JavaConversions._
 
 
 /**
@@ -96,19 +97,16 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         })
 
         var parents: List[AST] = List()
-        // TODO Optimize expensive array and list conversions
-        // to simplify the code use, import scala.collection.JavaConversions._
-        // see https://stackoverflow.com/questions/674713/converting-a-java-collection-into-a-scala-collection
         if (!uniqueSelectedStatements.isEmpty) {
-            parents = uniqueSelectedStatements.toArray(Array[Statement]()).toList
+            parents = uniqueSelectedStatements.toList
             uniqueSelectedStatements.clear()
             parents.foreach(statement => {
                 val exploitedStatement = exploitStatements(statement.asInstanceOf[Statement])
                 uniqueSelectedStatements.add(exploitedStatement)
             })
-            parents = uniqueSelectedStatements.toArray(Array[Statement]()).toList
+            parents = uniqueSelectedStatements.toList
         } else
-            parents = uniqueSelectedExpressions.toArray(Array[Expr]()).toList
+            parents = uniqueSelectedExpressions.toList
 
         cachedSelectedElements = parents.sortWith(comparePosition)
         logger.info("ExtractFuncSelection: " + cachedSelectedElements)
