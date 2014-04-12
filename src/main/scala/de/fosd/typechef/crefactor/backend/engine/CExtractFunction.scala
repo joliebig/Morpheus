@@ -775,5 +775,5 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
      * Generate the function declarator.
      */
     private def genDeclarator(name: String, extensions: List[Opt[DeclaratorExtension]] =
-    List[Opt[DeclaratorExtension]]()) = AtomicNamedDeclarator(List[Opt[Pointer]](), Id(name), extensions)
+        List[Opt[DeclaratorExtension]]()) = AtomicNamedDeclarator(List[Opt[Pointer]](), Id(name), extensions)
 }
