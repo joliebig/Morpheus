@@ -96,19 +96,21 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             }
         })
 
-        var parents: List[AST] = List()
-        if (!uniqueSelectedStatements.isEmpty) {
-            parents = uniqueSelectedStatements.toList
-            uniqueSelectedStatements.clear()
-            parents.foreach(statement => {
-                val exploitedStatement = exploitStatements(statement.asInstanceOf[Statement])
-                uniqueSelectedStatements.add(exploitedStatement)
-            })
-            parents = uniqueSelectedStatements.toList
-        } else
-            parents = uniqueSelectedExpressions.toList
+        val selectedElements = {
+            if (!uniqueSelectedStatements.isEmpty) {
+                val parents = uniqueSelectedStatements.toList
+                uniqueSelectedStatements.clear()
+                parents.foreach(statement => {
+                    val exploitedStatement = exploitStatements(statement)
+                    uniqueSelectedStatements.add(exploitedStatement)
+                })
+                uniqueSelectedStatements
+            } else
+                uniqueSelectedExpressions
+        }
 
-        cachedSelectedElements = parents.sortWith(comparePosition)
+
+        cachedSelectedElements = selectedElements.toList.sortWith(comparePosition)
         logger.info("ExtractFuncSelection: " + cachedSelectedElements)
         cachedSelectedElements
     }
