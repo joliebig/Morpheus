@@ -56,8 +56,7 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
     def runScript(script: String, dir: String, args: String, timeout: Int): (InputStream, InputStream) = {
         val pb = if (args == null) new ProcessBuilder(script)
         else new ProcessBuilder(script, args)
-        //pb.directory(new File(dir))
-        //println(pb.environment())
+        pb.directory(new File(dir))
         println(pb.command())
         val process = pb.start()
         val timer = new Timer(true)
