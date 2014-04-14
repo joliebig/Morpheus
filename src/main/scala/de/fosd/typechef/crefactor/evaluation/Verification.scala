@@ -13,6 +13,7 @@ trait Verification extends Evaluation {
     val testScript: String = "./runtest.sh"
     val confScript: String = "./genConfig.sh"
     val cleanScript: String = "./clean.sh"
+    val configFlags: String = "configFlags"
 
     def singleVerify(evalFile: String, fm: FeatureModel, mode: String, affectedFeatures : List[FeatureExpr] = List()) = {
         val resultDir = new File(evalFile.replaceAll(evalName, "result") + "/" + mode + "/")
@@ -40,7 +41,7 @@ trait Verification extends Evaluation {
         // get features
         val featureCombinations = getFeatureCombinations(confFeatures, affectedFeatures)
 
-        val fw = new java.io.FileWriter(new File(completePath + "/configFlags"))
+        val fw = new java.io.FileWriter(new File(completePath + "/" + configFlags))
         // addDefconfig
         fw.write(" \n")
 
