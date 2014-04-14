@@ -112,8 +112,10 @@ trait Verification extends Evaluation {
         evaluateScriptResult(run)._1
     }
 
-    def configure(config : SimpleConfiguration, writer : Writer) = {
-
+    def configure(configuration : SimpleConfiguration, writer : Writer) = {
+       val features = configuration.getTrueSet.map(_.feature).mkString("-D", " -D", "")
+       writer.write(features)
+       writer.write("\n")
     }
 
     def writeConfig(config: SimpleConfiguration, dir: File, name: String): Unit = writeConfig(config.getTrueSet, dir, name)
