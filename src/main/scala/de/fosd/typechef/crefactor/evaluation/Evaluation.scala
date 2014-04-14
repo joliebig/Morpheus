@@ -57,6 +57,7 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
         val pb = if (args == null) new ProcessBuilder(script)
         else new ProcessBuilder(script, args)
         pb.directory(new File(dir))
+        println(pb.environment())
         println(pb.command())
         val process = pb.start()
         val timer = new Timer(true)

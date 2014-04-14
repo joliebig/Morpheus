@@ -504,7 +504,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 case none =>
                     // fallback as parameter from parameter...
                     if (fallBackAllowed) addParameterFromParameter(id, ft, !fallBackAllowed, featureExploit)
-                    else logger.warn("Would have requiered fallback to parameter: " + id)
+                    else logger.warn("Would have required fallback to parameter: " + id)
             }
         }
 
