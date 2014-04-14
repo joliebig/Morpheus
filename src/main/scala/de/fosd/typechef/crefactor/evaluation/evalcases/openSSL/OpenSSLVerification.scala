@@ -26,7 +26,7 @@ object OpenSSLVerification extends OpenSSLEvaluation with Verification {
         // run refactored run first
         //first defConfig
         //val fw = new java.io.FileWriter(new File(resultDir.getCanonicalPath)) // TODO correct path
-        featureCombinations foreach (_.getTrueSet foreach (println))
+        featureCombinations foreach (_.getTrueSet foreach (single => println(single.feature)))
         // add def config first
         //featureCombinations foreach(configure(_, fw))
 
