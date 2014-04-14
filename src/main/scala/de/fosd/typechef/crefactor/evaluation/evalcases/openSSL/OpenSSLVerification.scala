@@ -13,28 +13,4 @@ object OpenSSLVerification extends OpenSSLEvaluation with Verification {
         // not supported
     }
 
-    override def completeVerify(evalFile: String, fm: FeatureModel, affectedFeatures: List[FeatureExpr] = List()) = {
-        val resultDir = new File(evalFile.replaceAll(evalName, "result") + "/")
-        if (!resultDir.exists)
-            resultDir.mkdirs
-
-        val confFeatures = new ConfigFeatures(allFeatures._1)
-
-        // get features
-        val featureCombinations = getFeatureCombinations(confFeatures, affectedFeatures)
-
-        // run refactored run first
-        //first defConfig
-        //val fw = new java.io.FileWriter(new File(resultDir.getCanonicalPath)) // TODO correct path
-        featureCombinations foreach (_.getTrueSet foreach (single => println(single.feature)))
-        // add def config first
-        //featureCombinations foreach(configure(_, fw))
-
-        //fw.flush
-        //fw.close
-    }
-    override def configure(configuration: SimpleConfiguration) = {
-        false
-        // not defined
-    }
 }

@@ -10,14 +10,4 @@ object SQLiteVerification extends SQLiteEvaluation with Verification {
     override def singleVerify(evalFile: String, fm: FeatureModel, mode: String, affectedFeatures: List[FeatureExpr] = List()) = {
         // not supported
     }
-
-    override def configure(configuration: SimpleConfiguration) = {
-        // TODO Enable them in config script.
-        configuration.getTrueSet foreach(println)
-        val features = ""
-        val run = runScript(confScript, sourcePath, features, runTimeout)
-        evaluateScriptResult(run)._1
-    }
-
-
 }

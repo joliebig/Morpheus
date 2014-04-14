@@ -30,7 +30,7 @@ trait Verification extends Evaluation {
         writeResult((testResult._1 && buildResult._1).toString, resultDir.getCanonicalPath + "/mode" + ".result")
     }
 
-    def completeVerify(evalFile: String, fm: FeatureModel, affectedFeatures: List[FeatureExpr] = List()) : Unit = {
+    def completeVerify(evalFile: String, fm: FeatureModel, affectedFeatures: List[FeatureExpr] = List()) = {
         val resultDir = new File(evalFile.replaceAll(evalName, "result") + "/")
         if (!resultDir.exists)
             resultDir.mkdirs
@@ -40,40 +40,16 @@ trait Verification extends Evaluation {
         // get features
         val featureCombinations = getFeatureCombinations(confFeatures, affectedFeatures)
 
-        // run refactored run first
-        //first defConfig
-        featureCombinations foreach(_.getTrueSet foreach(println))
-        configure()
-        val defRef = buildAndTest(resultDir, 0, "_ref")
-        logger.info("Can build and test " + evalFile + " in def config and ref: " + defRef)
-        //configureBuildAndTestFeatureCombinations(evalFile, resultDir, featureCombinations, "_ref")
+        val fw = new java.io.FileWriter(new File(completePath + "/configFlags"))
+        // addDefconfig
+        fw.write(" \n")
 
-        // clean up the refactor mess
-        runScript(cleanScript, sourcePath)
+        // addAllOtherConfigs
+        featureCombinations.foreach(config => writeConfigFlags(config, fw))
 
-        // run original
-        //first defConfig
-        configure()
-        val defOrg = buildAndTest(resultDir, 0, "_org")
-        logger.info("Can build and test " + evalFile + " in def config and org: " + defOrg)
-        //configureBuildAndTestFeatureCombinations(evalFile, resultDir, featureCombinations, "_org")
-
-        // cleanup
-        runScript(cleanScript, sourcePath)
+        fw.flush
+        fw.close
     }
-
-    def configureBuildAndTestFeatureCombinations(evalFile: String, resultDir: File,
-                                                 featureCombinations: List[SimpleConfiguration], mode: String) =
-        featureCombinations.zipWithIndex.foreach {
-            case (config, index) => {
-                val conf = configure(config)
-                logger.info(config.getTrueSet + " can be configured: " + conf)
-                if (conf) {
-                    val build = buildAndTest(resultDir, index + 1, mode)
-                    logger.info("Can build and test " + evalFile + " as " + mode + ": " + build)
-                }
-            }
-        }
 
     def test: (Boolean, String, String) = {
         val result = runScript(testScript, testPath)
@@ -105,14 +81,7 @@ trait Verification extends Evaluation {
         testResult._1 && buildResult._1
     }
 
-    def configure(configuration: SimpleConfiguration): Boolean
-
-     def configure(): Boolean = {
-        val run = runScript(confScript, sourcePath, runTimeout)
-        evaluateScriptResult(run)._1
-    }
-
-    def configure(configuration : SimpleConfiguration, writer : Writer) = {
+    def writeConfigFlags(configuration : SimpleConfiguration, writer : Writer) = {
        val features = configuration.getTrueSet.map(_.feature).mkString("-D", " -D", "")
        writer.write(features)
        writer.write("\n")

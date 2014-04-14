@@ -67,6 +67,5 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
         val result = runScript("./buildBusyBox.sh", sourcePath)
         evaluateScriptResult(result)
     }
-    override def configure(configuration: SimpleConfiguration) = false
-    override def configure() = false
+
 }
