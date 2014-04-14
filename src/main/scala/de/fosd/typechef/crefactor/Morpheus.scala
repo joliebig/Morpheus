@@ -119,7 +119,7 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
         if (!map.containsKey(key))
             List()
         else
-            map.get(key).filter { entry => getASTEnv.featureExpr(entry) and getASTEnv.featureExpr(key) isSatisfiable getFM }
+            map.get(key).filter { getASTEnv.featureExpr(_) and getASTEnv.featureExpr(key) isSatisfiable getFM }
     }
 
     private def getExternalVariableReferences(ids: List[Id], getReferences: (Id) => List[Id]) = {

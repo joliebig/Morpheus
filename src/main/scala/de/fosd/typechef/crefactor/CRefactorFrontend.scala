@@ -59,11 +59,14 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         val fm = getFM(runOpt)
         runOpt.setFeatureModel(fm)
 
-        val tunit = {
+        val loadedOrParsedTUnit = {
             if (runOpt.reuseAST && new File(runOpt.getSerializedTUnitFilename).exists())
                 loadSerializedTUnit(runOpt.getSerializedTUnitFilename)
             else parseTUnit(fm, runOpt)
         }
+
+        val tunit = prepareAST[TranslationUnit](loadedOrParsedTUnit)
+
 
         if (tunit == null) {
             logger.error("... failed reading AST " + runOpt.getFile + "\nExiting.")
@@ -85,11 +88,14 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         val fm = getFM(opt)
         opt.setFeatureModel(fm) //otherwise the lexer does not get the updated feature model with file presence conditions
 
-        val tunit = {
+        val loadedOrParsedTUnit = {
             if (runOpt.reuseAST && new File(opt.getSerializedTUnitFilename).exists())
                 loadSerializedTUnit(opt.getSerializedTUnitFilename)
             else parseTUnit(fm, opt)
         }
+
+        val tunit = prepareAST[TranslationUnit](loadedOrParsedTUnit)
+
 
         if (tunit == null) {
             logger.error("... failed reading AST " + opt.getFile + "\nExiting.")
