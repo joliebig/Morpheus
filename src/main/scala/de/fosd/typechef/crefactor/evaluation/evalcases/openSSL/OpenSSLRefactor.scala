@@ -34,13 +34,10 @@ object OpenSSLRefactor extends OpenSSLEvaluation with Refactor {
                 val result = r.refactor(morpheus)
                 if (result._1) {
                     write(result._2, morpheus.getFile.replace(".pi", ".c"))
-                    val time = new StopClock
                     StatsCan.addStat(file, AffectedFeatures, result._3)
                     val affectedFeatureExpr = result._3.foldRight(List[FeatureExpr]()) {(l, c) => l ::: c}.distinct
                     logger.info("Starting verification.")
                     OpenSSLVerification.completeVerify(morpheus.getFile, morpheus.getFM, affectedFeatureExpr)
-                    runScript("./clean.sh", sourcePath)
-                    StatsCan.addStat(file, TestingTime, time.getTime)
                 } else writeError("Could not engine file.", path)
                 val writer = new FileWriter(path + ".stats")
                 StatsCan.write(writer)

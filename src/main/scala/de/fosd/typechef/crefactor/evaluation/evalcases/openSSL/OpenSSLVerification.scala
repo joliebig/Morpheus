@@ -2,7 +2,7 @@ package de.fosd.typechef.crefactor.evaluation.evalcases.openSSL
 
 import de.fosd.typechef.crefactor.evaluation.Verification
 import de.fosd.typechef.featureexpr.{SingleFeatureExpr, FeatureExpr, FeatureModel}
-import java.io.File
+import java.io.{Writer, File}
 import de.fosd.typechef.{KnownFeatures, ConfigFeatures, SimpleConfiguration}
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 
@@ -13,10 +13,25 @@ object OpenSSLVerification extends OpenSSLEvaluation with Verification {
         // not supported
     }
 
-    override def configure(configuration: SimpleConfiguration): Boolean = {
-        val features = configuration.getTrueSet.map(_.feature).mkString("-D", " -D", "")
-        val run = runScript(confScript, sourcePath, features, runTimeout)
-        evaluateScriptResult(run)._1
+    override def completeVerify(evalFile: String, fm: FeatureModel, affectedFeatures: List[FeatureExpr] = List()) = {
+        val resultDir = new File(evalFile.replaceAll(evalName, "result") + "/")
+        if (!resultDir.exists)
+            resultDir.mkdirs
+
+        val confFeatures = new ConfigFeatures(allFeatures._1)
+
+        // get features
+        val featureCombinations = getFeatureCombinations(confFeatures, affectedFeatures)
+
+        // run refactored run first
+        //first defConfig
+        val fw = new java.io.FileWriter(new File(resultDir.getCanonicalPath)) // TODO correct path
+        featureCombinations foreach (_.getTrueSet foreach (println))
+        // add def config first
+        featureCombinations foreach(configure(_, fw))
+
+        fw.flush
+        fw.close
     }
 
 

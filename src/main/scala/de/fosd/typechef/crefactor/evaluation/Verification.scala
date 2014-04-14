@@ -1,7 +1,7 @@
 package de.fosd.typechef.crefactor.evaluation
 
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, SingleFeatureExpr, FeatureExpr, FeatureModel}
-import java.io.File
+import java.io.{Writer, File}
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef._
 import scala.Some
@@ -30,7 +30,7 @@ trait Verification extends Evaluation {
         writeResult((testResult._1 && buildResult._1).toString, resultDir.getCanonicalPath + "/mode" + ".result")
     }
 
-    def completeVerify(evalFile: String, fm: FeatureModel, affectedFeatures: List[FeatureExpr] = List()) = {
+    def completeVerify(evalFile: String, fm: FeatureModel, affectedFeatures: List[FeatureExpr] = List()) : Unit = {
         val resultDir = new File(evalFile.replaceAll(evalName, "result") + "/")
         if (!resultDir.exists)
             resultDir.mkdirs
@@ -110,6 +110,10 @@ trait Verification extends Evaluation {
      def configure(): Boolean = {
         val run = runScript(confScript, sourcePath, runTimeout)
         evaluateScriptResult(run)._1
+    }
+
+    def configure(config : SimpleConfiguration, writer : Writer) = {
+
     }
 
     def writeConfig(config: SimpleConfiguration, dir: File, name: String): Unit = writeConfig(config.getTrueSet, dir, name)
