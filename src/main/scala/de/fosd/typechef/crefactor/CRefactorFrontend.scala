@@ -59,14 +59,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         val fm = getFM(runOpt)
         runOpt.setFeatureModel(fm)
 
-        val loadedOrParsedTUnit = {
-            if (runOpt.reuseAST && new File(runOpt.getSerializedTUnitFilename).exists())
-                loadSerializedTUnit(runOpt.getSerializedTUnitFilename)
-            else parseTUnit(fm, runOpt)
-        }
-
-        val tunit = prepareAST[TranslationUnit](loadedOrParsedTUnit)
-
+        val tunit = getTunit(runOpt, fm)
 
         if (tunit == null) {
             logger.error("... failed reading AST " + runOpt.getFile + "\nExiting.")
@@ -88,14 +81,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         val fm = getFM(opt)
         opt.setFeatureModel(fm) //otherwise the lexer does not get the updated feature model with file presence conditions
 
-        val loadedOrParsedTUnit = {
-            if (runOpt.reuseAST && new File(opt.getSerializedTUnitFilename).exists())
-                loadSerializedTUnit(opt.getSerializedTUnitFilename)
-            else parseTUnit(fm, opt)
-        }
-
-        val tunit = prepareAST[TranslationUnit](loadedOrParsedTUnit)
-
+        val tunit = getTunit(opt, fm)
 
         if (tunit == null) {
             logger.error("... failed reading AST " + opt.getFile + "\nExiting.")
@@ -105,6 +91,14 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         (tunit, fm)
     }
 
+
+    private def getTunit(opt: FrontendOptions, fm: FeatureModel): TranslationUnit = {
+        val tunit =
+            if (runOpt.reuseAST && new File(opt.getSerializedTUnitFilename).exists())
+                loadSerializedTUnit(opt.getSerializedTUnitFilename)
+            else parseTUnit(fm, opt)
+        prepareAST[TranslationUnit](tunit)
+    }
     private def writeProjectInterface(options: FrontendOptions) = {
         // TODO ajanker: This method should generate a linking interface not requiring one, right?
         // So linkInf is obsolete!
