@@ -123,14 +123,23 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
 
     def isAvailable(morpheus: Morpheus, selection: List[AST]): Boolean = {
-        if (selection.isEmpty) false
-        else if (!selection.par.forall { findPriorASTElem[FunctionDef](_, morpheus.getASTEnv).isDefined }) false
+        if (selection.isEmpty) return false
+
+        val selectedIds = filterAllASTElems[Id](selection)
+        val externalUses = morpheus.getExternalUses(selectedIds)
+        val externalDefs = morpheus.getExternalDefs(selectedIds)
+        val liveIds = uniqueExtRefIds(externalDefs, externalUses)
+
+        val extractSelection = CExtractSelection(selectedIds, externalUses, externalDefs, liveIds)
+
+        if (!selection.par.forall { findPriorASTElem[FunctionDef](_, morpheus.getASTEnv).isDefined }) false
         else if (!isPartOfSameCompStmt(selection, morpheus)) false
         else if (!filterAllASTElems[ReturnStatement](selection).isEmpty) false
         else if (!selection.par.forall(checkAstElemForCFGDisruption(_, selection, morpheus))) false
-        else if (hasIdsWithDifferentScope(selection, morpheus)) false
-        else if (hasInvisibleEnumerations(selection, morpheus)) false
-        else if (hasVariablesDeclaredWithRegisterSpecifier(selection, morpheus)) false
+        else if (hasIdsWithDifferentScope(extractSelection, morpheus)) false
+        else if (hasInvisibleEnumerations(extractSelection, morpheus)) false
+        else if (hasInvisibleStructOrTypeDefSpecifier(extractSelection, morpheus)) false
+        else if (hasVariablesDeclaredWithRegisterSpecifier(extractSelection, morpheus)) false
         else true
     }
 
@@ -252,7 +261,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         }
     }
 
-    private def hasVariablesDeclaredWithRegisterSpecifier(selection: List[AST], morpheus: Morpheus): Boolean = {
+    private def hasVariablesDeclaredWithRegisterSpecifier(selection: CExtractSelection, morpheus: Morpheus): Boolean = {
         def containsRegisterSpecifier(specs : List[Opt[Specifier]]) : Boolean = {
              specs.exists(_.entry match {
                  case r: RegisterSpecifier => true
@@ -260,12 +269,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
              })
         }
 
-        val selectedIds = filterAllASTElems[Id](selection)
-        val externalUses = morpheus.getExternalUses(selectedIds)
-        val externalDefs = morpheus.getExternalDefs(selectedIds)
-        val extRefIds = uniqueExtRefIds(externalDefs, externalUses)
-
-        extRefIds.exists(id => morpheus.getDecls(id).exists(decl => {
+        selection.liveIds.exists(id => morpheus.getDecls(id).exists(decl => {
             val declaration = findPriorASTElem[Declaration](decl, morpheus.getASTEnv)
             val registeredInDecl = {
                 declaration match {
@@ -287,14 +291,44 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         }))
     }
 
-    private def hasInvisibleEnumerations(selection: List[AST], morpheus: Morpheus): Boolean = {
+    private def hasInvisibleStructOrTypeDefSpecifier(selection: CExtractSelection, morpheus: Morpheus): Boolean =
+        selection.liveIds.exists(id => morpheus.getDecls(id).exists(declId => {
+            val decl = findPriorASTElem[Declaration](declId, morpheus.getASTEnv)
+            decl match {
+                case None => false
+                case Some(entry) => entry.declSpecs.exists(spec => {
+                    spec.entry match {
+                        case TypeDefTypeSpecifier(i: Id) =>
+                            morpheus.getDecls(i).exists(findPriorASTElem[CompoundStatement](_, morpheus.getASTEnv) match {
+                                case None => false
+                                case _ => true
+                            })
+                        case s: StructOrUnionSpecifier => {
+                            val idIsInvisible = s.id match {
+                                case None => throw new RefactorException("Anonymous struct declaration are not supported")
+                                case Some(id) => morpheus.getDecls(id).exists(findPriorASTElem[CompoundStatement](_, morpheus.getASTEnv) match {
+                                    case None => false
+                                    case _ => true
+                                })
+                            }
+                            val structDeclIsInvisible = s.enumerators match {
+                                case None => false
+                                case Some(structDeclarations) => structDeclarations.exists(structDecl =>
+                                    findPriorASTElem[CompoundStatement](structDecl.entry, morpheus.getASTEnv) match {
+                                        case None => false
+                                        case _ => true
+                                    })
+                            }
+                            idIsInvisible || structDeclIsInvisible
+                        }
+                        case _ => false
+                    }
+                })
+            }
+        }))
 
-        val selectedIds = filterAllASTElems[Id](selection)
-        val externalUses = morpheus.getExternalUses(selectedIds)
-        val externalDefs = morpheus.getExternalDefs(selectedIds)
-        val liveIds = uniqueExtRefIds(externalDefs, externalUses)
-
-        val invisibleEnums = liveIds.exists(liveId => {
+    private def hasInvisibleEnumerations(selection: CExtractSelection, morpheus: Morpheus): Boolean = {
+        val invisibleEnums = selection.liveIds.exists(liveId => {
             try {
                 val enums = ConditionalLib.leaves(morpheus.getEnv(liveId).varEnv.lookup(liveId.name))
                 val res = enums.exists {case (_, KEnumVar, 1, _) => true; case _ => false}
@@ -316,9 +350,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         invisibleEnums
     }
 
-    private def hasIdsWithDifferentScope(selection: List[AST], morpheus: Morpheus): Boolean = {
-        val selectedIds = filterAllASTElems[Id](selection)
-        val externalUses = morpheus.getExternalUses(selectedIds)
+    private def hasIdsWithDifferentScope(selection: CExtractSelection, morpheus: Morpheus): Boolean = {
+        val externalUses = morpheus.getExternalUses(selection.selectedIds)
         val idsToDeclare = getIdsToDeclare(externalUses)
 
         !idsToDeclare.isEmpty
@@ -574,26 +607,41 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 spec.entry match {
                     case TypeDefTypeSpecifier(i: Id) =>
                         if (morpheus.getDecls(i).exists(findPriorASTElem[CompoundStatement](_, morpheus.getASTEnv) match {
-                            case None => false
+                            case None => true
                             case _ => true
                         })) throw new RefactorException("Type Declaration for " + i +
                             " would be invisible after extraction!")
-                    case StructOrUnionSpecifier(_, Some(i: Id), _, _, _) =>
-                        if (morpheus.getDecls(i).exists(findPriorASTElem[CompoundStatement](_, morpheus.getASTEnv) match {
-                            case None => false
-                            case _ => true
-                        })) throw new RefactorException("Type Declaration for " + i +
-                            " would be invisible after extraction!")
+                    case s: StructOrUnionSpecifier => {
+                        s.id match {
+                            case None => throw new RefactorException("Anonymous struct declaration are not supported")
+                            case Some(id) => if (morpheus.getDecls(id).exists(findPriorASTElem[CompoundStatement](_, morpheus.getASTEnv) match {
+                                case None => false
+                                case _ => true
+                            })) throw new RefactorException("Struct Declaration for " + id +
+                                " would be invisible after extraction!")
+                        }
+                        s.enumerators match {
+                            case None =>
+                            case Some(structDeclarations) => if (structDeclarations.exists(structDecl => {
+                                findPriorASTElem[CompoundStatement](structDecl.entry, morpheus.getASTEnv) match {
+                                    case None => false
+                                    case _ => true
+                                }
+                            })) throw new RefactorException("Struct Declarations for " + structDeclarations +
+                                " would be invisible after extraction!")
+                        }
+                    }
                     case _ => logger.debug("Specs " + spec)
                 }
             })
 
             // remove extern specifier in function argument.
-            val filteredDeclSpecs = decl.declSpecs.filter(_.entry match {
-                case c: ConstSpecifier => true
-                case s: OtherSpecifier => false
-                case _ => true
+            val filteredDeclSpecs = decl.declSpecs.flatMap(current => current.entry match {
+                case c: ConstSpecifier => Some(current)
+                case s: OtherSpecifier => None
+                case _ => Some(current)
             })
+
 
             val ids = declIdMap.get(decl)
             ids.flatMap {
@@ -777,3 +825,6 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     private def genDeclarator(name: String, extensions: List[Opt[DeclaratorExtension]] =
         List[Opt[DeclaratorExtension]]()) = AtomicNamedDeclarator(List[Opt[Pointer]](), Id(name), extensions)
 }
+
+case class CExtractSelection(selectedIds : List[Id], externalUses: List[(Id, List[Id])],
+                             externalDefs: List[(Id, List[Id])], liveIds : List[Id]) {}
