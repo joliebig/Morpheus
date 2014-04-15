@@ -292,40 +292,46 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     }
 
     private def hasInvisibleStructOrTypeDefSpecifier(selection: CExtractSelection, morpheus: Morpheus): Boolean =
-        selection.liveIds.exists(id => morpheus.getDecls(id).exists(declId => {
-            val decl = findPriorASTElem[Declaration](declId, morpheus.getASTEnv)
-            decl match {
-                case None => false
-                case Some(entry) => entry.declSpecs.exists(spec => {
-                    spec.entry match {
-                        case TypeDefTypeSpecifier(i: Id) =>
-                            morpheus.getDecls(i).exists(findPriorASTElem[CompoundStatement](_, morpheus.getASTEnv) match {
-                                case None => false
-                                case _ => true
-                            })
-                        case s: StructOrUnionSpecifier => {
-                            val idIsInvisible = s.id match {
-                                case None => throw new RefactorException("Anonymous struct declaration are not supported")
-                                case Some(id) => morpheus.getDecls(id).exists(findPriorASTElem[CompoundStatement](_, morpheus.getASTEnv) match {
-                                    case None => false
-                                    case _ => true
-                                })
-                            }
-                            val structDeclIsInvisible = s.enumerators match {
-                                case None => false
-                                case Some(structDeclarations) => structDeclarations.exists(structDecl =>
-                                    findPriorASTElem[CompoundStatement](structDecl.entry, morpheus.getASTEnv) match {
+        selection.liveIds.exists(id => {
+            morpheus.getDecls(id).::(id).exists({
+                declId => {
+                    // We can only look at look declaration as parameter typedef are forced to be visible to the
+                    // extracted function.
+                    val decl = findPriorASTElem[Declaration](declId, morpheus.getASTEnv)
+                    decl match {
+                        case None => false
+                        case Some(entry) => entry.declSpecs.exists(spec => {
+                            spec.entry match {
+                                case TypeDefTypeSpecifier(i: Id) =>
+                                    morpheus.getDecls(i).exists(findPriorASTElem[CompoundStatement](_, morpheus.getASTEnv) match {
                                         case None => false
                                         case _ => true
                                     })
+                                case s: StructOrUnionSpecifier => {
+                                    val idIsInvisible = s.id match {
+                                        case None => throw new RefactorException("Anonymous struct declaration are not supported")
+                                        case Some(id) => morpheus.getDecls(id).exists(findPriorASTElem[CompoundStatement](_, morpheus.getASTEnv) match {
+                                            case None => false
+                                            case _ => true
+                                        })
+                                    }
+                                    val structDeclIsInvisible = s.enumerators match {
+                                        case None => false
+                                        case Some(structDeclarations) => structDeclarations.exists(structDecl =>
+                                            findPriorASTElem[CompoundStatement](structDecl.entry, morpheus.getASTEnv) match {
+                                                case None => false
+                                                case _ => true
+                                            })
+                                    }
+                                    idIsInvisible || structDeclIsInvisible
+                                }
+                                case _ => false
                             }
-                            idIsInvisible || structDeclIsInvisible
-                        }
-                        case _ => false
+                        })
                     }
-                })
-            }
-        }))
+                }
+            })
+        })
 
     private def hasInvisibleEnumerations(selection: CExtractSelection, morpheus: Morpheus): Boolean = {
         val invisibleEnums = selection.liveIds.exists(liveId => {
@@ -635,9 +641,10 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 }
             })
 
-            // remove extern specifier in function argument.
+            // remove extern specifier and struct declartors from function argument.
             val filteredDeclSpecs = decl.declSpecs.flatMap(current => current.entry match {
                 case c: ConstSpecifier => Some(current)
+                case sd: StructOrUnionSpecifier => Some(current.copy(entry = sd.copy(enumerators = None)))
                 case s: OtherSpecifier => None
                 case _ => Some(current)
             })
