@@ -309,7 +309,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                                     })
                                 case s: StructOrUnionSpecifier => {
                                     val idIsInvisible = s.id match {
-                                        case None => throw new RefactorException("Anonymous struct declaration are not supported")
+                                        case None => true
                                         case Some(id) => morpheus.getDecls(id).exists(findPriorASTElem[CompoundStatement](_, morpheus.getASTEnv) match {
                                             case None => false
                                             case _ => true
@@ -613,7 +613,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 spec.entry match {
                     case TypeDefTypeSpecifier(i: Id) =>
                         if (morpheus.getDecls(i).exists(findPriorASTElem[CompoundStatement](_, morpheus.getASTEnv) match {
-                            case None => true
+                            case None => false
                             case _ => true
                         })) throw new RefactorException("Type Declaration for " + i +
                             " would be invisible after extraction!")
