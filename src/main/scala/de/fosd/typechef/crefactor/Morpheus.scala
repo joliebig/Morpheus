@@ -135,7 +135,7 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
         }).toList
     }
 
-    private def isPartOfFuncCall(id: Id): Boolean = {
+    def isPartOfFuncCall(id: Id): Boolean = {
         getASTEnv.parent(id) match {
             case PostfixExpr(`id`, FunctionCall(_)) => true
             case _ => false

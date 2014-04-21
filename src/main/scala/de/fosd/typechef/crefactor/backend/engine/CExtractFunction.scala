@@ -292,7 +292,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     }
 
     private def hasInvisibleStructOrTypeDefSpecifier(selection: CExtractSelection, morpheus: Morpheus): Boolean =
-        selection.liveIds.exists(id => {
+        selection.selectedIds.exists(id => {
             morpheus.getDecls(id).::(id).exists({
                 declId => {
                     // We can only look at look declaration as parameter typedef are forced to be visible to the
@@ -303,10 +303,12 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                         case Some(entry) => entry.declSpecs.exists(spec => {
                             spec.entry match {
                                 case TypeDefTypeSpecifier(i: Id) =>
-                                    morpheus.getDecls(i).exists(findPriorASTElem[CompoundStatement](_, morpheus.getASTEnv) match {
+                                    val invisible = morpheus.getDecls(i).exists(findPriorASTElem[CompoundStatement](_, morpheus.getASTEnv) match {
                                         case None => false
                                         case _ => true
                                     })
+                                    val funcCall = morpheus.getReferences(declId).exists(ref => morpheus.isPartOfFuncCall(ref.entry))
+                                    invisible || funcCall
                                 case s: StructOrUnionSpecifier => {
                                     val idIsInvisible = s.id match {
                                         case None => true
