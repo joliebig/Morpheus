@@ -8,6 +8,7 @@ import de.fosd.typechef.crefactor.frontend.util.CodeSelection
 import de.fosd.typechef.conditional._
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 import de.fosd.typechef.typesystem.linker.SystemLinker
+import java.util.Collections
 
 trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation with EnforceTreeHelper with Logging {
 
@@ -110,8 +111,10 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
      * Replace a list of ids in AST with copied instance with new names.
      */
     def replaceIds[T <: Product](t: T, ids: List[Id], newName: String): T = {
+        val idsToReplace = Collections.newSetFromMap[Id](new java.util.IdentityHashMap())
+        ids foreach(idsToReplace.add(_))
         val r = manybu(rule {
-            case id: Id => if (ids.exists(isPartOf(id, _))) {
+            case id: Id => if (idsToReplace.contains(id)) {
                 val copiedId = id.copy(name = newName)
                 val orgPosRange = id.range
                 orgPosRange match {
