@@ -74,7 +74,7 @@ trait DefaultRename extends Refactoring with Evaluation {
                     !(moduleInterface.isBlackListed(id.name) || renameLink.contains(id.name))
                 else true
             } && !isExternalDeclWithNoLinkingInformation(id, morpheus) &&
-                id.hasPosition && hasLocalLinkingInformation(id, morpheus)
+                id.hasPosition && !hasLocalLinkingInformation(id, morpheus)
 
             morpheus.getTypeSystem.getInferredInterface().exports.exists(sig => sig.name.equals())
 
