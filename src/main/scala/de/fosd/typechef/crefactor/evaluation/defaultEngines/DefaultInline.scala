@@ -21,22 +21,36 @@ trait DefaultInline extends Refactoring with Evaluation {
     def refactor(morpheus: Morpheus): (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)]) = {
         val psExpr = filterAllASTElems[PostfixExpr](morpheus.getTranslationUnit)
         val funcCalls = psExpr.par.filter(isFunctionCall)
-        val availableFuncCalls = funcCalls.par.filter(p => {
+        val availableFuncCalls = funcCalls.flatMap(p => {
             p.p match {
-                case i: Id => CInlineFunction.isAvailable(morpheus, i)
-                case _ => false
+                case i: Id =>
+                    if (CInlineFunction.isAvailable(morpheus, i)) Some(i)
+                    else None
+                case _ => None
             }
-        }).toList
+        })
 
         logger.info("Function calls found to inline: " + availableFuncCalls.size)
 
         if (availableFuncCalls.isEmpty)
             return (false, null, List(), List())
 
-        // TODO Prefer var func calls
-        // val variableFuncCalls =
+        // Prefer var func calls
+        val variableFuncCalls = availableFuncCalls.flatMap(call => {
+            val callsDeclDef = CInlineFunction.divideCallDeclDef(call, morpheus)
+            val varCalls = callsDeclDef._1.exists(isVariable)
+            val varDecls = callsDeclDef._2.exists(isVariable)
+            val varDefs = callsDeclDef._3.exists(isVariable)
+            val varExpr = callsDeclDef._4.exists(isVariable)
+            if (varCalls || varDecls || varDefs || varExpr) Some(call)
+            else None
+        })
 
-        val callIdToInline = availableFuncCalls(Random.nextInt(availableFuncCalls.size)).p.asInstanceOf[Id]
+        logger.info("Function calls found to inline: " + variableFuncCalls.size)
+
+        val callIdToInline =
+            if (variableFuncCalls.isEmpty) availableFuncCalls(Random.nextInt(availableFuncCalls.size))
+            else variableFuncCalls(Random.nextInt(variableFuncCalls.size))
 
         logger.info("Trying to inline fcall: " + callIdToInline)
 
