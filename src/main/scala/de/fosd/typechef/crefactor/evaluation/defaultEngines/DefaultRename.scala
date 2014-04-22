@@ -122,6 +122,7 @@ trait DefaultRename extends Refactoring with Evaluation {
             }
 
             val id = getRandomID(randomIDs)
+            logger.info("Run " + run + ": Found Id: " + id)
             if (id == null)
                 return null
 
