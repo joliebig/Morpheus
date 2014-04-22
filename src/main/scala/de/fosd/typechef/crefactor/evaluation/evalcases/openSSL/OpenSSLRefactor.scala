@@ -39,7 +39,7 @@ object OpenSSLRefactor extends OpenSSLEvaluation with Refactor {
                     logger.info("Starting verification.")
                     OpenSSLVerification.completeVerify(morpheus.getFile, morpheus.getFM, affectedFeatureExpr)
                 } else writeError("Could not engine file.", path)
-                val writer = new FileWriter(path + ".stats")
+                val writer = new FileWriter(path + getFileName(file) + ".stats")
                 StatsCan.write(writer)
                 writer.flush()
                 writer.close()
