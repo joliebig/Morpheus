@@ -488,7 +488,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 else decl.declSpecs.foldLeft((List[Opt[Pointer]](), List[FeatureExpr]())) {(entries, declSpec) => genPointer(entries, declSpec)}._1
 
             val resPointers = decl.init.foldLeft(genPointers) {(currentPointers, declInit) => {
-                if(declInit.entry.eq(param.name)) declInit.entry.declarator.pointers ::: currentPointers
+                if(declInit.entry.getName.eq(param.name)) declInit.entry.declarator.pointers ::: currentPointers
                 else currentPointers
             }}
 
