@@ -74,6 +74,8 @@ trait DefaultRename extends Refactoring with Evaluation {
                 else true
             } && !isExternalDeclWithNoLinkingInformation(id, morpheus) && id.hasPosition
 
+            morpheus.getTypeSystem.getInferredInterface().exports.exists(sig => sig.name.equals())
+
             def hasSameFileName(id : Id) : Boolean = {
                 val entry = id.getFile.get.replaceFirst("file ", "")
                 (entry.equalsIgnoreCase(morpheus.getFile) || getFileName(entry).equalsIgnoreCase(getFileName(morpheus.getFile)))
@@ -120,6 +122,8 @@ trait DefaultRename extends Refactoring with Evaluation {
             val id = getRandomID(randomIDs)
             logger.info("Run " + run + ": Found Id: " + id)
             logger.info(id.getPositionFrom)
+            logger.info(morpheus.getTypeSystem.getInferredInterface().exports.exists(sig => sig.name.equals(id.name)))
+            logger.info(morpheus.getTypeSystem.getInferredInterface().imports.exists(sig => sig.name.equals(id.name)))
             if (id == null)
                 return null
 
