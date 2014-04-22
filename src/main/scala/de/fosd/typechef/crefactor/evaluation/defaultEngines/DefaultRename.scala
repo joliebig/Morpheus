@@ -72,7 +72,7 @@ trait DefaultRename extends Refactoring with Evaluation {
             def isValidId(id: Id): Boolean = !id.name.contains("_main") && !isSystemLinkedName(id.name) && {
                 if (moduleInterface != null) !(moduleInterface.isBlackListed(id.name) || renameLink.contains(id.name))
                 else true
-            } && !isExternalDeclWithNoLinkingInformation(id, morpheus)
+            } && !isExternalDeclWithNoLinkingInformation(id, morpheus) && id.hasPosition
 
             def hasSameFileName(id : Id) : Boolean = {
                 val entry = id.getFile.get.replaceFirst("file ", "")
