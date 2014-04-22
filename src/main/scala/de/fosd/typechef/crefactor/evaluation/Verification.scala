@@ -41,7 +41,7 @@ trait Verification extends Evaluation {
         // get features
         val featureCombinations = getFeatureCombinations(confFeatures, affectedFeatures)
 
-        val fw = new java.io.FileWriter(new File(completePath + "/" + configFlags))
+        val fw = new java.io.FileWriter(new File(completePath + "/" + evalName + "/" + configFlags))
         // addDefconfig
         fw.write(" \n")
 
