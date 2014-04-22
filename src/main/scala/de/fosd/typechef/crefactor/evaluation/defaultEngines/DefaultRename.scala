@@ -122,10 +122,6 @@ trait DefaultRename extends Refactoring with Evaluation {
             }
 
             val id = getRandomID(randomIDs)
-            logger.info("Run " + run + ": Found Id: " + id)
-            logger.info(id.getPositionFrom)
-            logger.info(morpheus.getTypeSystem.getInferredInterface().exports.exists(sig => sig.name.equals(id.name)))
-            logger.info(morpheus.getTypeSystem.getInferredInterface().imports.exists(sig => sig.name.equals(id.name)))
             if (id == null)
                 return null
 
