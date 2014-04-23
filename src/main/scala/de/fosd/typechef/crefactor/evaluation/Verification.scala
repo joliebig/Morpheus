@@ -83,9 +83,15 @@ trait Verification extends Evaluation {
     }
 
     def writeConfigFlags(configuration : SimpleConfiguration, writer : Writer) = {
-       val features = configuration.getTrueSet.map(_.feature).mkString("-D", " -D", "")
-       writer.write(features)
-       writer.write("\n")
+       val features = configuration.getTrueSet.flatMap(x => {
+           if (filterFeatures.contains(x.feature)) Some(x.feature)
+           else None
+        }).mkString("-D", " -D", "")
+
+       if (features.nonEmpty) {
+           writer.write(features)
+           writer.write("\n")
+       }
     }
 
     def writeConfig(config: SimpleConfiguration, dir: File, name: String): Unit = writeConfig(config.getTrueSet, dir, name)
