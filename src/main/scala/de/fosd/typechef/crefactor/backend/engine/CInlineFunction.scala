@@ -121,7 +121,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                 case _: InitDeclaratorE => fDecls ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[AST]]
                 case _: Expr => fCallExprs ::= parent.asInstanceOf[Opt[AST]]
                 case _: NArySubExpr => fCallExprs ::= parent.asInstanceOf[Opt[AST]]
-                case _ => assert(false, "Invalid function found!")
+                case x => logger.warn("Invalid function found!" + x)
             }
         })
 
