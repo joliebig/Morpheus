@@ -40,8 +40,6 @@ object SQLiteRefactor extends SQLiteEvaluation with Refactor {
                     val affectedFeatureExpr = result._3.foldRight(List[FeatureExpr]()) {(l, c) => l ::: c}.distinct
                     logger.info("Starting verification.")
                     SQLiteVerification.completeVerify(morpheus.getFile, morpheus.getFM, affectedFeatureExpr)
-                    runScript("./clean.sh", sourcePath)
-                    StatsCan.addStat(file, TestingTime, time.getTime)
                 } else writeError("Could not engine file.", path)
                 val writer = new FileWriter(path + ".stats")
                 StatsCan.write(writer)
