@@ -35,7 +35,6 @@ object SQLiteRefactor extends SQLiteEvaluation with Refactor {
                 val result = r.refactor(morpheus)
                 if (result._1) {
                     write(result._2, morpheus.getFile)
-                    val time = new StopClock
                     StatsCan.addStat(file, AffectedFeatures, result._2)
                     val affectedFeatureExpr = result._3.foldRight(List[FeatureExpr]()) {(l, c) => l ::: c}.distinct
                     logger.info("Starting verification.")
