@@ -19,14 +19,17 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
     def getSelectedElements(morpheus: Morpheus, selection: CodeSelection): List[AST] = {
         val functions = (filterASTElems[FunctionDef](morpheus.getTranslationUnit) :::
             filterASTElems[FunctionCall](morpheus.getTranslationUnit) :::
-            filterAllASTElems[NestedFunctionDef](morpheus.getTranslationUnit)).filter(isSelected(_, morpheus.getASTEnv, selection))
+            filterASTElems[NestedFunctionDef](morpheus.getTranslationUnit)).filter(isSelected(_, morpheus.getASTEnv, selection))
 
-        filterASTElementsForFile(functions, selection.getFilePath).sortWith(comparePosition)
+        filterASTElementsForFile(functions.map(getFunctionIdentifier(_, morpheus.getASTEnv)), selection.getFilePath)
     }
 
     def getAvailableIdentifiers(morpheus: Morpheus, selection: CodeSelection): List[Id] = {
-        val ids = getSelectedElements(morpheus, selection).map(getFunctionIdentifier(_, morpheus.getASTEnv))
-        ids.sortWith(comparePosition)
+        val ids = getSelectedElements(morpheus, selection).flatMap(selected => selected match {
+            case i : Id => Some(i)
+            case _ => None
+        })
+        ids.filter(id => isAvailable(morpheus, id))
     }
 
     def isAvailable(morpheus: Morpheus, selection: CodeSelection): Boolean =
@@ -40,20 +43,27 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
         val fDefs = callsDeclDef._3
         val calls = callsDeclDef._1
 
-        if (fDefs.isEmpty)
+        if (fDefs.isEmpty) {
             false
+        }
+
 
         else if (fDefs.exists(func => hasIncompatibleCFG(func.entry, morpheus)
-            || isRecursive(func.entry)))
+            || isRecursive(func.entry)))  {
+            logger.info(call + " is not compatible.")
             false
+        }
 
         else if (calls.exists(fCall => {
             fDefs.exists(fDef => {
                 val callCompStmt = getCallCompStatement(fCall, morpheus.getASTEnv)
                 val ids = filterAllASTElems[Id](fDef)
-                ids.exists(hasIncompatibleDoubleScopes(_, callCompStmt, morpheus))
+                ids.exists(hasIncompatibleVariableScoping(_, callCompStmt, morpheus))
             })}))
+        {
+            logger.info(call + " has different scopes.")
             false
+        }
         else
             true
     }
@@ -148,9 +158,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
             case n: NestedFunctionDef => isPartOfSelection(n.declarator.getId, selection)
             case c: FunctionCall => isSelected(astEnv.parent(c).asInstanceOf[AST], astEnv, selection)
             case p: PostfixExpr => isPartOfSelection(p.p, selection)
-            case _ =>
-                assert(false, element)
-                false
+            case _ => false
         }
     }
 
@@ -564,10 +572,15 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
         CompoundStatement(initializer ::: stmts)
     }
 
-    private def hasIncompatibleDoubleScopes(id: Id, compStmt: CompoundStatement, morpheus: Morpheus): Boolean = {
+    /**
+     * Determines if a function has an identifier which has a different scope under different presence condition.
+     * As renaming of globally scoped variables causes to alter the behaviour, we do not allow inining of functions
+     * containing variables which are not in the same scope under each condition.
+     */
+    private def hasIncompatibleVariableScoping(id: Id, compStmt: CompoundStatement, morpheus: Morpheus): Boolean = {
         val env = morpheus.getEnv(compStmt.innerStatements.last.entry)
         val condScope = env.varEnv.lookupScope(id.name)
-        val doubleScope = -1
+        val variableScope = -1
 
         def checkConditional(conditional: Conditional[Int]): Boolean = {
             def checkScopes(condScope: Conditional[Int]): Int = {
@@ -576,14 +589,14 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                         val thenScope = checkScopes(thenB)
                         val elseScope = checkScopes(elseB)
 
-                        if (thenScope == doubleScope || elseScope == doubleScope) doubleScope
-                        else if (thenScope != elseScope) doubleScope
+                        if (thenScope == variableScope || elseScope == variableScope) variableScope
+                        else if (thenScope != elseScope) variableScope
                         else thenScope
                     case One(scope) => scope
                 }
             }
             
-            checkScopes(conditional) != doubleScope
+            checkScopes(conditional) == variableScope
         }
 
         condScope match {
