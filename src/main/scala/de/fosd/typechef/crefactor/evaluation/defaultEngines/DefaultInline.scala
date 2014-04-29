@@ -42,6 +42,7 @@ trait DefaultInline extends Refactoring with Evaluation {
             val varDecls = callsDeclDef._2.exists(isVariable)
             val varDefs = callsDeclDef._3.exists(isVariable)
             val varExpr = callsDeclDef._4.exists(isVariable)
+
             if (varCalls || varDecls || varDefs || varExpr) Some(call)
             else None
         })
