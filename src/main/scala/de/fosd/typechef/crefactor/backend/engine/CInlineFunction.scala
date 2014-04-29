@@ -576,8 +576,12 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
     }
 
     private def isFunctionDefOrDecl(id: Id, morpheus: Morpheus): Boolean = {
-        if (morpheus.getEnv(id).varEnv.lookupType(id.name).forall(_.isFunction))
-            return true
+        try {
+            if (morpheus.getEnv(id).varEnv.lookupType(id.name).forall(_.isFunction))
+                return true
+        } catch {
+            case e: Exception =>
+        }
 
         morpheus.getReferences(id).map(_.entry).exists(ref => {
             findPriorASTElem[FunctionDef](ref, morpheus.getASTEnv) match {
