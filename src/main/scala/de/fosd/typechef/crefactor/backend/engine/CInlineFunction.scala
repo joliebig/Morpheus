@@ -552,8 +552,11 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
             case One(scope) => false
             case _ => checkConditional(condScope)
         }
-    } 
+    }
 
+    /**
+     * Checks if an id is only declared at the place of the inlining function scope.
+     */
     private def isDeclaredInFunctionScope(id: Id, env: Env, compStmt: CompoundStatement, morpheus: Morpheus): Boolean = {
 
         val globalScope = 0
@@ -567,15 +570,8 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                             checkConditional(morpheus.getEnv(compStmt.innerStatements.last.entry).varEnv.lookup(id.name), true)
                         else
                             false
-                    } else if (x._1.isFunction) {
-                        parentAST(id, morpheus.getASTEnv) match {
-                            case PostfixExpr(_, FunctionCall(_)) => false
-                            case _ => parentOpt(id, morpheus.getASTEnv).entry match {
-                                case _: FunctionDef => false
-                                case _ => true
-                            }
-                        }
-                    }
+                    } else if (x._1.isFunction)
+                        false
                     else
                         // only rename variables with are not in a global scope
                         x._3 != globalScope
@@ -591,7 +587,6 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                 case One((_)) => checkOne(conditional, recursive)
             }
         }
-        println(env.varEnv.lookup(id.name))
         checkConditional(env.varEnv.lookup(id.name))
 
     }
