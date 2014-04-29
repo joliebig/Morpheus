@@ -10,6 +10,68 @@ import scala._
 import scala.Some
 import de.fosd.typechef.crefactor.frontend.util.CodeSelection
 import de.fosd.typechef.crewrite.IntraCFG
+import java.util.Collections
+import de.fosd.typechef.parser.c.SwitchStatement
+import scala.Some
+import de.fosd.typechef.parser.c.NAryExpr
+import de.fosd.typechef.parser.c.DoStatement
+import de.fosd.typechef.parser.c.Initializer
+import de.fosd.typechef.parser.c.AssignExpr
+import de.fosd.typechef.parser.c.DeclParameterDeclList
+import de.fosd.typechef.parser.c.Id
+import de.fosd.typechef.parser.c.DeclarationStatement
+import de.fosd.typechef.crefactor.backend.RefactorException
+import de.fosd.typechef.parser.c.CompoundStatement
+import de.fosd.typechef.parser.c.CaseStatement
+import de.fosd.typechef.parser.c.InitDeclaratorE
+import de.fosd.typechef.parser.c.PostfixExpr
+import de.fosd.typechef.parser.c.ArrayAccess
+import de.fosd.typechef.parser.c.ReturnStatement
+import de.fosd.typechef.parser.c.CompoundStatementExpr
+import de.fosd.typechef.parser.c.TranslationUnit
+import de.fosd.typechef.parser.c.FunctionCall
+import de.fosd.typechef.parser.c.IfStatement
+import de.fosd.typechef.parser.c.NArySubExpr
+import de.fosd.typechef.parser.c.WhileStatement
+import de.fosd.typechef.parser.c.InitDeclaratorI
+import de.fosd.typechef.parser.c.Declaration
+import de.fosd.typechef.parser.c.ExprStatement
+import de.fosd.typechef.parser.c.ElifStatement
+import de.fosd.typechef.parser.c.FunctionDef
+import de.fosd.typechef.parser.c.NestedFunctionDef
+import de.fosd.typechef.parser.c.ParameterDeclarationD
+import de.fosd.typechef.parser.c.SwitchStatement
+import scala.Some
+import de.fosd.typechef.parser.c.NAryExpr
+import de.fosd.typechef.parser.c.DoStatement
+import de.fosd.typechef.parser.c.Initializer
+import de.fosd.typechef.parser.c.AssignExpr
+import de.fosd.typechef.conditional.One
+import de.fosd.typechef.parser.c.DeclParameterDeclList
+import de.fosd.typechef.parser.c.Id
+import de.fosd.typechef.parser.c.DeclarationStatement
+import de.fosd.typechef.crefactor.backend.RefactorException
+import de.fosd.typechef.parser.c.CompoundStatement
+import de.fosd.typechef.conditional.Opt
+import de.fosd.typechef.parser.c.CaseStatement
+import de.fosd.typechef.parser.c.InitDeclaratorE
+import de.fosd.typechef.parser.c.PostfixExpr
+import de.fosd.typechef.parser.c.ArrayAccess
+import de.fosd.typechef.parser.c.ReturnStatement
+import de.fosd.typechef.parser.c.CompoundStatementExpr
+import de.fosd.typechef.conditional.Choice
+import de.fosd.typechef.parser.c.TranslationUnit
+import de.fosd.typechef.parser.c.FunctionCall
+import de.fosd.typechef.parser.c.IfStatement
+import de.fosd.typechef.parser.c.NArySubExpr
+import de.fosd.typechef.parser.c.WhileStatement
+import de.fosd.typechef.parser.c.InitDeclaratorI
+import de.fosd.typechef.parser.c.Declaration
+import de.fosd.typechef.parser.c.ExprStatement
+import de.fosd.typechef.parser.c.ElifStatement
+import de.fosd.typechef.parser.c.FunctionDef
+import de.fosd.typechef.parser.c.NestedFunctionDef
+import de.fosd.typechef.parser.c.ParameterDeclarationD
 
 /**
  * Implements inline-function refactoring!
@@ -464,7 +526,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
             return compStmt
 
         var workingStatement = compStmt
-        val idsToRename = getIdsToRename(fDef.entry, fCall.entry, workingStatement, morpheus)
+        val idsToRename = getIdsToRename(fDef.entry, workingStatement, morpheus)
         val renamed = renameShadowedIds(idsToRename, fDef, fCall, morpheus)
         val initializer = getInitializers(fCall, renamed._2, morpheus)
 
@@ -502,9 +564,9 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
 
     private def inlineFDefInExpr(compStmt: CompoundStatement, fDef: Opt[FunctionDef],
                                  fCall: Opt[AST], morpheus: Morpheus): CompoundStatement = {
-        val wStmt = compStmt
+        val workingStatement = compStmt
 
-        val idsToRename = getIdsToRename(fDef.entry, fCall.entry, wStmt, morpheus)
+        val idsToRename = getIdsToRename(fDef.entry, workingStatement, morpheus)
 
         val renamed = renameShadowedIds(idsToRename, fDef, fCall, morpheus)
         val initializer = getInitializers(fCall, renamed._2, morpheus)
@@ -554,43 +616,6 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
         }
     }
 
-    /**
-     * Checks if an id is only declared at the place of the inlining function scope.
-     */
-    private def isDeclaredInFunctionScope(id: Id, env: Env, compStmt: CompoundStatement, morpheus: Morpheus): Boolean = {
-
-        val globalScope = 0
-
-        def checkOne(one: Conditional[(CType, DeclarationKind, Int, Linkage)],
-                     recursive: Boolean = false): Boolean = {
-            one match {
-                case One(x) =>
-                    if (x._1.isUnknown) {
-                        if (!recursive)
-                            checkConditional(morpheus.getEnv(compStmt.innerStatements.last.entry).varEnv.lookup(id.name), true)
-                        else
-                            false
-                    } else if (x._1.isFunction)
-                        false
-                    else
-                        // only rename variables with are not in a global scope
-                        x._3 != globalScope
-                case _ => true
-            }
-        }
-
-        def checkConditional(conditional: Conditional[(CType, DeclarationKind, Int, Linkage)],
-                             recursive: Boolean = false): Boolean = {
-            conditional match {
-                case Choice(_, thenB, elseB) =>
-                    checkConditional(thenB, recursive) || checkConditional(elseB, recursive)
-                case One((_)) => checkOne(conditional, recursive)
-            }
-        }
-        checkConditional(env.varEnv.lookup(id.name))
-
-    }
-
     private def isValidFDef(fDef: Opt[FunctionDef], call: Opt[_], ccStatement: CompoundStatement,
                             morpheus: Morpheus): Boolean = {
         if (!(fDef.feature.equivalentTo(FeatureExprFactory.True)
@@ -598,15 +623,122 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
             return false
 
         // stmt's feature does not imply fDef's feature -> no need to inline this def at this position
-        assert(!isRecursive(fDef.entry), "Can not inline - method is recursive.")
-        assert(!hasIncompatibleCFG(fDef.entry, morpheus), "Can not inline - method has bad return statements")
+        if (isRecursive(fDef.entry))
+            throw new RefactorException("Can not inline - method is recursive.")
+        if (hasIncompatibleCFG(fDef.entry, morpheus))
+            throw new RefactorException("Can not inline - method has bad return statements")
+
         true
     }
 
-    private def getIdsToRename(funcDef: FunctionDef, call: AST, compStmt: CompoundStatement, morpheus: Morpheus) =
-        filterAllASTElems[Id](funcDef).filter(isDeclaredInFunctionScope(_,
-            morpheus.getEnv(compStmt.innerStatements.last.entry).asInstanceOf[Env],
-            compStmt: CompoundStatement, morpheus: Morpheus))
+    private def getIdsToRename(funcDef: FunctionDef, compStmt: CompoundStatement, morpheus: Morpheus) = {
+        val idsToInline = filterAllASTElems[Id](funcDef)
+        idsToInline.filter(isDeclaredInFunctionCallScope(_, compStmt, morpheus))
+    }
+
+    private def isFunctionDefOrDecl(id: Id, morpheus: Morpheus): Boolean = {
+        if (morpheus.getEnv(id).varEnv.lookupType(id.name).forall(_.isFunction))
+            return true
+
+        morpheus.getReferences(id).map(_.entry).exists(ref => {
+            findPriorASTElem[FunctionDef](ref, morpheus.getASTEnv) match {
+                case Some(f) => f.declarator.getName.equals(ref.name)
+                case _ => false
+            }
+        })
+    }
+
+    private def isPartOfStruct(refs: List[Opt[Id]], morpheus: Morpheus): Boolean = {
+        refs.map(_.entry).exists(ref => {
+            findPriorASTElem[StructDeclarator](ref, morpheus.getASTEnv) match {
+                case Some(_) => true
+                case _ => false
+            }
+        })
+    }
+
+    private def isTypeDef(refs: List[Opt[Id]], morpheus: Morpheus): Boolean = {
+        refs.map(_.entry).exists(ref => {
+            findPriorASTElem[Declaration](ref, morpheus.getASTEnv) match {
+                case Some(decl) => {
+                    decl.init.exists(_.entry.getName.equals(ref.name)) && decl.declSpecs.exists(_.entry match {
+                        case _: TypedefSpecifier => true
+                        case _ => false
+                    })
+                }
+                case _ => false
+            }
+        })
+    }
+
+    /**
+     * Checks if an id is only declared at the place of the inlining function scope.
+     */
+    private def isDeclaredInFunctionCallScope(id: Id, callCompStmt: CompoundStatement, morpheus: Morpheus): Boolean = {
+
+        // lookup if name is visible in current scope
+        if (!isVisibleNameInFunctionCallScope(id.name, callCompStmt, morpheus))
+            return false
+
+        // check if any reference of the inline id links into the calling scope - if so no renaming is required
+        val idReferences = morpheus.getReferences(id)
+        val idsInCompStmt = Collections.newSetFromMap[Id](new java.util.IdentityHashMap())
+        filterAllASTElems[Id](callCompStmt) foreach idsInCompStmt.add
+
+        if (idReferences.exists(idsInCompStmt.contains))
+            return false
+
+        // id is function -> no rename
+        if (isFunctionDefOrDecl(id, morpheus))
+            return false
+
+        // id is part of struct -> no rename
+        if (isPartOfStruct(idReferences, morpheus))
+            return false
+
+        // id is typedef -> no rename
+        if (isTypeDef(idReferences, morpheus))
+            return false
+
+        true
+    }
+
+    /**
+     * Checks if a name is visibile at the place of the inlining function scope.
+     */
+    private def isVisibleGlobalNameInFunctionCallScope(name: String, callCompStmt: CompoundStatement, morpheus: Morpheus) =
+        isPartOfScope(name, callCompStmt, morpheus, 0)
+
+    /**
+     * Checks if a name is visibile at the place of the inlining function scope.
+     */
+    private def isVisibleNameInFunctionCallScope(name: String, callCompStmt: CompoundStatement, morpheus: Morpheus) =
+        !isPartOfScope(name, callCompStmt, morpheus, -1)
+
+    /**
+     * Checks if a name is part of a specific scope.
+     */
+    private def isPartOfScope(name: String, compStmt: CompoundStatement, morpheus : Morpheus, scope : Int) : Boolean = {
+        val env = morpheus.getEnv(compStmt.innerStatements.last.entry)
+        val nameScope = env.varEnv.lookupScope(name)
+
+        def checkOne(one: Conditional[Int]): Boolean = {
+            one match {
+                case One(`scope`) => true
+                case _ => false
+            }
+        }
+
+        def checkConditionalScope(conditional: Conditional[Int]): Boolean = {
+            conditional match {
+                case Choice(_, thenB, elseB) =>
+                    checkConditionalScope(thenB) || checkConditionalScope(elseB)
+                case One((_)) => checkOne(conditional)
+            }
+        }
+
+        checkConditionalScope(nameScope)
+    }
 
     private def getInitializers(call: Opt[AST], parameters: List[Opt[DeclaratorExtension]],
                                 morpheus: Morpheus): List[Opt[DeclarationStatement]] = {
