@@ -1,77 +1,16 @@
 package de.fosd.typechef.crefactor.backend.engine
 
+import de.fosd.typechef.conditional._
 import de.fosd.typechef.crefactor._
 import de.fosd.typechef.crefactor.backend.{RefactorException, CRefactor, ASTSelection}
-import de.fosd.typechef.parser.c._
-import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureExprFactory}
-import de.fosd.typechef.typesystem._
-import de.fosd.typechef.conditional._
-import scala._
-import scala.Some
 import de.fosd.typechef.crefactor.frontend.util.CodeSelection
 import de.fosd.typechef.crewrite.IntraCFG
+import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureExprFactory}
+import de.fosd.typechef.parser.c._
+import scala._
 import java.util.Collections
-import de.fosd.typechef.parser.c.SwitchStatement
 import scala.Some
-import de.fosd.typechef.parser.c.NAryExpr
-import de.fosd.typechef.parser.c.DoStatement
-import de.fosd.typechef.parser.c.Initializer
-import de.fosd.typechef.parser.c.AssignExpr
-import de.fosd.typechef.parser.c.DeclParameterDeclList
-import de.fosd.typechef.parser.c.Id
-import de.fosd.typechef.parser.c.DeclarationStatement
-import de.fosd.typechef.crefactor.backend.RefactorException
-import de.fosd.typechef.parser.c.CompoundStatement
-import de.fosd.typechef.parser.c.CaseStatement
-import de.fosd.typechef.parser.c.InitDeclaratorE
-import de.fosd.typechef.parser.c.PostfixExpr
-import de.fosd.typechef.parser.c.ArrayAccess
-import de.fosd.typechef.parser.c.ReturnStatement
-import de.fosd.typechef.parser.c.CompoundStatementExpr
-import de.fosd.typechef.parser.c.TranslationUnit
-import de.fosd.typechef.parser.c.FunctionCall
-import de.fosd.typechef.parser.c.IfStatement
-import de.fosd.typechef.parser.c.NArySubExpr
-import de.fosd.typechef.parser.c.WhileStatement
-import de.fosd.typechef.parser.c.InitDeclaratorI
-import de.fosd.typechef.parser.c.Declaration
-import de.fosd.typechef.parser.c.ExprStatement
-import de.fosd.typechef.parser.c.ElifStatement
-import de.fosd.typechef.parser.c.FunctionDef
-import de.fosd.typechef.parser.c.NestedFunctionDef
-import de.fosd.typechef.parser.c.ParameterDeclarationD
-import de.fosd.typechef.parser.c.SwitchStatement
-import scala.Some
-import de.fosd.typechef.parser.c.NAryExpr
-import de.fosd.typechef.parser.c.DoStatement
-import de.fosd.typechef.parser.c.Initializer
-import de.fosd.typechef.parser.c.AssignExpr
-import de.fosd.typechef.conditional.One
-import de.fosd.typechef.parser.c.DeclParameterDeclList
-import de.fosd.typechef.parser.c.Id
-import de.fosd.typechef.parser.c.DeclarationStatement
-import de.fosd.typechef.crefactor.backend.RefactorException
-import de.fosd.typechef.parser.c.CompoundStatement
-import de.fosd.typechef.conditional.Opt
-import de.fosd.typechef.parser.c.CaseStatement
-import de.fosd.typechef.parser.c.InitDeclaratorE
-import de.fosd.typechef.parser.c.PostfixExpr
-import de.fosd.typechef.parser.c.ArrayAccess
-import de.fosd.typechef.parser.c.ReturnStatement
-import de.fosd.typechef.parser.c.CompoundStatementExpr
-import de.fosd.typechef.conditional.Choice
-import de.fosd.typechef.parser.c.TranslationUnit
-import de.fosd.typechef.parser.c.FunctionCall
-import de.fosd.typechef.parser.c.IfStatement
-import de.fosd.typechef.parser.c.NArySubExpr
-import de.fosd.typechef.parser.c.WhileStatement
-import de.fosd.typechef.parser.c.InitDeclaratorI
-import de.fosd.typechef.parser.c.Declaration
-import de.fosd.typechef.parser.c.ExprStatement
-import de.fosd.typechef.parser.c.ElifStatement
-import de.fosd.typechef.parser.c.FunctionDef
-import de.fosd.typechef.parser.c.NestedFunctionDef
-import de.fosd.typechef.parser.c.ParameterDeclarationD
+
 
 /**
  * Implements inline-function refactoring!
