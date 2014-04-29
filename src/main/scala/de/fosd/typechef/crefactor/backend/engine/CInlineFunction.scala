@@ -591,7 +591,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                 case One((_)) => checkOne(conditional, recursive)
             }
         }
-
+        println(env.varEnv.lookup(id.name))
         checkConditional(env.varEnv.lookup(id.name))
 
     }
@@ -676,7 +676,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
 
     private def getReturnStmts(statements: List[Opt[Statement]]): List[Opt[ReturnStatement]] = {
         filterAllOptElems(statements).filter {
-            case Opt(_, ReturnStatement) => true
+            case Opt(_, _: ReturnStatement) => true
             case _ => false
         }.asInstanceOf[List[Opt[ReturnStatement]]]
     }
