@@ -12,7 +12,7 @@ import de.fosd.typechef.crefactor.frontend.util.CodeSelection
 import de.fosd.typechef.crewrite.IntraCFG
 
 /**
- * Implements the technique of inlining a function
+ * Implements inline-function refactoring!
  */
 object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
 
@@ -25,10 +25,10 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
     }
 
     def getAvailableIdentifiers(morpheus: Morpheus, selection: CodeSelection): List[Id] = {
-        val ids = getSelectedElements(morpheus, selection).flatMap(selected => selected match {
-            case i : Id => Some(i)
-            case _ => None
-        })
+        val ids = getSelectedElements(morpheus, selection).filter {
+            case i : Id => true
+            case _ => false
+        }.asInstanceOf[List[Id]]
         ids.filter(id => isAvailable(morpheus, id))
     }
 
@@ -45,26 +45,19 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
 
         if (fDefs.isEmpty) {
             false
-        }
-
-
-        else if (fDefs.exists(func => hasIncompatibleCFG(func.entry, morpheus)
+        } else if (fDefs.exists(func => hasIncompatibleCFG(func.entry, morpheus)
             || isRecursive(func.entry)))  {
             logger.info(call + " is not compatible.")
             false
-        }
-
-        else if (calls.exists(fCall => {
+        } else if (calls.exists(fCall => {
             fDefs.exists(fDef => {
                 val callCompStmt = getCallCompStatement(fCall, morpheus.getASTEnv)
                 val ids = filterAllASTElems[Id](fDef)
                 ids.exists(hasIncompatibleVariableScoping(_, callCompStmt, morpheus))
-            })}))
-        {
+            })})) {
             logger.info(call + " has different scopes.")
             false
-        }
-        else
+        } else
             true
     }
 
@@ -82,8 +75,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
      * @param id the function's identifier
      * @return the refactored tunit
      */
-    def inline(morpheus: Morpheus, id: Id, keepDeclaration : Boolean):
-    Either[String, TranslationUnit] = {
+    def inline(morpheus: Morpheus, id: Id, keepDeclaration : Boolean): Either[String, TranslationUnit] = {
         val (fCalls, fDecls, fDefs, callExpr) = divideCallDeclDef(id, morpheus)
 
         if (fDefs.isEmpty)
@@ -172,12 +164,11 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
         def getStatementForAstNode(i: AST): Option[Statement] = {
             findPriorASTElem[FunctionDef](i, morpheus.getASTEnv) match {
                 case None => None
-                case Some(f) => {
+                case Some(f) =>
                     f.stmt.innerStatements.foreach {
                         cStmt => if (isPartOf(i, cStmt)) return Some(cStmt.entry)
                     }
                     None
-                }
             }
         }
 
@@ -190,45 +181,6 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
         } else {
             false
         }
-
-
-        /**
-        // TODO Optimize Runtime
-        // TODO: @andreas Should be removed in case if the upper code is a proper replacement!
-        def codeAfterStatement(feature: FeatureExpr, opt: Opt[_]): Boolean = {
-            val next = nextOpt(opt, morpheus.getASTEnv)
-            next match {
-                case null => false
-                case _ =>
-                    if ((feature.equivalentTo(FeatureExprFactory.True)
-                        || feature.implies(next.feature).isTautology(morpheus.getFM))) true
-                    else codeAfterStatement(feature, next)
-            }
-        }
-
-        def getStatementOpt(opt: Opt[_], statements: List[Opt[Statement]]): Opt[_] = {
-            statements.foreach(statement => if (filterAllOptElems(statement).exists(x => opt.eq(x))) return statement)
-            null
-        }
-
-        def getStatementOpts(opt: Opt[_], statement: Product, statements: List[Opt[_]] = List[Opt[_]]()): List[Opt[_]] = {
-            var result = statements
-            val filtered = filterAllOptElems(statement)
-            if (filtered.length > 1) filtered.foreach(stmt =>
-                if (filterAllOptElems(stmt).exists(x =>
-                    opt.eq(x))) result :::= stmt :: getStatementOpts(opt, stmt.entry.asInstanceOf[Product], result))
-            result
-        }
-
-        filterASTElems[ReturnStatement](func).exists({
-            case r: ReturnStatement =>
-                val parent = parentOpt(r, morpheus.getASTEnv)
-                val outerStatement = getStatementOpt(parent, func.stmt.innerStatements)
-                getStatementOpts(parent, outerStatement,
-                    List(outerStatement)).exists(statement => codeAfterStatement(parent.feature, statement))
-            case _ => false
-        })
-        */
     }
 
     private def isRecursive(funcDef: FunctionDef): Boolean = {
@@ -468,7 +420,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                     if (feature.isSatisfiable(morpheus.getFM))
                     // TODO Ask Jörg for better solution -> manybu/oncetd <- wtf!?!!?!
                     // TODO @andreas: What is the problem here?
-                        if (wStatement.innerStatements.exists(entry => entry.eq(statement)))
+                        if (wStatement.innerStatements.exists(_.eq(statement)))
                             wStatement = replaceInASTOnceTD(wStatement, stmt,
                                 Opt(feature, ExprStatement(AssignExpr(t, o, entry))))
                         else wStatement = replaceInAST(wStatement, stmt,
@@ -726,11 +678,9 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
     }
 
     private def getReturnStmts(statements: List[Opt[Statement]]): List[Opt[ReturnStatement]] = {
-        filterAllOptElems(statements).filter(opt => {
-            opt match {
-                case Opt(_, _: ReturnStatement) => true
-                case _ => false
-            }
-        }).asInstanceOf[List[Opt[ReturnStatement]]]
+        filterAllOptElems(statements).filter {
+            case Opt(_, ReturnStatement) => true
+            case _ => false
+        }.asInstanceOf[List[Opt[ReturnStatement]]]
     }
 }
