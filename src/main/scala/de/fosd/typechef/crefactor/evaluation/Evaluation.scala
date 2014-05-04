@@ -387,4 +387,11 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
 
     def getAllFeaturesFromUniqueFeatureFile =
         (Source.fromFile(allFeaturesFile).getLines().map(FeatureExprFactory.createDefinedExternal).toList, new java.util.IdentityHashMap[String, String]())
+
+    def hasSameFileName(id : Id, morpheus : Morpheus) : Boolean = {
+        val entry = id.getFile.get.replaceFirst("file ", "")
+        (entry.equalsIgnoreCase(morpheus.getFile) || getFileName(entry).equalsIgnoreCase(getFileName(morpheus.getFile)))
+    }
+
+
 }

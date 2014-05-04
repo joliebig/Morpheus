@@ -24,7 +24,7 @@ trait DefaultInline extends Refactoring with Evaluation {
         val availableFuncCalls = funcCalls.flatMap(p => {
             p.p match {
                 case i: Id =>
-                    if (CInlineFunction.isAvailable(morpheus, i)) Some(i)
+                    if (hasSameFileName(i, morpheus) && CInlineFunction.isAvailable(morpheus, i)) Some(i)
                     else None
                 case _ => None
             }
@@ -47,7 +47,7 @@ trait DefaultInline extends Refactoring with Evaluation {
             else None
         })
 
-        logger.info("Function calls found to inline: " + variableFuncCalls.size)
+        logger.info("Variable function calls found to inline: " + variableFuncCalls.size)
 
         val callIdToInline =
             if (variableFuncCalls.isEmpty) availableFuncCalls(Random.nextInt(availableFuncCalls.size))
