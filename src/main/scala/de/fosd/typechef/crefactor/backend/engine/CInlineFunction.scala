@@ -406,7 +406,6 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                 return compoundStmt
 
             val rDecl = decl.copy(declSpecs.reverse, initDecls.reverse)
-            // TODO ReplaceStrategy
             replaceInASTOnceTD(compoundStmt.asInstanceOf[AST], returnStmt,
                 call.copy(feature, declStmt.copy(rDecl))).asInstanceOf[CompoundStatement]
         }
@@ -448,13 +447,15 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
             case ExprStatement(e) => e match {
                 case _: PostfixExpr => wStmt = includeReturnStatement(returnStmts, wStmt, call, false)
                 case _: AssignExpr => wStmt = includeReturnStatement(returnStmts, wStmt, call, true)
-                case x => println("missed" + x)
+                case x => logger.warn("missed" + x)
             }
             case declStmt@DeclarationStatement(decl) =>
                 returnStmts.foreach(statement => wStmt = initReturnStatement(decl, statement, declStmt, wStmt, call))
+            case ReturnStatement(expr) =>
+            // no initializing or special handling required as function has been called like return function();
             case x =>
-                println("missed " + x)
-                assert(false, "Pattern matching not exhaustive")
+                logger.warn("Pattern not reached " + x)
+                throw new RefactorException("Could not inline - some rules are not complete.")
         }
         wStmt
     }
