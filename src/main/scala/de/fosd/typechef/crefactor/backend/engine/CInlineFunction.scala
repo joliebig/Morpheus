@@ -218,7 +218,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                         call match {
                             case n@NArySubExpr(op, _) =>
                                 val replacement = replaceInTUnit(others, n, n.copy(e = inlineChoice))
-                                o.copy(value = NAryExpr(e, replacement.asInstanceOf[List[Opt[NArySubExpr]]]))
+                                o.copy(value = NAryExpr(e, replacement))
                             case x =>
                                 logger.warn("missed " + x)
                                 throw new RefactorException("No rule defined for:" + x)
