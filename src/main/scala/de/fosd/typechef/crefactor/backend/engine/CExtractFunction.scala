@@ -90,6 +90,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             parent match {
                 case null =>
                 case s: Some[Statement] =>
+                    s.get.setPositionRange(id)
                     uniqueSelectedStatements.add(s.get)
                     uniqueSelectedStatements.add(lookupControlStatements(s.get))
                 case x => // logger.info("There may have been an expression! " + x)
