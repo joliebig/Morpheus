@@ -368,11 +368,10 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
             case _ => null
         }
 
-    private def assignReturnValue(statement: CompoundStatement, call: Opt[Statement],
+    private def assignReturnValue(callCompStmt: CompoundStatement, fCall: Opt[Statement],
                                   returnStmts: List[Opt[ReturnStatement]], morpheus: Morpheus):
     CompoundStatement = {
-        // TODO deep inspect
-        var wStmt = statement
+        var wStmt = callCompStmt
 
         def initReturnStatement(decl: Declaration, returnStmt: Opt[ReturnStatement],
                                 declStmt: DeclarationStatement, compoundStmt: CompoundStatement,
@@ -388,8 +387,8 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                         initDecls ::= Opt(feature, i.copy(i = Some(Initializer(label,
                             returnStmt.entry.expr.get))))
                     case x =>
-                        println("missed " + x)
-                        assert(false, "Pattern matching not exhaustive")
+                        logger.warn("missed " + x)
+                        throw new RefactorException("No rule defined for:" + x)
                 }
             })
             val declSpecs = decl.declSpecs.map(
@@ -417,43 +416,51 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                 case ExprStatement(AssignExpr(t, o, _)) =>
                     val feature = stmt.feature.and(call.feature)
                     if (feature.isSatisfiable(morpheus.getFM))
-                        if (wStatement.innerStatements.exists(_.eq(statement)))
+                        if (wStatement.innerStatements.exists(_.eq(callCompStmt)))
                             wStatement = replaceInASTOnceTD(wStatement, stmt,
                                 Opt(feature, ExprStatement(AssignExpr(t, o, entry))))
                         else wStatement = replaceInASTOnceTD(wStatement, stmt,
                             Opt(feature, ExprStatement(AssignExpr(t, o, entry))))
                     else wStatement = removeFromAST(wStatement, stmt)
-                case _ => assert(false, "Missed Pattern!")
+                case x =>
+                    logger.error("No assign rule for: " + x)
+                    throw new RefactorException("No rule defined for:" + x)
             }
             wStatement
         }
 
-        def includeReturnStatement(returnStmts: List[Opt[Statement]], cStmt: CompoundStatement,
+        def includeReturnStatement(returnStmts: List[Opt[ReturnStatement]], cStmt: CompoundStatement,
                                    fCall: Opt[Statement], assign: Boolean): CompoundStatement = {
             var wStmt = cStmt
-            returnStmts.foreach(stmt => stmt.entry match {
-                case ReturnStatement(Some(entry)) =>
+            returnStmts.foreach(stmt => {
+                if (stmt.entry.expr.nonEmpty) {
+                    val returnStmtExpr = stmt.entry.expr.get
                     val feature = stmt.feature.and(fCall.feature)
                     if (assign)
-                        wStmt = assignStatement(stmt, wStmt, fCall, entry)
+                        wStmt = assignStatement(stmt, wStmt, fCall, returnStmtExpr)
                     else if (feature.isSatisfiable(morpheus.getFM))
-                        wStmt = replaceInASTOnceTD(wStmt, stmt, Opt(feature, ExprStatement(entry)))
-                case _ => assert(false, "Missed Pattern!")
+                        wStmt = replaceInASTOnceTD(wStmt, stmt, Opt(feature, ExprStatement(returnStmtExpr)))
+                }
             })
             wStmt
         }
 
-        call.entry match {
+        fCall.entry match {
+            // function has been called as an expression:
+            // a = functionToInline();
+            // or
+            // functionToInline
             case ExprStatement(e) => e match {
-                case _: PostfixExpr => wStmt = includeReturnStatement(returnStmts, wStmt, call, false)
-                case _: AssignExpr => wStmt = includeReturnStatement(returnStmts, wStmt, call, true)
+                case _: PostfixExpr => wStmt = includeReturnStatement(returnStmts, wStmt, fCall, false)
+                case _: AssignExpr => wStmt = includeReturnStatement(returnStmts, wStmt, fCall, true)
                 case x => logger.warn("missed" + x)
             }
+            // function to inline has been called as declaration, e.g int foo = functionToInline();
             case declStmt@DeclarationStatement(decl) =>
-                returnStmts.foreach(statement => wStmt = initReturnStatement(decl, statement, declStmt, wStmt, call))
+                returnStmts.foreach(statement => wStmt = initReturnStatement(decl, statement, declStmt, wStmt, fCall))
+            // function to inline has been called like return functionToInline()
             case ReturnStatement(expr) =>
-            // no initializing or special handling required as function to inline
-            // has been called like return functionToInline();
+            // no initializing or special handling required;
             case x =>
                 logger.warn("Pattern not reached " + x)
                 throw new RefactorException("Could not inline - some rules are not complete.")
