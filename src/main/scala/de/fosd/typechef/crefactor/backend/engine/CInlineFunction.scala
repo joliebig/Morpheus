@@ -53,7 +53,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
             false
         } else if (calls.exists(fCall => {
             fDefs.exists(fDef => {
-                val callCompStmt = getCallCompStatement(fCall, morpheus.getASTEnv)
+                val callCompStmt = getCompStatement(fCall, morpheus.getASTEnv)
                 val ids = filterAllASTElems[Id](fDef)
                 ids.exists(hasIncompatibleVariableScoping(_, callCompStmt, morpheus))
             })})) {
@@ -192,7 +192,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
 
     private def inlineFuncCallExpr(ast: AST, morpheus: Morpheus, call: Opt[AST],
                                    fDefs: List[Opt[_]]): TranslationUnit = {
-        val workingCallCompStmt = getCallCompStatement(call, morpheus.getASTEnv)
+        val workingCallCompStmt = getCompStatement(call, morpheus.getASTEnv)
 
         def generateInlineExprStmts: List[(CompoundStatementExpr, FeatureExpr)] = {
             fDefs.flatMap({
@@ -314,7 +314,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                         logger.error("Missed InlineStatementExpr" + x)
                         throw new RefactorException("Refactoring failed - missed InlineStatementExpr")
                 }
-                insertRefactoredAST(morpheus, getCallCompStatement(call, morpheus.getASTEnv),
+                insertRefactoredAST(morpheus, getCompStatement(call, morpheus.getASTEnv),
                     replaceStmt)}
             case _ => throw new RefactorException("FunctionCall to inline is no statement.")
         }
@@ -322,7 +322,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
 
     private def inlineFuncCall(tunit: TranslationUnit, morpheus: Morpheus, call: Opt[Statement],
                                fDefs: List[Opt[_]]): TranslationUnit = {
-        var workingCallCompStmt = getCallCompStatement(call, morpheus.getASTEnv)
+        var workingCallCompStmt = getCompStatement(call, morpheus.getASTEnv)
 
         def inlineIfStmt(funcDefs: List[Opt[_]], callCompStmt: CompoundStatement): CompoundStatement = {
             val stmtsToInline = funcDefs.flatMap({
@@ -358,13 +358,13 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
             case _: CompoundStatement => workingCallCompStmt = inlineCompStmt(fDefs, workingCallCompStmt)
             case _: IfStatement => workingCallCompStmt = inlineIfStmt(fDefs, workingCallCompStmt)
             case _: ElifStatement => workingCallCompStmt = inlineIfStmt(fDefs, workingCallCompStmt)
-            case x => println("forgotten " + x)
+            case x => logger.warn("forgotten " + x)
         }
 
-        insertRefactoredAST(morpheus, getCallCompStatement(call, morpheus.getASTEnv), workingCallCompStmt)
+        insertRefactoredAST(morpheus, getCompStatement(call, morpheus.getASTEnv), workingCallCompStmt)
     }
 
-    private def getCallCompStatement(call: Opt[AST], astEnv: ASTEnv): CompoundStatement =
+    private def getCompStatement(call: Opt[AST], astEnv: ASTEnv): CompoundStatement =
         findPriorASTElem[CompoundStatement](call.entry, astEnv) match {
             case Some(entry) => entry
             case _ => null
@@ -631,7 +631,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
     private def isDeclaredInFunctionCallScope(id: Id, callCompStmt: CompoundStatement, morpheus: Morpheus): Boolean = {
 
         // lookup if name is visible in current scope
-        if (!isVisibleNameInFunctionCallScope(id.name, callCompStmt, morpheus))
+        if (!isVisibleNameInFunctionScope(id.name, callCompStmt, morpheus))
             return false
 
         // check if any reference of the inline id links into the calling scope - if so no renaming is required
@@ -640,6 +640,12 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
         filterAllASTElems[Id](callCompStmt) foreach idsInCompStmt.add
 
         if (idReferences.exists(idsInCompStmt.contains))
+            return false
+
+        // in both places the has the same global visibility -> no need to rename
+        val localCompStmt = getCompStatement(parentOpt(id, morpheus.getASTEnv).asInstanceOf[Opt[AST]], morpheus.getASTEnv)
+        if((localCompStmt != null) && isVisibleGlobalNameInFunctionScope(id.name, callCompStmt, morpheus)
+            && isVisibleGlobalNameInFunctionScope(id.name, localCompStmt, morpheus))
             return false
 
         // id is function -> no rename
@@ -660,13 +666,13 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
     /**
      * Checks if a name is visibile at the place of the inlining function scope.
      */
-    private def isVisibleGlobalNameInFunctionCallScope(name: String, callCompStmt: CompoundStatement, morpheus: Morpheus) =
+    private def isVisibleGlobalNameInFunctionScope(name: String, callCompStmt: CompoundStatement, morpheus: Morpheus) =
         isPartOfScope(name, callCompStmt, morpheus, 0)
 
     /**
      * Checks if a name is visibile at the place of the inlining function scope.
      */
-    private def isVisibleNameInFunctionCallScope(name: String, callCompStmt: CompoundStatement, morpheus: Morpheus) =
+    private def isVisibleNameInFunctionScope(name: String, callCompStmt: CompoundStatement, morpheus: Morpheus) =
         !isPartOfScope(name, callCompStmt, morpheus, -1)
 
     /**
