@@ -93,8 +93,8 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
 
         // Remove old definition and declarations (note may cause linking error)
         if (!keepDeclaration) {
-            tunitRefactored = fDefs.foldLeft(tunitRefactored)((workingAST, x) => removeFromAST(workingAST, x))
-            tunitRefactored = fDecls.foldLeft(tunitRefactored)((workingAST, x) => removeFromAST(workingAST, x))
+            tunitRefactored = fDefs.foldLeft(tunitRefactored)((workingAST, x) => remove(workingAST, x))
+            tunitRefactored = fDecls.foldLeft(tunitRefactored)((workingAST, x) => remove(workingAST, x))
         }
 
         Right(tunitRefactored)
@@ -217,7 +217,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                     case NAryExpr(e, others) =>
                         call match {
                             case n@NArySubExpr(op, _) =>
-                                val replacement = replaceInTUnit(others, n, n.copy(e = inlineChoice))
+                                val replacement = replaceNArySubExpr(others, n, n.copy(e = inlineChoice))
                                 o.copy(value = NAryExpr(e, replacement))
                             case x =>
                                 logger.warn("missed " + x)
@@ -252,8 +252,14 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
             }
         }
 
-        def inlineInExpr(expr: Expr, inlineExprStatements: List[(CompoundStatementExpr, FeatureExpr)]) =
-            replaceInAST(expr, call.entry, buildVariableCompoundStatement(inlineExprStatements)).asInstanceOf[Expr]
+        def inlineInExpr(expr: Expr, inlineExprStatements: List[(CompoundStatementExpr, FeatureExpr)]) = {
+            call.entry match {
+                case e: Expr =>
+                    replaceExprWithCompStmExpr(expr, e, buildVariableCompoundStatement(inlineExprStatements))
+                case x => throw new RefactorException("Function call is no expression:" + x)
+            }
+
+        }
 
         findPriorASTElem[Statement](call.entry, morpheus.getASTEnv) match {
             case Some(entry) =>{
@@ -326,13 +332,13 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                         case null => None
                         case _ => Some(inlineStmt, f.feature.and(call.feature))
                     }
-                case _ =>
-                    println("Forgotten definition")
+                case x =>
+                    logger.error("Forgotten definition: " + x)
                     None
             })
             // Remove fCall and inline function
-            replaceInAST(callCompStmt, morpheus.getASTEnv.parent(call.entry),
-                buildChoice(stmtsToInline)).asInstanceOf[CompoundStatement]
+            replaceStmtWithStmtsInCompStmt(callCompStmt, call,
+                stmtsToInline.map(toInline => Opt(toInline._2, toInline._1)))
         }
 
         def inlineCompStmt(fDefs: List[Opt[_]], callCompStmt: CompoundStatement): CompoundStatement = {
@@ -340,12 +346,12 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                 fDefs.foldLeft(callCompStmt)(
                     (curStmt, fDef) => fDef match {
                         case f: Opt[FunctionDef] => inlineFDefInCompStmt(curStmt, morpheus, call, f)
-                        case _ =>
-                            println("Forgotten definition")
+                        case x =>
+                            logger.error("Forgotten definition" + x)
                             curStmt
                     })
             // Remove stmt
-            removeFromAST(workingCallCompStmt, call)
+            remove(workingCallCompStmt, call)
         }
 
         parentAST(call.entry, morpheus.getASTEnv) match {
@@ -401,7 +407,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                 return compoundStmt
 
             val rDecl = decl.copy(declSpecs.reverse, initDecls.reverse)
-            replaceInASTOnceTD(compoundStmt.asInstanceOf[AST], returnStmt,
+            replaceOnceTD(compoundStmt.asInstanceOf[AST], returnStmt,
                 call.copy(feature, declStmt.copy(rDecl))).asInstanceOf[CompoundStatement]
         }
 
@@ -413,11 +419,11 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                     val feature = stmt.feature.and(call.feature)
                     if (feature.isSatisfiable(morpheus.getFM))
                         if (wStatement.innerStatements.exists(_.eq(callCompStmt)))
-                            wStatement = replaceInASTOnceTD(wStatement, stmt,
+                            wStatement = replaceOnceTD(wStatement, stmt,
                                 Opt(feature, ExprStatement(AssignExpr(t, o, entry))))
-                        else wStatement = replaceInASTOnceTD(wStatement, stmt,
+                        else wStatement = replaceOnceTD(wStatement, stmt,
                             Opt(feature, ExprStatement(AssignExpr(t, o, entry))))
-                    else wStatement = removeFromAST(wStatement, stmt)
+                    else wStatement = remove(wStatement, stmt)
                 case x =>
                     logger.error("No assign rule for: " + x)
                     throw new RefactorException("No rule defined for:" + x)
@@ -435,7 +441,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                     if (assign)
                         wStmt = assignStatement(stmt, wStmt, fCall, returnStmtExpr)
                     else if (feature.isSatisfiable(morpheus.getFM))
-                        wStmt = replaceInASTOnceTD(wStmt, stmt, Opt(feature, ExprStatement(returnStmtExpr)))
+                        wStmt = replaceOnceTD(wStmt, stmt, Opt(feature, ExprStatement(returnStmtExpr)))
                 }
             })
             wStmt
@@ -481,8 +487,8 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
         val returnStmts = getReturnStmts(statements)
 
         // insert in tunit
-        workingStatement = insertInAstBefore(workingStatement, fCall, initializer)
-        workingStatement = insertInAstBefore(workingStatement, fCall, statements)
+        workingStatement = insertListBefore(workingStatement, fCall, initializer)
+        workingStatement = insertListBefore(workingStatement, fCall, statements)
 
         // insert return statements
         assignReturnValue(workingStatement, fCall, returnStmts, morpheus)
@@ -520,8 +526,8 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
         // remove return statements
         stmts = returnStmts.foldLeft(stmts)((stmts, returnStmt) =>
             returnStmt.entry.expr match {
-                case None => removeFromAST(stmts, returnStmt)
-                case Some(_) => replaceInAST(stmts, returnStmt,
+                case None => remove(stmts, returnStmt)
+                case Some(_) => replace(stmts, returnStmt,
                     Opt(returnStmt.feature, ExprStatement(returnStmt.entry.expr.get)))
             })
         CompoundStatement(initializer ::: stmts)
@@ -733,8 +739,8 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
     private def renameShadowedIds(idsToRename: List[Id], fDef: Opt[FunctionDef], fCall: Opt[AST],
                                   morpheus: Morpheus): (List[Opt[Statement]],
         List[Opt[DeclaratorExtension]]) = {
-        val statements = idsToRename.foldLeft(fDef.entry.stmt.innerStatements)((statement, id) => replaceInAST(statement, id, id.copy(name = generateValidNewName(id, fCall, morpheus))))
-        val parameters = idsToRename.foldLeft(fDef.entry.declarator.extensions)((extension, id) => replaceInAST(extension, id, id.copy(name = generateValidNewName(id, fCall, morpheus))))
+        val statements = idsToRename.foldLeft(fDef.entry.stmt.innerStatements)((statement, id) => replaceId(statement, id, id.copy(name = generateValidNewName(id, fCall, morpheus))))
+        val parameters = idsToRename.foldLeft(fDef.entry.declarator.extensions)((extension, id) => replaceId(extension, id, id.copy(name = generateValidNewName(id, fCall, morpheus))))
         (statements, parameters)
     }
 
