@@ -452,7 +452,8 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
             case declStmt@DeclarationStatement(decl) =>
                 returnStmts.foreach(statement => wStmt = initReturnStatement(decl, statement, declStmt, wStmt, call))
             case ReturnStatement(expr) =>
-            // no initializing or special handling required as function has been called like return function();
+            // no initializing or special handling required as function to inline
+            // has been called like return functionToInline();
             case x =>
                 logger.warn("Pattern not reached " + x)
                 throw new RefactorException("Could not inline - some rules are not complete.")
