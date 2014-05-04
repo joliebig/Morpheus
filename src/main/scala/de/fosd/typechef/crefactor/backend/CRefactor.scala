@@ -210,8 +210,13 @@ trait CRefactor extends CEnvCache with ASTNavigation with ConditionalNavigation 
         val r = oncetd(rule {
             case l: List[Opt[_]] => l.flatMap(x => if (x.eq(mark)) replace :: Nil else x :: Nil)
         })
-        println(mark)
-        println(replace)
+        r(t).get.asInstanceOf[T]
+    }
+
+    def replaceInTUnit[T <: Product](t: T, e: NArySubExpr, n: NArySubExpr)(implicit m: Manifest[T]): T = {
+        val r = manybu(rule {
+            case i: NArySubExpr => if (isPartOf(i, e)) n else i
+        })
         r(t).get.asInstanceOf[T]
     }
 

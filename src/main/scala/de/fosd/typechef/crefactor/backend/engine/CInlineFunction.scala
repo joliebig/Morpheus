@@ -217,18 +217,16 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                     case NAryExpr(e, others) =>
                         call match {
                             case n@NArySubExpr(op, _) =>
-                                // TODO: @andreas. statement references the problematic replace function.
-                                val replacement = replaceInAST(others, call, n.copy(e = inlineChoice))
+                                val replacement = replaceInTUnit(others, n, n.copy(e = inlineChoice))
                                 o.copy(value = NAryExpr(e, replacement.asInstanceOf[List[Opt[NArySubExpr]]]))
                             case x =>
-                                assert(false, "Refactoring failed.")
-                                o
+                                logger.warn("missed " + x)
+                                throw new RefactorException("No rule defined for:" + x)
                         }
                     case p: PostfixExpr => o.copy(value = inlineChoice)
                     case x =>
-                        println(x)
-                        assert(false, "Refactoring failed.")
-                        o
+                        logger.warn("missed " + x)
+                        throw new RefactorException("No rule defined for:" + x)
                 }
             }
 
