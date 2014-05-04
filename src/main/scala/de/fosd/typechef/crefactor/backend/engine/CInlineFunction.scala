@@ -256,10 +256,7 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
             replaceInAST(expr, call.entry, buildVariableCompoundStatement(inlineExprStatements)).asInstanceOf[Expr]
 
         findPriorASTElem[Statement](call.entry, morpheus.getASTEnv) match {
-            case None =>
-                assert(false, "This should not have happend!")
-                null
-            case Some(entry) =>
+            case Some(entry) =>{
                 val inlineExprStatements = generateInlineExprStmts
                 val parent = parentOpt(entry, morpheus.getASTEnv).asInstanceOf[Opt[Statement]]
                 var replaceStmt: CompoundStatement = null
@@ -312,7 +309,8 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                         throw new RefactorException("Refactoring failed - missed InlineStatementExpr")
                 }
                 insertRefactoredAST(morpheus, getCallCompStatement(call, morpheus.getASTEnv),
-                    replaceStmt)
+                    replaceStmt)}
+            case _ => throw new RefactorException("FunctionCall to inline is no statement.")
         }
     }
 
@@ -501,9 +499,9 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
         fCall.entry match {
             case ExprStatement(PostfixExpr(_, FunctionCall(_))) => ExprStatement(compoundStmtExpr)
             case ExprStatement(AssignExpr(target, op, _)) => ExprStatement(AssignExpr(target, op, compoundStmtExpr))
-            case _ =>
-                assert(false, "An error occurred. Unable to assign return statements")
-                null
+            case x =>
+                logger.warn("missed " + x)
+                throw new RefactorException("No rule defined for assigning for following return statement:" + x)
         }
     }
 
@@ -710,15 +708,15 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
                                 case p: ParameterDeclarationD =>
                                     val spec = p.specifiers.map(specifier => specifier.copy(feature = feature.and(specifier.feature)))
                                     Some(Opt(feature, DeclarationStatement(Declaration(spec, List(Opt(feature, InitDeclaratorI(p.decl, List(), Some(Initializer(None, expr.entry)))))))))
-                                case _ =>
-                                    assert(false, "Can not init parameters!")
-                                    None
+                                case x =>
+                                    logger.warn("missed " + x)
+                                    throw new RefactorException("No rule defined for initializing parameter:" + x)
                             }
                         }
                     })
-                case _ =>
-                    assert(false, "Can not init parameters!")
-                    null
+                case x =>
+                    logger.warn("missed " + x)
+                    throw new RefactorException("No rule defined for initializing parameter list:" + x)
             }
         }
         // TODO Safe solution -> features
