@@ -170,12 +170,11 @@ trait RewriteRulesInTunit extends ASTNavigation with ConditionalNavigation {
         })
     }
 
-    // -TODO: @andreas use foldRight without the reverse??
     def insertBefore(l: List[Opt[Statement]], mark: Opt[Statement], insert: Opt[Statement]) =
-        l.foldLeft(List[Opt[Statement]]())((nl, s) => {
+        l.foldRight(List[Opt[Statement]]())((s, nl) => {
             if (mark.eq(s)) insert :: s :: nl
             else s :: nl
-        }).reverse
+        })
 
     def insertRefactoredAST(morpheus: Morpheus, callCompStmt: CompoundStatement,
                             workingCallCompStmt: CompoundStatement): TranslationUnit = {
@@ -186,9 +185,7 @@ trait RewriteRulesInTunit extends ASTNavigation with ConditionalNavigation {
             case c: CompoundStatement => replaceCompoundStatement(morpheus.getTranslationUnit, c,
                 c.copy(innerStatements = workingCallCompStmt.innerStatements))
                 .asInstanceOf[TranslationUnit]
-            case x =>
-                assert(false, "Something bad happened; missing: " + x)
-                morpheus.getTranslationUnit
+            case _ => throw RefactorException("No valid rewrite rule.")
         }
     }
 

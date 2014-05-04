@@ -146,10 +146,12 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     def isAvailable(morpheus: Morpheus, selection: CodeSelection): Boolean =
         isAvailable(morpheus, getSelectedElements(morpheus, selection))
 
-    def extract(morpheus: Morpheus, selection: List[AST], funName: String): Either[String, TranslationUnit] = {
+    def extract(morpheus: Morpheus, selectedElements: List[AST], funName: String): Either[String, TranslationUnit] = {
 
         if (!isValidId(funName))
             return Left(Configuration.getInstance().getConfig("default.error.invalidName"))
+
+        val selection = selectedElements.sortWith(comparePosition)
 
         // Reference check is performed as soon as we know the featureExpr the new function is going to have!
 
