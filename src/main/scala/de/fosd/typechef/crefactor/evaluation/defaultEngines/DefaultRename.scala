@@ -162,7 +162,7 @@ trait DefaultRename extends Refactoring with Evaluation {
         refactored match {
             case Right(ast) => {
                 val linkedRefactored = refactorChain.map(x => {
-                    val linkedId = findIdInAST(x._2, id, x._1.getTranslationUnit)
+                    val linkedId = findIdInAST(x._2, id.name, x._1.getTranslationUnit)
                     val time = new StopClock
                     val ref = CRenameIdentifier.rename(linkedId.get, name, x._1)
                     val refTime = time.getTime
@@ -195,11 +195,11 @@ trait DefaultRename extends Refactoring with Evaluation {
 
     }
 
-    private def findIdInAST(position: Position, id: Id, tUnit: TranslationUnit) = {
-        logger.info("Looking for " + position + "of " + id.name + ".")
+    private def findIdInAST(position: Position, name: String, tUnit: TranslationUnit) = {
+        logger.info("Looking for " + position + "of " + name + ".")
         val found = filterASTElems[Id](tUnit).par.find(aId => {
-            if (aId.name.equalsIgnoreCase(id.name))
-                logger.info("Found matching names " + id.name +
+            if (aId.name.equalsIgnoreCase(name))
+                logger.info("Found matching names " + name +
                     " at: " + aId.getPositionFrom + ", " + aId.getPositionTo)
 
             // as positions in TypeChef are a little bit buggy, we extend the search range.
@@ -209,7 +209,7 @@ trait DefaultRename extends Refactoring with Evaluation {
                 position.getLine.equals(aId.getPositionTo.getLine - 1) ||
                 position.getLine.equals(aId.getPositionFrom.getLine + 1) ||
                 position.getLine.equals(aId.getPositionTo.getLine + 1))
-                && aId.name.equalsIgnoreCase(id.name))
+                && aId.name.equalsIgnoreCase(name))
         })
         logger.info("Found the following linkedIds: " + found)
         found
