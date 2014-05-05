@@ -3,25 +3,8 @@ package de.fosd.typechef.crefactor.backend
 import de.fosd.typechef.parser.c._
 import java.util.Collections
 import org.kiama.rewriting.Rewriter._
-import scala.Some
-import de.fosd.typechef.conditional.Opt
-import scala.Some
-import de.fosd.typechef.conditional.Opt
-import scala.Some
-import de.fosd.typechef.conditional.Opt
-import scala.Some
-import de.fosd.typechef.conditional.Opt
 import de.fosd.typechef.crefactor.Morpheus
-import scala.Some
 import de.fosd.typechef.conditional.Opt
-import de.fosd.typechef.parser.c.Id
-import de.fosd.typechef.parser.c.PointerDerefExpr
-import de.fosd.typechef.parser.c.CompoundStatementExpr
-import scala.Some
-import de.fosd.typechef.parser.c.TranslationUnit
-import de.fosd.typechef.parser.c.CompoundStatement
-import de.fosd.typechef.conditional.Opt
-import de.fosd.typechef.parser.c.NArySubExpr
 
 /**
  * Trait containing all used kiama rewrite rules.
@@ -33,7 +16,7 @@ trait RewriteRulesInTunit extends ASTNavigation with ConditionalNavigation {
      */
     def replaceIds[T <: Product](t: T, ids: List[Id], newName: String): T = {
         val idsToReplace = Collections.newSetFromMap[Id](new java.util.IdentityHashMap())
-        ids foreach(idsToReplace.add(_))
+        ids foreach(idsToReplace.add)
         val r = manybu(rule {
             case id: Id => if (idsToReplace.contains(id)) {
                 val copiedId = id.copy(name = newName)
