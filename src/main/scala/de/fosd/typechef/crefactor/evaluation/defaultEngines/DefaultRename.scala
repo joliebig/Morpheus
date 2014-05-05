@@ -249,11 +249,11 @@ trait DefaultRename extends Refactoring with Evaluation {
     // count and log renamed types of renamed ids
     private def countAndLogIdTypes(ids: List[Opt[Id]], morpheus: Morpheus, run: Int) = {
         var res: Map[String, Int] = Map()
-        res += "Unknown" -> 0
+        res += "Unknown"  -> 0
         res += "Function" -> 0
-        res += "Enum" -> 0
+        res += "Enum"     -> 0
         res += "Variable" -> 0
-        res += "TypeDef" -> 0
+        res += "TypeDef"  -> 0
 
         // an identifier may have different types depending on the configuration
         def traverseIdTypes(c: Conditional[_], id: Id) = {
@@ -272,6 +272,7 @@ trait DefaultRename extends Refactoring with Evaluation {
                     res += "Unknown" -> (res("Unknown") + 1)
             })
         }
+
         ids.foreach(id => {
             try {
                 // only lookup variables
