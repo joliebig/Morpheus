@@ -195,6 +195,8 @@ trait DefaultRename extends Refactoring with Evaluation {
 
     }
 
+    // given the position and the string of an identifier, the function returns, if the available, the
+    // id object in the translation unit
     private def findIdInAST(position: Position, name: String, tUnit: TranslationUnit) = {
         logger.info("Looking for " + position + "of " + name + ".")
         val found = filterASTElems[Id](tUnit).par.find(aId => {
