@@ -11,7 +11,7 @@ import de.fosd.typechef.typesystem.linker.SystemLinker
 import java.util.Collections
 
 trait CRefactor
-    extends CEnvCache with ASTNavigation with ConditionalNavigation with RewriteRulesInTunit
+    extends CEnvCache with ASTNavigation with ConditionalNavigation with TUnitRewriteRules
     with EnforceTreeHelper with Logging {
 
     private val VALID_NAME_PATTERN = "[a-zA-Z_][a-zA-Z0-9_]*"

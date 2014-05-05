@@ -7,9 +7,10 @@ import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.conditional.Opt
 
 /**
- * Trait containing all used kiama rewrite rules.
+ * Trait containing all used kiama rewrite rules that apply the actual transformations.
+ * E.g., changing an identifiers.
  */
-trait RewriteRulesInTunit extends ASTNavigation with ConditionalNavigation {
+trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
 
     /**
      * Replace a list of ids in AST with copied instance with new names.
@@ -45,6 +46,7 @@ trait RewriteRulesInTunit extends ASTNavigation with ConditionalNavigation {
 
     /**
      * Replaces the innerstatements of compoundstatements of a translation unit.
+     * TODO ajanker: Why not replace a CompoundStatement with another one directly?
      */
     def replaceCompoundStmt[T <: Product](t: T, cStmt: CompoundStatement,
                                           newInnerStmt: List[Opt[Statement]]): T = {
@@ -130,6 +132,7 @@ trait RewriteRulesInTunit extends ASTNavigation with ConditionalNavigation {
         r(t).get.asInstanceOf[T]
     }
 
+    // single identifier replacement
     def replaceId[T <: Product](t: T, e: Id, n: Id)(implicit m: Manifest[T]): T = {
         val r = manybu(rule {
             case i: Id => if (i eq e) n else i
@@ -138,6 +141,17 @@ trait RewriteRulesInTunit extends ASTNavigation with ConditionalNavigation {
         r(t).get.asInstanceOf[T]
     }
 
+    // generic replace function; possible replacement for replaceId and replaceCompoundStatement, and maybe more?
+    def replace[T <: Product, U <: AnyRef](t: T, e: U, n: U)(implicit m: Manifest[T]): T = {
+        val r = manybu(rule {
+            case i: Id => if (i eq e) n else i
+            case x => x
+        })
+        r(t).getOrElse(t).asInstanceOf[T]
+    }
+
+    // removes element remove from t, but does not traverse t entirely, since
+    // oncetd is top-down traversal, which stops at fist successful match
     def remove[T <: Product](t: T, remove: Opt[_])(implicit m: Manifest[T]): T = {
         val r = oncetd(rule {
             case l: List[Opt[_]] => l.flatMap(x => if (x.eq(remove)) Nil else x :: Nil)
@@ -180,5 +194,4 @@ trait RewriteRulesInTunit extends ASTNavigation with ConditionalNavigation {
             case x => false
         }
     }
-
 }
