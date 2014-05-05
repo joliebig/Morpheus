@@ -1,25 +1,21 @@
 package de.fosd.typechef.crefactor.evaluation.defaultEngines
 
+import java.io.File
+import java.util
+import scala.collection.mutable
+import scala.util.Random
+
+import de.fosd.typechef.conditional._
 import de.fosd.typechef.crefactor.evaluation._
 import de.fosd.typechef.crefactor.{CRefactorFrontend, Morpheus}
-import de.fosd.typechef.featureexpr.FeatureExpr
 import de.fosd.typechef.crefactor.backend.engine.CRenameIdentifier
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.Stats._
-import scala.collection.mutable
 import de.fosd.typechef.error.Position
-import java.io.File
-import de.fosd.typechef.typesystem._
-import de.fosd.typechef.conditional._
-import java.util
-import scala.Some
-import de.fosd.typechef.parser.c.TranslationUnit
-import de.fosd.typechef.typesystem.CUnknown
-import de.fosd.typechef.typesystem.CFunction
+import de.fosd.typechef.featureexpr.FeatureExpr
 import de.fosd.typechef.parser.c.Id
-import de.fosd.typechef.conditional.Opt
-import scala.util.Random
-
+import de.fosd.typechef.parser.c.TranslationUnit
+import de.fosd.typechef.typesystem._
 
 trait DefaultRename extends Refactoring with Evaluation {
 
