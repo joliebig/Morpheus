@@ -34,19 +34,22 @@ trait DefaultRename extends Refactoring with Evaluation {
         var affectedFeatures = List[List[FeatureExpr]]()
 
         for (run <- 1 to REFACTOR_AMOUNT) {
-            val refactoredRun = singleRefactor(runMorpheus, run)
+            val (refResult, refTUnit, refAffectedFeaturs, refAffectedFiles) = singleRefactor(runMorpheus, run)
 
-            if (refactoredRun._1) {
-                succ = refactoredRun._1
-                StatsCan.addStat(morpheus.getFile, run, AffectedFeatures, refactoredRun._3)
-                affectedFeatures = refactoredRun._3 :: affectedFeatures
-                runMorpheus = new Morpheus(refactoredRun._2, morpheus.getFM, morpheus.getModuleInterface, morpheus.getFile)
+            if (refResult) {
+                succ = refResult
+                StatsCan.addStat(morpheus.getFile, run, AffectedFeatures, refAffectedFeaturs)
+                affectedFeatures ::= refAffectedFeaturs
+                runMorpheus = new Morpheus(refTUnit, morpheus.getFM, morpheus.getModuleInterface, morpheus.getFile)
 
-                refactoredRun._4.foreach(
-                    entry => linkedRenamedFiles.put(removeFilePrefix(entry._1), new Morpheus(entry._2, runMorpheus.getFM, removeFilePrefix(entry._1))))
+                refAffectedFiles.foreach {
+                    case (affFName, affTUnit) =>
+                        val noPrefix = removeFilePrefix(affFName)
+                        linkedRenamedFiles.put(noPrefix, new Morpheus(affTUnit, runMorpheus.getFM, noPrefix))
+                }
 
-                writeRunResult(run, runMorpheus, refactoredRun._4)
-                logger.info("Run " + run + " affected features: " + refactoredRun._3)
+                writeRunResult(run, runMorpheus, refAffectedFiles)
+                logger.info("Run " + run + " affected features: " + refAffectedFeaturs)
             } else {
                 logger.info("Run " + run + " failed.")
             }
