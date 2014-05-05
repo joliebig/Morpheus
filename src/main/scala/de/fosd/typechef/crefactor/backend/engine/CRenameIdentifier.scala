@@ -5,8 +5,6 @@ import de.fosd.typechef.parser.c.{TranslationUnit, AST, Id}
 import de.fosd.typechef.crefactor.frontend.util.CodeSelection
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.evaluation_utils.Configuration
-import de.fosd.typechef.crefactor.evaluation.StatsCan
-import de.fosd.typechef.crefactor.evaluation.Stats._
 import java.io.File
 import de.fosd.typechef.conditional.Opt
 
@@ -49,11 +47,13 @@ object CRenameIdentifier extends ASTSelection with CRefactor {
 
     private def hasSameFileName(id : Id, morpheus : Morpheus) : Boolean = {
         val entry = id.getFile.get.replaceFirst("file ", "")
-        (entry.equalsIgnoreCase(morpheus.getFile) || getFileName(entry).equalsIgnoreCase(getFileName(morpheus.getFile)))
+        entry.equalsIgnoreCase(morpheus.getFile) ||
+            getFileName(entry).equalsIgnoreCase(getFileName(morpheus.getFile))
     }
 
     private def getFileName(originalFilePath: String) =
         if (originalFilePath.contains(File.separatorChar))
-            originalFilePath.substring(originalFilePath.lastIndexOf(File.separatorChar), originalFilePath.length).replace("/", "")
+            originalFilePath.substring(originalFilePath.lastIndexOf(File.separatorChar),
+                originalFilePath.length).replace("/", "")
         else originalFilePath
 }
