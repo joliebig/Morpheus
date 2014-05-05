@@ -14,7 +14,7 @@ trait CRefactor
     extends CEnvCache with ASTNavigation with ConditionalNavigation with TUnitRewriteRules
     with EnforceTreeHelper with Logging {
 
-    private val VALID_NAME_PATTERN = "[a-zA-Z_][a-zA-Z0-9_]*"
+    private val REGEX_VALID_IDENTIFIER = "[a-zA-Z_][a-zA-Z0-9_]*"
 
     private val LANGUAGE_KEYWORDS = List("auto", "break", "case", "char", "const", "continue", "default",
         "do", "double", "else", "enum", "extern", "float", "for", "goto", "if", "inline", "int", "long",
@@ -31,7 +31,7 @@ trait CRefactor
      * @return <code>true</code> if valid, <code>false</code> if not
      */
     def isValidId(name: String): Boolean =
-        (name.matches(VALID_NAME_PATTERN)
+        (name.matches(REGEX_VALID_IDENTIFIER)
             && !name.startsWith("__")
             && !isReservedLanguageKeyword(name)
             && !isSystemLinkedName(name))
