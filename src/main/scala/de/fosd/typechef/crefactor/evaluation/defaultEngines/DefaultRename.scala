@@ -134,7 +134,7 @@ trait DefaultRename extends Refactoring with Evaluation {
         StatsCan.addStat(morpheus.getFile, run, RenamedId, id.name)
 
         val refactorChain = if (moduleInterface != null)
-                                getLinkedFilesToRefactor(morpheus, id)
+                                getRefactoringObjectsForGloballyLinkedIdentifiers(morpheus, id)
                             else
                                 List()
 
@@ -213,35 +213,47 @@ trait DefaultRename extends Refactoring with Evaluation {
         found
     }
 
-
-    private def getLinkedFilesToRefactor(morpheus: Morpheus, id: Id): List[(Morpheus, Position)] = {
+    // get for each globally linked identifier the file and code position
+    // (row and column) and create morpheus refactoring objects of them
+    // we use the result subsequently to rename the linked identifiers also
+    private def getRefactoringObjectsForGloballyLinkedIdentifiers(morpheus: Morpheus, id: Id): List[(Morpheus, Position)] = {
         val cmif = morpheus.getModuleInterface
         val linked = cmif.getPositions(id.name)
 
-        val affectedFiles = linked.foldLeft(new mutable.HashMap[String, Position])((map, pos) =>
-            if (getFileName(pos.getFile).equalsIgnoreCase(getFileName(morpheus.getFile))) map
-            else map += (pos.getFile -> pos))
+        // get files with linking different from the current file, we already operate on
+        val affectedFiles = linked.flatMap {
+            pos => {
+                if (getFileName(pos.getFile).equalsIgnoreCase(getFileName(morpheus.getFile)))
+                    None
+                else
+                    Some((pos.getFile, pos))
+            }
+        }
 
+        // erroneous linking information?
         if (affectedFiles.isEmpty && linked.nonEmpty) {
             logger.info("Id is recognized as to be linked, but no corresponding file was found.")
             return null
         }
 
-        if (affectedFiles.keySet.exists(file => blackListFiles.exists(getFileName(file).equalsIgnoreCase)
-            || (!evalFiles.exists(getFileName(file).equalsIgnoreCase)))) {
+        // we cannot handle all files in TypeChef
+        if (affectedFiles.exists(lPos => blackListFiles.exists(getFileName(lPos._1).equalsIgnoreCase)
+            || (!evalFiles.exists(getFileName(lPos._1).equalsIgnoreCase)))) {
             logger.info("One or more file is blacklisted or is not a member of the valid files list and cannot be build.")
             return null
         }
 
-        val refactorChain = affectedFiles.foldLeft(List[(Morpheus, Position)]())((list, entry) => {
-            linkedRenamedFiles.get(removeFilePrefix(entry._1)) match {
-                case Some(morpheus) =>
-                    list :+(morpheus, entry._2)
-                case _ =>
-                    val linked = CRefactorFrontend.parseOrLoadTUnit(removeFilePrefix(entry._1))
-                    list :+(new Morpheus(linked._1, linked._2, removeFilePrefix(entry._1)), entry._2)
-            }
-        })
+        // reuse or create morpheus (refactoring) objects
+        val refactorChain = affectedFiles.map {
+            case (fName, fPos) =>
+                val fNameNoPrefix = removeFilePrefix(fName)
+                linkedRenamedFiles.get(fNameNoPrefix) match {
+                    case Some(m) => (m, fPos)
+                    case _ =>
+                        val (tu, fm) = CRefactorFrontend.parseOrLoadTUnit(fNameNoPrefix)
+                        (new Morpheus(tu, fm, fNameNoPrefix), fPos)
+                }
+        }
 
         refactorChain
     }
