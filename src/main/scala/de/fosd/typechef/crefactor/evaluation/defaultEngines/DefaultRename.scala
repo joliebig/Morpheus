@@ -122,7 +122,7 @@ trait DefaultRename extends Refactoring with Evaluation {
                 return null
 
             val associatedIds = morpheus.getReferences(id)
-            addType(associatedIds, morpheus, run)
+            countAndLogIdTypes(associatedIds, morpheus, run)
             (id, associatedIds.length, associatedIds.map(id => morpheus.getASTEnv.featureExpr(id.entry)).distinct)
         }
 
@@ -245,32 +245,42 @@ trait DefaultRename extends Refactoring with Evaluation {
         refactorChain
     }
 
-    private def addType(ids: List[Opt[Id]], morpheus: Morpheus, run: Int) = {
-        def traverseTypesAndCount(c: Conditional[_], id: Id) = {
-            val tautTypes = ConditionalLib.items(c).filter { entry => entry._1.isTautology(morpheus.getFM) }
-            tautTypes.map(_._2).flatMap({
+    // count and log renamed types of renamed ids
+    private def countAndLogIdTypes(ids: List[Opt[Id]], morpheus: Morpheus, run: Int) = {
+        var res: Map[String, Int] = Map()
+        res += "Unknown" -> 0
+        res += "Function" -> 0
+        res += "Enum" -> 0
+        res += "Variable" -> 0
+        res += "TypeDef" -> 0
+
+        // an identifier may have different types depending on the configuration
+        def traverseIdTypes(c: Conditional[_], id: Id) = {
+            val satTypes = ConditionalLib.items(c).filter { entry => entry._1.isSatisfiable(morpheus.getFM) }
+
+            satTypes.map(_._2).foreach({
                 case c@(CUnknown(_), _, _) =>
                     logger.warn("Is unkown " + id + " " + c)
-                    None
-                case (CFunction(_, _), _, _) => Some("FunctionName")
-                case (CType(CFunction(_, _), _, _, _), _, _, _) => Some("FunctionName")
-                case (_, KEnumVar, _, _) => Some("Enum")
-                case (CType(_, _, _, _), _, _, _) => Some("Variable")
+                    res += "Unknown" -> (res("Unknown") + 1)
+                case (CFunction(_, _), _, _)                    => res += "Function" -> (res("Function") + 1)
+                case (CType(CFunction(_, _), _, _, _), _, _, _) => res += "Function" -> (res("Function") + 1)
+                case (_, KEnumVar, _, _)                        => res += "Enum"     -> (res("Enum") + 1)
+                case (CType(_, _, _, _), _, _, _)               => res += "Variable" -> (res("Variable") + 1)
                 case o =>
                     logger.warn("Unknown Type " + id + " " + o)
-                    Some(o.toString)
+                    res += "Unknown" -> (res("Unknown") + 1)
             })
         }
-        val foundTypes = ids.flatMap(id => {
+        ids.foreach(id => {
             try {
                 // only lookup variables
-                traverseTypesAndCount(morpheus.getEnv(id.entry).varEnv.lookup(id.entry.name), id.entry)
+                traverseIdTypes(morpheus.getEnv(id.entry).varEnv.lookup(id.entry.name), id.entry)
             } catch {
-                case _: Throwable => Some("TypeDef")
+                case _: Throwable => res += "TypeDef" -> (res("TypeDef") + 1)
             }
         })
 
-        StatsCan.addStat(morpheus.getFile, run, Type, foundTypes)
+        StatsCan.addStat(morpheus.getFile, run, Type, res)
     }
 
     def hasLocalLinkingInformation(id : Id, morpheus : Morpheus) = {
