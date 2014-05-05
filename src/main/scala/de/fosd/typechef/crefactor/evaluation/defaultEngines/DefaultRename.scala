@@ -70,7 +70,7 @@ trait DefaultRename extends Refactoring with Evaluation {
                     !(moduleInterface.isBlackListed(id.name) || renameLink.contains(id.name))
                 else true
             } && !isExternalDeclWithNoLinkingInformation(id, morpheus) &&
-                id.hasPosition && !hasLocalLinkingInformation(id, morpheus)
+                id.hasPosition && !isLocallyLinked(id, morpheus)
 
             morpheus.getTypeSystem.getInferredInterface().exports.exists(sig => sig.name.equals())
 
@@ -297,11 +297,18 @@ trait DefaultRename extends Refactoring with Evaluation {
         StatsCan.addStat(morpheus.getFile, run, Type, res)
     }
 
-    def hasLocalLinkingInformation(id : Id, morpheus : Morpheus) = {
-        val local = morpheus.getTypeSystem.getInferredInterface().exports.exists(sig => sig.name.equals(id.name)) ||
-            morpheus.getTypeSystem.getInferredInterface().imports.exists(sig => sig.name.equals(id.name))
-        val global = if (morpheus.getModuleInterface == null) false
-        else morpheus.getModuleInterface.nameIsListed(id.name)
+    // TODO @ajanker: What is the purpose of this function?
+    def isLocallyLinked(id: Id, morpheus : Morpheus) = {
+        val exports = morpheus.getTypeSystem.getInferredInterface().exports
+        val imports = morpheus.getTypeSystem.getInferredInterface().imports
+
+        val local = exports.exists(_.name.equals(id.name)) ||
+            imports.exists(_.name.equals(id.name))
+
+        val global = if (morpheus.getModuleInterface == null)
+                         false
+                     else
+                         morpheus.getModuleInterface.nameIsListed(id.name)
 
         local && !global
     }
