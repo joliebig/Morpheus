@@ -69,7 +69,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         processFile(tunit, fm, runOpt)
     }
 
-    def parseOrLoadTUnit(toLoad: String): (TranslationUnit, FeatureModel) = {
+    def getTUnit(toLoad: String): (TranslationUnit, FeatureModel) = {
         val file = {
             if (toLoad.startsWith("file")) toLoad.substring(5)
             else toLoad

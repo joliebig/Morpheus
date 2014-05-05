@@ -250,7 +250,7 @@ trait DefaultRename extends Refactoring with Evaluation {
                 linkedRenamedFiles.get(fNameNoPrefix) match {
                     case Some(m) => (m, fPos)
                     case _ =>
-                        val (tu, fm) = CRefactorFrontend.parseOrLoadTUnit(fNameNoPrefix)
+                        val (tu, fm) = CRefactorFrontend.getTUnit(fNameNoPrefix)
                         (new Morpheus(tu, fm, fNameNoPrefix), fPos)
                 }
         }
