@@ -261,7 +261,7 @@ trait DefaultRename extends Refactoring with Evaluation {
 
             satTypes.map(_._2).foreach({
                 case c@(CUnknown(_), _, _) =>
-                    logger.warn("Is unkown " + id + " " + c)
+                    logger.warn("Is unknown " + id + " " + c)
                     res += "Unknown" -> (res("Unknown") + 1)
                 case (CFunction(_, _), _, _)                    => res += "Function" -> (res("Function") + 1)
                 case (CType(CFunction(_, _), _, _, _), _, _, _) => res += "Function" -> (res("Function") + 1)
