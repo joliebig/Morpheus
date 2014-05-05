@@ -198,8 +198,11 @@ trait DefaultRename extends Refactoring with Evaluation {
     private def findIdInAST(position: Position, id: Id, tUnit: TranslationUnit) = {
         logger.info("Looking for " + position + "of " + id.name + ".")
         val found = filterASTElems[Id](tUnit).par.find(aId => {
-            if (aId.name.equalsIgnoreCase(id.name)) logger.info("Found matching names " + id.name + " at: " + aId.getPositionFrom + ", " + aId.getPositionTo)
-            // as positions in TypeChef are little bit buggy - we extend the search ranch.
+            if (aId.name.equalsIgnoreCase(id.name))
+                logger.info("Found matching names " + id.name +
+                    " at: " + aId.getPositionFrom + ", " + aId.getPositionTo)
+
+            // as positions in TypeChef are a little bit buggy, we extend the search range.
             ((position.getLine.equals(aId.getPositionFrom.getLine) ||
                 position.getLine.equals(aId.getPositionTo.getLine) ||
                 position.getLine.equals(aId.getPositionFrom.getLine - 1) ||
