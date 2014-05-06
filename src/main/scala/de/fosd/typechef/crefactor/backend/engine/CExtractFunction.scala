@@ -60,10 +60,11 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
         // TODO @ajanker: I don't get the purpose of this function?
         def lookupControlStatements(stmt: Statement): Statement = {
-            // TODO @ajanker: Is a try-catch here really necessary?
+            // TODO @ajanker: Is a try-catch here really necessary? An Exception is only thrown
+            // stmt is not in the environment (getASTEnv)
             try {
                 nextAST(stmt, morpheus.getASTEnv) match {
-                    case ns @ ( ContinueStatement(_)| BreakStatement() | CaseStatement(_) |
+                    case ns @ ( ContinueStatement(_) | BreakStatement() | CaseStatement(_) |
                              GotoStatement(_) | ReturnStatement(_)) =>
                         if (isElementOfSelection(ns, selection))
                             ns.asInstanceOf[Statement]
