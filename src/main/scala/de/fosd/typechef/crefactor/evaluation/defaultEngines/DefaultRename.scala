@@ -29,7 +29,7 @@ trait DefaultRename extends Refactoring with Evaluation {
     // not supported
     def getValidStatementsForEvaluation(morpheus: Morpheus): List[Statement] = List()
 
-    def getAvailableElementsForEvaluation(morpheus : Morpheus) : List[Id] = {
+    def getValidIdsForEvaluation(morpheus : Morpheus) : List[Id] = {
         val moduleInterface = morpheus.getModuleInterface
 
         // We check if an id has an valid name, is neither blacklisted, or called main or has wrong linking informations
