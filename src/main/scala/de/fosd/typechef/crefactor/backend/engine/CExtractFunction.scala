@@ -89,10 +89,8 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         }
 
         // TODO @ajanker: I don't get the purpose of this function?
+        // if an control statement was hit - we look if the the afterwards, possible embedded stmts are also selected.
         def lookupControlStatements(stmt: Statement): Statement = {
-            // TODO @ajanker: Is a try-catch here really necessary? An Exception is only thrown
-            // stmt is not in the environment (getASTEnv)
-            try {
                 nextAST(stmt, morpheus.getASTEnv) match {
                     case ns @ ( ContinueStatement(_) | BreakStatement() | CaseStatement(_) |
                              GotoStatement(_) | ReturnStatement(_)) =>
@@ -102,9 +100,6 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                             stmt
                     case _ => stmt
                 }
-            } catch {
-                case _: Throwable => stmt
-            }
         }
         val uniqueSelectedStatements = Collections.newSetFromMap[Statement](new java.util.IdentityHashMap())
         val uniqueSelectedExpressions = Collections.newSetFromMap[Expr](new java.util.IdentityHashMap())
