@@ -69,9 +69,9 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
     /**
      * Inserts one opt statement before and the after a mark in a translation unit.
      */
-    def insertBeforeAndAfter[T <: Product](t: T, mark: Opt[_], insertBefore: Opt[_], insertAfter: Opt[_]): T = {
+    def insertBeforeAndAfter[T <: Product](t: T, mark: Opt[_], before: Opt[_], after: Opt[_]): T = {
         val r = oncetd(rule {
-            case l: List[Opt[_]] => l.flatMap(x => if (x.eq(mark)) insertBefore :: x :: insertAfter :: Nil else x :: Nil)
+            case l: List[Opt[_]] => l.flatMap(x => if (x.eq(mark)) before :: x :: after :: Nil else x :: Nil)
         })
         r(t).get.asInstanceOf[T]
     }
