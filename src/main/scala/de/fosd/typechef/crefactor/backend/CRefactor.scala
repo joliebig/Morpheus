@@ -1,14 +1,14 @@
 package de.fosd.typechef.crefactor.backend
 
+import org.kiama.rewriting.Rewriter._
+
 import de.fosd.typechef.typesystem.{CType, CEnvCache}
 import de.fosd.typechef.crefactor.{Logging, Morpheus}
-import org.kiama.rewriting.Rewriter._
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.crefactor.frontend.util.CodeSelection
 import de.fosd.typechef.conditional._
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 import de.fosd.typechef.typesystem.linker.SystemLinker
-import java.util.Collections
 
 trait CRefactor
     extends CEnvCache with ASTNavigation with ConditionalNavigation with TUnitRewriteRules
@@ -25,7 +25,7 @@ trait CRefactor
     def isAvailable(morpheus: Morpheus, selection: CodeSelection): Boolean
 
     /**
-     * Checks if the name of a variable is compatible to the iso c standard. See 6.4.2 of the iso standard
+     * Checks if the name of a variable is compatible to the iso C standard. See 6.4.2 of the iso standard
      *
      * @param name name to check
      * @return <code>true</code> if valid, <code>false</code> if not
@@ -55,6 +55,8 @@ trait CRefactor
      */
     def isReservedLanguageKeyword(name: String) = LANGUAGE_KEYWORDS.contains(name)
 
+    // TODO @ajanker: What is the purpose of this function? It is only used in CExtractFunction and
+    // I don't get the purpose there either.
     def getOrFeatures(a: Any): FeatureExpr = {
         var featureSet: Set[FeatureExpr] = Set()
         val r = manytd(query {
@@ -62,7 +64,7 @@ trait CRefactor
             case Choice(ft, _, _) => featureSet += ft
         })
         r(a).get
-        featureSet.foldRight(FeatureExprFactory.True)((fxpr, setEntry) => fxpr.or(setEntry))
+        featureSet.foldRight(FeatureExprFactory.True)(_ or _)
     }
 
     def buildVariableCompoundStatement(stmts: List[(CompoundStatementExpr, FeatureExpr)]): CompoundStatementExpr = {
@@ -75,29 +77,35 @@ trait CRefactor
         CompoundStatementExpr(CompoundStatement(innerstmts))
     }
 
-
+    // Check whether a symbol is valid in the current file (module).
     def isValidInModule(name: String, element: AST, morpheus: Morpheus): Boolean = {
-        val lookupValue = findPriorASTElem[CompoundStatement](element, morpheus.getASTEnv) match {
+
+        // get the scope of the AST element
+        // It is either one CompoundStatement or we take the last external definition
+        // of this module.
+        val scope = findPriorASTElem[CompoundStatement](element, morpheus.getASTEnv) match {
             case Some(x) => x.innerStatements.last.entry
             case _ => morpheus.getTranslationUnit.defs.last.entry
         }
 
-        val env = morpheus.getEnv(lookupValue).asInstanceOf[Env]
+        // Depending on the type the name may be defined in one of the following three
+        // environments: variable, struct or union, enum.
+        val env = morpheus.getEnv(scope).asInstanceOf[Env]
         val ctx = morpheus.getASTEnv.featureExpr(element)
 
-        (isDeclaredInEnv(env.varEnv(name), ctx, morpheus)
-            || isDeclaredStructOrUnionInEnv(name, env)
-            || isDeclaredInEnv(env.typedefEnv(name), ctx, morpheus))
+        (hasConflictingType(env.varEnv(name), ctx, morpheus)
+            || hasConflictingStructOrUnion(name, env)
+            || hasConflictingType(env.typedefEnv(name), ctx, morpheus))
     }
 
-    private def isDeclaredInEnv(env: Conditional[CType], ctx: FeatureExpr, morpheus: Morpheus):
-    Boolean = {
-        !ConditionalLib.items(env).forall {
-            x => x._2.isUnknown || (ctx and x._1 isContradiction morpheus.getFM)
+    // determine if a conflicting type is available in configuration ctx
+    private def hasConflictingType(env: Conditional[CType], ctx: FeatureExpr, morpheus: Morpheus): Boolean = {
+        ! ConditionalLib.items(env).forall {
+            case (typeCtx, cType) => cType.isUnknown || (ctx and typeCtx isContradiction morpheus.getFM)
         }
     }
 
-    private def isDeclaredStructOrUnionInEnv(name: String, env: Env): Boolean = {
+    private def hasConflictingStructOrUnion(name: String, env: Env): Boolean = {
         env.structEnv.someDefinition(name, false) || env.structEnv.someDefinition(name, true)
     }
 }
