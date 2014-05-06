@@ -1,11 +1,11 @@
-package de.fosd.typechef.crefactor.backend
+package de.fosd.typechef.crefactor.backend.codeselection
 
-import de.fosd.typechef.parser.c.{Id, AST}
+import de.fosd.typechef.parser.c.{ConditionalNavigation, ASTNavigation, Id, AST}
 import de.fosd.typechef.crefactor.frontend.util.CodeSelection
 import de.fosd.typechef.crefactor.{Logging, Morpheus}
 import de.fosd.typechef.conditional.Opt
 
-trait ASTSelection extends Logging {
+trait ASTSelection extends Logging with ASTNavigation with ConditionalNavigation {
 
     def getSelectedElements(morpheus: Morpheus, selection: CodeSelection): List[AST]
 

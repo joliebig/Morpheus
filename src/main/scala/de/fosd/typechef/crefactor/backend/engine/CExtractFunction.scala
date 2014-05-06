@@ -2,7 +2,7 @@ package de.fosd.typechef.crefactor.backend.engine
 
 import java.util.Collections
 
-import de.fosd.typechef.crefactor.backend.{RefactorException, CRefactor, ASTSelection}
+import de.fosd.typechef.crefactor.backend.{RefactorException, CRefactor}
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.crefactor.frontend.util.CodeSelection
 import de.fosd.typechef.crefactor.Morpheus
@@ -54,6 +54,7 @@ import de.fosd.typechef.parser.c.BreakStatement
 import de.fosd.typechef.parser.c.ParameterDeclarationD
 import de.fosd.typechef.parser.c.RegisterSpecifier
 import de.fosd.typechef.parser.c.ConstSpecifier
+import de.fosd.typechef.crefactor.backend.codeselection.ASTSelection
 
 
 /**
@@ -141,7 +142,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         }
 
 
-    def isAvailable(morpheus: Morpheus, selection: List[AST]): Boolean = {
+    def canRefactor(morpheus: Morpheus, selection: List[AST]): Boolean = {
         if (selection.isEmpty) return false
 
         val selectedIds = filterAllASTElems[Id](selection)
@@ -163,11 +164,11 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     }
 
     def isAvailable(morpheus: Morpheus, selection: CodeSelection): Boolean =
-        isAvailable(morpheus, getSelectedElements(morpheus, selection))
+        canRefactor(morpheus, getSelectedElements(morpheus, selection))
 
     def extract(morpheus: Morpheus, selectedElements: List[AST], funcName: String): Either[String, TranslationUnit] = {
 
-        if (!isValidId(funcName))
+        if (!isValidName(funcName))
             return Left(Configuration.getInstance().getConfig("default.error.invalidName"))
 
         val selection = selectedElements.sortWith(comparePosition)

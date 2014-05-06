@@ -2,7 +2,7 @@ package de.fosd.typechef.crefactor.backend.engine
 
 import de.fosd.typechef.conditional._
 import de.fosd.typechef.crefactor._
-import de.fosd.typechef.crefactor.backend.{RefactorException, CRefactor, ASTSelection}
+import de.fosd.typechef.crefactor.backend.{RefactorException, CRefactor}
 import de.fosd.typechef.crefactor.frontend.util.CodeSelection
 import de.fosd.typechef.crewrite.IntraCFG
 import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureExprFactory}
@@ -10,6 +10,7 @@ import de.fosd.typechef.parser.c._
 import scala._
 import java.util.Collections
 import scala.Some
+import de.fosd.typechef.crefactor.backend.codeselection.ASTSelection
 
 
 /**
@@ -130,28 +131,6 @@ object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
         })
 
         (fCallStmts, fDecls, fDefs, fCallExprs)
-    }
-
-    private def getFunctionIdentifier(function: AST, morpheus: Morpheus): Id = {
-        function match {
-            case f: FunctionDef => f.declarator.getId
-            case n: NestedFunctionDef => n.declarator.getId
-            case c: FunctionCall => getFunctionIdentifier(parentAST(c, morpheus.getASTEnv), morpheus)
-            case PostfixExpr(i: Id, _ : FunctionCall) => i
-            case _ =>
-                logger.warn("No function identifier found for: " + function)
-                null
-        }
-    }
-
-    private def isSelected(element: AST, astEnv: ASTEnv, selection: CodeSelection): Boolean = {
-        element match {
-            case f: FunctionDef => isPartOfSelection(f.declarator.getId, selection)
-            case n: NestedFunctionDef => isPartOfSelection(n.declarator.getId, selection)
-            case c: FunctionCall => isSelected(astEnv.parent(c).asInstanceOf[AST], astEnv, selection)
-            case p: PostfixExpr => isPartOfSelection(p.p, selection)
-            case _ => false
-        }
     }
 
     /*

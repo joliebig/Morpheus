@@ -9,6 +9,7 @@ import de.fosd.typechef.crefactor.frontend.util.CodeSelection
 import de.fosd.typechef.conditional._
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 import de.fosd.typechef.typesystem.linker.SystemLinker
+import java.io.File
 
 trait CRefactor
     extends CEnvCache with ASTNavigation with ConditionalNavigation with TUnitRewriteRules
@@ -22,15 +23,13 @@ trait CRefactor
         "typedef", "union", "unsigned", "void", "volatile", "while", "_Alignas", "_Alignof", "_Atomic",
         "_Bool", "_Complex", "_Generic", "_Imaginary", "_Noreturn", "_Static_assert", "_Thread_local")
 
-    def isAvailable(morpheus: Morpheus, selection: CodeSelection): Boolean
-
     /**
      * Checks if the name of a variable is compatible to the iso C standard. See 6.4.2 of the iso standard
      *
      * @param name name to check
      * @return <code>true</code> if valid, <code>false</code> if not
      */
-    def isValidId(name: String): Boolean =
+    def isValidName(name: String): Boolean =
         (name.matches(REGEX_VALID_IDENTIFIER)
             && !name.startsWith("__")
             && !isReservedLanguageKeyword(name)
@@ -45,6 +44,24 @@ trait CRefactor
         val newName = id.name + "_" + appendix
         if (isValidInModule(newName, stmt.entry, morpheus)) generateValidNewName(id, stmt, morpheus, appendix + 1)
         else newName
+    }
+
+    /**
+     * Checks if the id valid for renaming
+     */
+    def isValidForRename(id: Id, morpheus : Morpheus): Boolean =
+        !id.name.contains("_main") && !isSystemLinkedName(id.name) && {
+            if (morpheus.getModuleInterface != null)
+                !(morpheus.getModuleInterface.isBlackListed(id.name))
+            else true
+        } && !hasConflictingLinking(id, morpheus) &&
+            id.hasPosition && !hasConflictingLinking(id, morpheus)
+
+    def isWritable(id: Id, morpheus : Morpheus) : Boolean = {
+        val path =
+            if (hasSameFileName(id, morpheus)) morpheus.getFile
+            else id.getFile.get.replaceFirst("file ", "")
+        new File(path).canWrite
     }
 
     /**
@@ -96,6 +113,39 @@ trait CRefactor
     private def hasConflictingStructOrUnion(name: String, env: Env): Boolean = {
         env.structEnv.someDefinition(name, false) || env.structEnv.someDefinition(name, true)
     }
+
+    /**
+     * Checks if the local linking informations are also globally visible
+     // TODO: bug in interface gen
+     */
+    private def hasConflictingLinking(id: Id, morpheus : Morpheus) = {
+        val exports = morpheus.getTypeSystem.getInferredInterface().exports
+        val imports = morpheus.getTypeSystem.getInferredInterface().imports
+
+        val local = exports.exists(_.name == id.name) ||
+            imports.exists(_.name == id.name)
+
+        val global = if (morpheus.getModuleInterface == null)
+            false
+        else
+            morpheus.getModuleInterface.nameIsListed(id.name)
+
+        local && !global
+    }
+
+    private def hasSameFileName(id : Id, morpheus : Morpheus) : Boolean = {
+        val entry = id.getFile.get.replaceFirst("file ", "")
+        entry.equalsIgnoreCase(morpheus.getFile) ||
+            getFileName(entry).equalsIgnoreCase(getFileName(morpheus.getFile))
+    }
+
+    private def getFileName(originalFilePath: String) =
+        if (originalFilePath.contains(File.separatorChar))
+            originalFilePath.substring(originalFilePath.lastIndexOf(File.separatorChar),
+                originalFilePath.length).replace("/", "")
+        else originalFilePath
+
+
 }
 
 case class RefactorException(error: String) extends Exception

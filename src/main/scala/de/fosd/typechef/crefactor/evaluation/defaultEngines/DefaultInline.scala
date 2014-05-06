@@ -26,7 +26,7 @@ trait DefaultInline extends Refactoring with Evaluation {
             }
         })
 
-        logger.info("Function calls found to inline: " + availableFuncCalls.size)
+        logger.info(morpheus.getFile +  " Function calls found to inline: " + availableFuncCalls.size)
 
         // Prefer var func calls
         val variableFuncCalls = availableFuncCalls.flatMap(call => {
@@ -40,7 +40,7 @@ trait DefaultInline extends Refactoring with Evaluation {
             else None
         })
 
-        logger.info("Variable function calls found to inline: " + variableFuncCalls.size)
+        logger.info(morpheus.getFile +  " Variable function calls found to inline: " + variableFuncCalls.size)
 
         if (FORCE_VARIABILITY && variableFuncCalls.nonEmpty) Random.shuffle(variableFuncCalls)
         else if (FORCE_VARIABILITY) List()

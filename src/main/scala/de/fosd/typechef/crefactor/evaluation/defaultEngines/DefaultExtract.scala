@@ -2,13 +2,17 @@ package de.fosd.typechef.crefactor.evaluation.defaultEngines
 
 import de.fosd.typechef.crefactor.evaluation.{StatsCan, Evaluation, Refactoring}
 import de.fosd.typechef.crefactor.Morpheus
-import de.fosd.typechef.parser.c.{TranslationUnit, Statement, AST, CompoundStatement}
+import de.fosd.typechef.parser.c._
 import de.fosd.typechef.featureexpr.FeatureExpr
 import de.fosd.typechef.crefactor.backend.engine.CExtractFunction
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.conditional.Opt
 import java.io.File
+import de.fosd.typechef.parser.c.TranslationUnit
+import de.fosd.typechef.parser.c.CompoundStatement
+import de.fosd.typechef.conditional.Opt
+import scala.util.Random
 
 trait DefaultExtract extends Refactoring with Evaluation {
 
@@ -18,6 +22,41 @@ trait DefaultExtract extends Refactoring with Evaluation {
     val RETRIES: Int = 10
 
     val NAME = "refactored_func"
+
+
+    def getValidStatementsForEvaluation(morpheus: Morpheus): List[List[Statement]] = {
+        // Test all available combinations for extraction
+        def getAvailableInnerStatements(opts: List[Opt[Statement]], i: Int, length: Int): List[List[Statement]] = {
+            (i to length).flatMap(x => {
+                val selectedElements = constantSlice(opts, i, x).map(_.entry)
+                if (CExtractFunction.canRefactor(morpheus, selectedElements)) Some(selectedElements)
+                else None
+            }).toList
+        }
+
+        def getAvailableExtractStatements(compStmt: CompoundStatement): List[List[Statement]] = {
+            val length = compStmt.innerStatements.length - 1
+            if (compStmt.innerStatements.isEmpty) List()
+            else (0 to length).flatMap(getAvailableInnerStatements(compStmt.innerStatements, _, length)).toList
+        }
+
+        val compStmts = filterAllASTElems[CompoundStatement](morpheus.getTranslationUnit)
+
+        val allCombinations = compStmts.flatMap(getAvailableExtractStatements).filterNot(_.isEmpty)
+
+        logger.info(morpheus.getFile + " Statements found to extract: " + allCombinations.size)
+
+        val variableCombinations = allCombinations.par.filter(_.exists(isVariable)).toList
+
+        logger.info(morpheus.getFile + " Variable statements found to extract: " + allCombinations.size)
+
+        if (FORCE_VARIABILITY && variableCombinations.nonEmpty) Random.shuffle(variableCombinations)
+        else if (FORCE_VARIABILITY) List()
+        else Random.shuffle(allCombinations)
+    }
+
+    // not supported
+    def getValidIdsForEvaluation(morpheus : Morpheus) : List[Id] = List()
 
 
     def refactor(morpheus: Morpheus): (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)]) = {
@@ -39,7 +78,7 @@ trait DefaultExtract extends Refactoring with Evaluation {
                                  else
                                      constantSlice(compStmt.innerStatements, rand2, rand1).map(_.entry)
 
-                if (CExtractFunction.isAvailable(morpheus, statements)) statements
+                if (CExtractFunction.canRefactor(morpheus, statements)) statements
                 else if (depth > MAX_REC_DEPTH) List[AST]()
                 else getRandomStatements(depth + 1)
             }
@@ -57,7 +96,7 @@ trait DefaultExtract extends Refactoring with Evaluation {
             def getAvailableInnerStatements(opts: List[Opt[Statement]], i: Int, length: Int): List[List[AST]] = {
                 (i to length).foldLeft(List[List[AST]]())((l, x) => {
                     val selectedElements = constantSlice(opts, i, x).map(_.entry)
-                    if (CExtractFunction.isAvailable(morpheus, selectedElements)) selectedElements :: l
+                    if (CExtractFunction.canRefactor(morpheus, selectedElements)) selectedElements :: l
                     else l
                 })
             }

@@ -32,22 +32,7 @@ trait DefaultRename extends Refactoring with Evaluation {
     def getValidIdsForEvaluation(morpheus : Morpheus) : List[Id] = {
         val moduleInterface = morpheus.getModuleInterface
 
-        // We check if an id has an valid name, is neither blacklisted, or called main or has wrong linking informations
-        def isValidId(id: Id): Boolean =
-            !id.name.contains("_main") && !isSystemLinkedName(id.name) && {
-                if (moduleInterface != null)
-                    !(moduleInterface.isBlackListed(id.name) || renameLink.contains(id.name))
-                else true
-                } && !isExternalDeclWithNoLinkingInformation(id, morpheus) &&
-                        id.hasPosition && !isOnlyLocallyLinked(id, morpheus)
-
-        // We check the writable property here already in order to maximize the number of possible refactorings.
-        def isWritable(id: Id): Boolean =
-            morpheus.getReferences(id).map(_.entry).forall(i =>
-                isValidId(i) &&
-                    (hasSameFileName(i, morpheus) || new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
-
-        val allIds = morpheus.getAllUses.filter(isWritable)
+        val allIds = morpheus.getAllUses.filter(CRenameIdentifier.canRefactor(_, morpheus))
 
         val linkedIds = if (FORCE_LINKING && moduleInterface != null)
             allIds.par.filter(id => moduleInterface.isListed(Opt(parentOpt(id, morpheus.getASTEnv).feature, id.name), morpheus.getFM))

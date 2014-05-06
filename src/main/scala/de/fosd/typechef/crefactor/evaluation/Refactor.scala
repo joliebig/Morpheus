@@ -12,7 +12,7 @@ trait Refactoring {
 
     def getValidIdsForEvaluation(morpheus: Morpheus): List[Id]
 
-    def getValidStatementsForEvaluation(morpheus: Morpheus): List[Statement]
+    def getValidStatementsForEvaluation(morpheus: Morpheus): List[List[Statement]]
 
 }
 
