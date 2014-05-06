@@ -10,6 +10,8 @@ trait Refactoring {
     def refactor(morpheus: Morpheus):
     (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)])
 
+    def getAvailableElementsForEvaluation[T <: AST](morpheus: Morpheus): List[T] = List()
+
 }
 
 trait Refactor {
@@ -23,5 +25,6 @@ trait Refactor {
     def inline(tunit: TranslationUnit, fm: FeatureModel,
                file: String, linkInterface: CModuleInterface = null)
 }
+
 
 

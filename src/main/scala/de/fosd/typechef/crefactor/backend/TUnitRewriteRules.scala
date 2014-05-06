@@ -48,12 +48,11 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
 
     /**
      * Replaces the innerstatements of compoundstatements of a translation unit.
-     * TODO ajanker: Why not replace a CompoundStatement with another one directly?
      */
     def replaceCompoundStmt[T <: Product](t: T, cStmt: CompoundStatement,
-                                          newInnerStmt: List[Opt[Statement]]): T = {
+                                          newCStmt: CompoundStatement): T = {
         val r = manybu(rule {
-            case cc: CompoundStatement => if (cc eq cStmt) cc.copy(innerStatements = newInnerStmt) else cc
+            case cc: CompoundStatement => if (cc eq cStmt) newCStmt else cc
             case x => x
         })
         r(t).get.asInstanceOf[T]
