@@ -19,15 +19,17 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
         val idsToReplace = Collections.newSetFromMap[Id](new java.util.IdentityHashMap())
         ids foreach idsToReplace.add
         val r = manybu(rule {
-            case id: Id => if (idsToReplace.contains(id)) {
-                val copiedId = id.copy(name = newName)
-                val orgPosRange = id.range
-                orgPosRange match {
-                    case Some(range) => copiedId.setPositionRange(range._1, range._2)
-                    case _ =>
-                }
-                copiedId
-            } else id
+            case id: Id =>
+                if (idsToReplace.contains(id)) {
+                    // create id with the new name and preserve the position information
+                    val copiedId = id.copy(name = newName)
+                    id.range match {
+                        case Some((from, to)) => copiedId.setPositionRange(from, to)
+                        case _ =>
+                    }
+                    copiedId
+                } else
+                    id
             case x => x
         })
         r(t).get.asInstanceOf[T]
