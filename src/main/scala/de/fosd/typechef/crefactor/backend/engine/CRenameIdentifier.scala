@@ -13,6 +13,7 @@ import de.fosd.typechef.conditional.Opt
  */
 object CRenameIdentifier extends ASTSelection with CRefactor {
 
+    // TODO @ajanker: Do the following three functions belong here?
     def getSelectedElements(morpheus: Morpheus, selection: CodeSelection): List[AST] =
         getAvailableIdentifiers(morpheus, selection)
 
