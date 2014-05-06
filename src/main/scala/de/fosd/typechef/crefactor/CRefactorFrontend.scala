@@ -40,7 +40,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
 
         if (runOpt.writeProjectInterface) writeProjectInterface(runOpt)
 
-        if (runOpt.parse) parseOrLoadTUnitandProcess(args, true)
+        else if (runOpt.parse) parseOrLoadTUnitandProcess(args, true)
 
 
         println("# unique Sat calls: " + FeatureExprHelper.uniqueSatCalls)
