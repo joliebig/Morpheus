@@ -17,7 +17,7 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
      */
     def replaceIds[T <: Product](t: T, ids: List[Id], newName: String): T = {
         val idsToReplace = Collections.newSetFromMap[Id](new java.util.IdentityHashMap())
-        ids foreach(idsToReplace.add)
+        ids foreach idsToReplace.add
         val r = manybu(rule {
             case id: Id => if (idsToReplace.contains(id)) {
                 val copiedId = id.copy(name = newName)
@@ -57,7 +57,7 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
         r(t).get.asInstanceOf[T]
     }
 
-    def insertBefore[T <: Product](t: T, mark: Opt[_], insert: Opt[_])(implicit m: Manifest[T]): T = {
+    def insertBefore[T <: Product](t: T, mark: Opt[_], insert: Opt[_]): T = {
         val r = oncetd(rule {
             case l: List[Opt[_]] => l.flatMap(x => if (x.eq(mark)) insert :: x :: Nil else x :: Nil)
         })
@@ -67,22 +67,21 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
     /**
      * Inserts one opt statement before and the after a mark in a translation unit.
      */
-    def insertBeforeAndAfter[T <: Product](t: T, mark: Opt[_], insertBefore: Opt[_], insertAfter: Opt[_])
-                                          (implicit m: Manifest[T]): T = {
+    def insertBeforeAndAfter[T <: Product](t: T, mark: Opt[_], insertBefore: Opt[_], insertAfter: Opt[_]): T = {
         val r = oncetd(rule {
             case l: List[Opt[_]] => l.flatMap(x => if (x.eq(mark)) insertBefore :: x :: insertAfter :: Nil else x :: Nil)
         })
         r(t).get.asInstanceOf[T]
     }
 
-    def insertListBefore[T <: Product](t: T, mark: Opt[_], insert: List[Opt[_]])(implicit m: Manifest[T]): T = {
+    def insertListBefore[T <: Product](t: T, mark: Opt[_], insert: List[Opt[_]]): T = {
         val r = oncetd(rule {
             case l: List[Opt[_]] => l.flatMap(x => if (x.eq(mark)) insert ::: x :: Nil else x :: Nil)
         })
         r(t).get.asInstanceOf[T]
     }
 
-    def replace[T <: Product](t: T, mark: Opt[_], replace: Opt[_])(implicit m: Manifest[T]): T = {
+    def replace[T <: Product](t: T, mark: Opt[_], replace: Opt[_]): T = {
         val r = manybu(rule {
             case l: List[Opt[_]] => l.flatMap(x => if (x.eq(mark)) replace :: Nil else x :: Nil)
         })
@@ -97,35 +96,35 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
         ccStmt.copy(innerStatements = newInnerStmts)
     }
 
-    def replaceOnceTD[T <: Product](t: T, mark: Opt[_], replace: Opt[_])(implicit m: Manifest[T]): T = {
+    def replaceOnceTD[T <: Product](t: T, mark: Opt[_], replace: Opt[_]): T = {
         val r = oncetd(rule {
             case l: List[Opt[_]] => l.flatMap(x => if (x.eq(mark)) replace :: Nil else x :: Nil)
         })
         r(t).get.asInstanceOf[T]
     }
 
-    def replaceNArySubExpr[T <: Product](t: T, e: NArySubExpr, n: NArySubExpr)(implicit m: Manifest[T]): T = {
+    def replaceNArySubExpr[T <: Product](t: T, e: NArySubExpr, n: NArySubExpr): T = {
         val r = manybu(rule {
             case i: NArySubExpr => if (isPartOf(i, e)) n else i
         })
         r(t).get.asInstanceOf[T]
     }
 
-    def replaceExprWithCompStmExpr[T <: Product](t: T, e: Expr, n: CompoundStatementExpr)(implicit m: Manifest[T]): T = {
+    def replaceExprWithCompStmExpr[T <: Product](t: T, e: Expr, n: CompoundStatementExpr): T = {
         val r = manybu(rule {
             case i: NArySubExpr => if (isPartOf(i, e)) n else i
         })
         r(t).get.asInstanceOf[T]
     }
 
-    def replaceStmtWithStmtsInCompStmt[T <: Product](t: CompoundStatement, e: Opt[Statement], n: List[Opt[Statement]])(implicit m: Manifest[T]): T = {
+    def replaceStmtWithStmtsInCompStmt[T <: Product](t: CompoundStatement, e: Opt[Statement], n: List[Opt[Statement]]): T = {
         val r = manybu(rule {
             case l: List[Opt[_]] => l.flatMap(x => if (x eq e) Some(n) else x :: Nil)
         })
         r(t).get.asInstanceOf[T]
     }
 
-    def replaceCompoundStatement[T <: Product](t: T, mark: CompoundStatement, replace: CompoundStatement)(implicit m: Manifest[T]): T = {
+    def replaceCompoundStatement[T <: Product](t: T, mark: CompoundStatement, replace: CompoundStatement): T = {
         val r = manybu(rule {
             case c: CompoundStatement => if (c eq mark) replace else c
         })
@@ -133,7 +132,7 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
     }
 
     // single identifier replacement
-    def replaceId[T <: Product](t: T, e: Id, n: Id)(implicit m: Manifest[T]): T = {
+    def replaceId[T <: Product](t: T, e: Id, n: Id): T = {
         val r = manybu(rule {
             case i: Id => if (i eq e) n else i
             case x => x
@@ -153,7 +152,7 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
 
     // removes element remove from t, but does not traverse t entirely, since
     // oncetd is top-down traversal, which stops at first successful match
-    def remove[T <: Product](t: T, remove: Opt[_])(implicit m: Manifest[T]): T = {
+    def remove[T <: Product](t: T, remove: Opt[_]): T = {
         val r = oncetd(rule {
             case l: List[Opt[_]] => l.flatMap(x => if (x.eq(remove)) Nil else x :: Nil)
         })
