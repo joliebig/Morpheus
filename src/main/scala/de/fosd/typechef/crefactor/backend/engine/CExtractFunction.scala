@@ -18,12 +18,13 @@ import scala.collection.JavaConversions._
 
 
 /**
- * Implements the strategy of extracting a function.
+ * Implements extract-function refactoring.
  */
 object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
     private var lastSelection: CodeSelection = null
 
+    // TODO @ajanker: It's not much of a cache if it stores only one list of AST elements, right?
     private var cachedSelectedElements: List[AST] = null
 
     def getSelectedElements(morpheus: Morpheus, selection: CodeSelection): List[AST] = {
@@ -44,7 +45,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             try {
                 parentAST(statement, morpheus.getASTEnv) match {
                     case null => throw new RefactorException("No proper selection for extract function.")
-                    case _: FunctionDef => statement
+                    case _: FunctionDef       => statement
                     case _: NestedFunctionDef => statement
                     case p =>
                         if (isElementOfSelectionRange(p, selection)) {
@@ -88,12 +89,11 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         ids.foreach(id => {
             val parent = findPriorASTElem[Statement](id, morpheus.getASTEnv)
             parent match {
-                case null =>
-                case s: Some[Statement] =>
-                    s.get.setPositionRange(id)
-                    uniqueSelectedStatements.add(s.get)
-                    uniqueSelectedStatements.add(lookupControlStatements(s.get))
-                case x => // logger.info("There may have been an expression! " + x)
+                case Some(stmt) =>
+                    stmt.setPositionRange(id)
+                    uniqueSelectedStatements.add(stmt)
+                    uniqueSelectedStatements.add(lookupControlStatements(stmt))
+                case None => // logger.info("There may have been an expression!")
             }
         })
 
@@ -147,9 +147,9 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
     def isAvailable(morpheus: Morpheus, selection: CodeSelection): Boolean =
         isAvailable(morpheus, getSelectedElements(morpheus, selection))
 
-    def extract(morpheus: Morpheus, selectedElements: List[AST], funName: String): Either[String, TranslationUnit] = {
+    def extract(morpheus: Morpheus, selectedElements: List[AST], funcName: String): Either[String, TranslationUnit] = {
 
-        if (!isValidId(funName))
+        if (!isValidId(funcName))
             return Left(Configuration.getInstance().getConfig("default.error.invalidName"))
 
         val selection = selectedElements.sortWith(comparePosition)
@@ -157,12 +157,12 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         // Reference check is performed as soon as we know the featureExpr the new function is going to have!
 
         val oldFDef = findPriorASTElem[FunctionDef](selection.head, morpheus.getASTEnv)
-        if (isValidInProgram(Opt(morpheus.getASTEnv.featureExpr(oldFDef.get), funName), morpheus))
+        if (isValidInProgram(Opt(morpheus.getASTEnv.featureExpr(oldFDef.get), funcName), morpheus))
             return Left(Configuration.getInstance().getConfig(
                 "default.error.isInConflictWithSymbolInModuleInterface"))
 
         // we check binding and visibility using the last element in the translation unit
-        if (isValidInModule(funName, morpheus.getTranslationUnit.defs.last.entry, morpheus))
+        if (isValidInModule(funcName, morpheus.getTranslationUnit.defs.last.entry, morpheus))
             return Left(Configuration.getInstance().getConfig("default.error.isInConflictWithSymbolInModule"))
 
         // we can only handle statements. report error otherwise.
@@ -178,7 +178,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         })
             return Left(Configuration.getInstance().getConfig("refactor.extractFunction.failed.invalidSelection"))
 
-        extractStatements(morpheus, selection, funName)
+        extractStatements(morpheus, selection, funcName)
     }
 
     private def extractStatements(morpheus: Morpheus, selection: List[AST], funcName: String):
@@ -218,18 +218,18 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             val params = retrieveParameters(extRefIds, morpheus)
             val paramsIds = params.map(_._3)
 
-            StatsCan.addStat(morpheus.getFile, Liveness, startTime.getTime)
-            StatsCan.addStat(morpheus.getFile, ExternalUses, externalUses)
+            StatsCan.addStat(morpheus.getFile, Liveness,      startTime.getTime)
+            StatsCan.addStat(morpheus.getFile, ExternalUses,  externalUses)
             StatsCan.addStat(morpheus.getFile, ExternalDecls, externalDefs)
-            StatsCan.addStat(morpheus.getFile, Parameters, paramsIds)
+            StatsCan.addStat(morpheus.getFile, Parameters,    paramsIds)
 
             // generate new function definition
             val specifiers = genSpecifiers(parentFunction, morpheus)
             val parameterDecls = getParameterDecls(params, parentFunction, morpheus)
             val declarator = genDeclarator(funcName, parameterDecls)
-            val compundStatement = genCompoundStatement(selectedOptStatements,
+            val compoundStatement = genCompoundStatement(selectedOptStatements,
                 allExtRefIds, paramsIds, morpheus)
-            val newFDef = genFDef(specifiers, declarator, compundStatement)
+            val newFDef = genFDef(specifiers, declarator, compoundStatement)
             val newFDefOpt = genFDefExternal(parentFunction, newFDef, morpheus)
 
             // generate forward declaration
@@ -257,10 +257,9 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             Right(refAST)
         } catch {
             case r: RefactorException => Left(r.error)
-            case x: Throwable => {
+            case x: Throwable =>
                 x.printStackTrace()
                 Left(x.getMessage)
-            }
         }
     }
 
@@ -548,7 +547,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                         addTodeclIdMapMap(entry, id)
                     }
                 }
-                case none =>
+                case None =>
                     // fallback as parameter from parameter...
                     if (fallBackAllowed) addParameterFromParameter(id, ft, !fallBackAllowed, featureExploit)
                     else logger.warn("Would have required fallback to parameter: " + id)
