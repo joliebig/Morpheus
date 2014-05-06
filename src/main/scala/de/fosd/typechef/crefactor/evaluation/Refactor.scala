@@ -1,7 +1,7 @@
 package de.fosd.typechef.crefactor.evaluation
 
 import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
-import de.fosd.typechef.parser.c.{TranslationUnit, AST}
+import de.fosd.typechef.parser.c.{Statement, Id, AST, TranslationUnit}
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.backend.CModuleInterface
 
@@ -10,7 +10,9 @@ trait Refactoring {
     def refactor(morpheus: Morpheus):
     (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)])
 
-    def getAvailableElementsForEvaluation[T <: AST](morpheus: Morpheus): List[T] = List()
+    def getValidIdsForEvaluation(morpheus: Morpheus): List[Id]
+
+    def getValidStatementsForEvaluation(morpheus: Morpheus): List[Statement]
 
 }
 

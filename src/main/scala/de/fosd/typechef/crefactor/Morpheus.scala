@@ -109,7 +109,7 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
 
     def getFM = fm
 
-    def getFile = file
+    def getFile = file //.replace("/Users/andi/Desktop/FOSD", "/local/janker/eval/rename")
 
     def getModuleInterface = moduleInterface
 

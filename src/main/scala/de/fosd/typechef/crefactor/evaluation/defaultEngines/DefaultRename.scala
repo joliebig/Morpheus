@@ -13,8 +13,7 @@ import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.error.Position
 import de.fosd.typechef.featureexpr.FeatureExpr
-import de.fosd.typechef.parser.c.Id
-import de.fosd.typechef.parser.c.TranslationUnit
+import de.fosd.typechef.parser.c.{Statement, Id, TranslationUnit}
 import de.fosd.typechef.typesystem._
 
 trait DefaultRename extends Refactoring with Evaluation {
@@ -27,9 +26,51 @@ trait DefaultRename extends Refactoring with Evaluation {
 
     private val linkedRenamedFiles = mutable.HashMap[String, Morpheus]()
 
-    def getAvailableElementsForEvaluation[Id](morpheus : Morpheus) = {
+    // not supported
+    def getValidStatementsForEvaluation(morpheus: Morpheus): List[Statement] = List()
+
+    def getAvailableElementsForEvaluation(morpheus : Morpheus) : List[Id] = {
         val moduleInterface = morpheus.getModuleInterface
-        List()
+
+        // We check if an id has an valid name, is neither blacklisted, or called main or has wrong linking informations
+        def isValidId(id: Id): Boolean =
+            !id.name.contains("_main") && !isSystemLinkedName(id.name) && {
+                if (moduleInterface != null)
+                    !(moduleInterface.isBlackListed(id.name) || renameLink.contains(id.name))
+                else true
+                } && !isExternalDeclWithNoLinkingInformation(id, morpheus) &&
+                        id.hasPosition && !isOnlyLocallyLinked(id, morpheus)
+
+        // We check the writable property here already in order to maximize the number of possible refactorings.
+        def isWritable(id: Id): Boolean =
+            morpheus.getReferences(id).map(_.entry).forall(i =>
+                isValidId(i) &&
+                    (hasSameFileName(i, morpheus) || new File(i.getFile.get.replaceFirst("file ", "")).canWrite))
+
+        val allIds = morpheus.getAllUses.filter(isWritable)
+
+        val linkedIds = if (FORCE_LINKING && moduleInterface != null)
+            allIds.par.filter(id => moduleInterface.isListed(Opt(parentOpt(id, morpheus.getASTEnv).feature, id.name), morpheus.getFM))
+                        else allIds
+
+        val ids = if (linkedIds.isEmpty) allIds else linkedIds
+        logger.info(morpheus.getFile + ": IDs found: " + ids.size)
+
+        val variableIds = ids.par.filter(id => isVariable(parentOpt(id, morpheus.getASTEnv)))
+        logger.info(morpheus.getFile  + ": Variable IDs found: " + variableIds.size)
+
+        val randomIDs =
+            if (FORCE_VARIABILITY && !variableIds.isEmpty) Random.shuffle(variableIds)
+            else if (FORCE_VARIABILITY) List()
+            else Random.shuffle(ids)
+
+        val validIDs =
+            if (moduleInterface == null) randomIDs
+            else randomIDs.filter(canLink(_, morpheus))
+
+        logger.info(morpheus.getFile  + ": IDs to rename found: " + validIDs.size)
+
+        validIDs.toList
     }
 
     // refactor attempts to make REFACTOR_AMOUNT renamings in a file
@@ -82,7 +123,6 @@ trait DefaultRename extends Refactoring with Evaluation {
 
             morpheus.getTypeSystem.getInferredInterface().exports.exists(sig => sig.name.equals())
 
-            // TODO Fix Bug in OpenSSL for functions without body
             // We check the writable property here already in order to maximize the number of possible refactorings.
             def isWritable(id: Id): Boolean =
                 morpheus.getReferences(id).map(_.entry).forall(i =>
@@ -197,6 +237,35 @@ trait DefaultRename extends Refactoring with Evaluation {
                 (false, null, List(), List())
         }
 
+    }
+
+    // checks if all possible linked reference of an id can be linked if necessary
+    private def canLink(id: Id, morpheus : Morpheus) : Boolean = {
+        val cmif = morpheus.getModuleInterface
+        val linked = cmif.getPositions(id.name)
+
+        // get files with linking different from the current file, we already operate on
+        val affectedFiles = linked.flatMap {
+            pos => {
+                if (getFileName(pos.getFile).equalsIgnoreCase(getFileName(morpheus.getFile)))
+                    None
+                else
+                    Some((pos.getFile, pos))
+            }
+        }
+
+        // erroneous linking information?
+        if (affectedFiles.isEmpty && linked.nonEmpty) {
+            logger.info(id + "  is recognized as to be linked, but no corresponding file was found.")
+            false
+        }
+        // we cannot handle all files in TypeChef
+        else if (affectedFiles.exists(lPos => blackListFiles.exists(getFileName(lPos._1).equalsIgnoreCase)
+            || (!evalFiles.exists(getFileName(lPos._1).equalsIgnoreCase)))) {
+            logger.info(id + ": One or more file is blacklisted or is not a member of the valid files list and cannot be build.")
+            false
+        }
+        else true
     }
 
     // given the position and the string of an identifier, the function returns, if the available, the
