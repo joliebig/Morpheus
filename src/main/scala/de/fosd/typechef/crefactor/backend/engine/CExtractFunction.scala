@@ -58,29 +58,21 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             }
         }
 
-        def lookupControlStatements(statement: Statement): Statement = {
+        // TODO @ajanker: I don't get the purpose of this function?
+        def lookupControlStatements(stmt: Statement): Statement = {
+            // TODO @ajanker: Is a try-catch here really necessary?
             try {
-                nextAST(statement, morpheus.getASTEnv) match {
-                    case null => statement
-                    case c: ContinueStatement =>
-                        if (isElementOfSelection(c, selection)) c
-                        else statement
-                    case b: BreakStatement =>
-                        if (isElementOfSelection(b, selection)) b
-                        else statement
-                    case c: CaseStatement =>
-                        if (isElementOfSelection(c, selection)) c
-                        else statement
-                    case g: GotoStatement =>
-                        if (isElementOfSelection(g, selection)) g
-                        else statement
-                    case r: ReturnStatement =>
-                        if (isElementOfSelection(r, selection)) r
-                        else statement
-                    case _ => statement
+                nextAST(stmt, morpheus.getASTEnv) match {
+                    case ns @ ( ContinueStatement(_)| BreakStatement() | CaseStatement(_) |
+                             GotoStatement(_) | ReturnStatement(_)) =>
+                        if (isElementOfSelection(ns, selection))
+                            ns.asInstanceOf[Statement]
+                        else
+                            stmt
+                    case _ => stmt
                 }
             } catch {
-                case _: Throwable => statement
+                case _: Throwable => stmt
             }
         }
         val uniqueSelectedStatements = Collections.newSetFromMap[Statement](new java.util.IdentityHashMap())
