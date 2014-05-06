@@ -141,7 +141,8 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
         r(t).get.asInstanceOf[T]
     }
 
-    // generic replace function; possible replacement for replaceId and replaceCompoundStatement, and maybe more?
+    // generic replace function; possible replacement for replaceId and
+    // replaceCompoundStatement, and maybe more?
     def replace[T <: Product, U <: AnyRef](t: T, e: U, n: U): T = {
         val r = manybu(rule {
             case i: U => if (i eq e) n else i
