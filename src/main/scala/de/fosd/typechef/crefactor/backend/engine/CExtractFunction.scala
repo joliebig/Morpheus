@@ -41,20 +41,20 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         // }
         // in case the whole if statement is selected we don't want to add the i++ statement to our selection list,
         // as it is already part of the if statement
-        def exploitStatements(statement: Statement): Statement = {
+        def exploitStatement(stmt: Statement): Statement = {
             try {
-                parentAST(statement, morpheus.getASTEnv) match {
+                parentAST(stmt, morpheus.getASTEnv) match {
                     case null => throw new RefactorException("No proper selection for extract function.")
-                    case _: FunctionDef       => statement
-                    case _: NestedFunctionDef => statement
+                    case _: FunctionDef       => stmt
+                    case _: NestedFunctionDef => stmt
                     case p =>
-                        if (isElementOfSelectionRange(p, selection)) {
-                            exploitStatements(p.asInstanceOf[Statement])
+                        if (isElementOfSelection(p, selection)) {
+                            exploitStatement(p.asInstanceOf[Statement])
                         } else
-                            statement
+                            stmt
                 }
             } catch {
-                case _: Throwable => statement
+                case _: Throwable => stmt
             }
         }
 
@@ -63,19 +63,19 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 nextAST(statement, morpheus.getASTEnv) match {
                     case null => statement
                     case c: ContinueStatement =>
-                        if (isElementOfSelectionRange(c, selection)) c
+                        if (isElementOfSelection(c, selection)) c
                         else statement
                     case b: BreakStatement =>
-                        if (isElementOfSelectionRange(b, selection)) b
+                        if (isElementOfSelection(b, selection)) b
                         else statement
                     case c: CaseStatement =>
-                        if (isElementOfSelectionRange(c, selection)) c
+                        if (isElementOfSelection(c, selection)) c
                         else statement
                     case g: GotoStatement =>
-                        if (isElementOfSelectionRange(g, selection)) g
+                        if (isElementOfSelection(g, selection)) g
                         else statement
                     case r: ReturnStatement =>
-                        if (isElementOfSelectionRange(r, selection)) r
+                        if (isElementOfSelection(r, selection)) r
                         else statement
                     case _ => statement
                 }
@@ -102,7 +102,7 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                 val parents = uniqueSelectedStatements.toList
                 uniqueSelectedStatements.clear()
                 parents.foreach(statement => {
-                    val exploitedStatement = exploitStatements(statement)
+                    val exploitedStatement = exploitStatement(statement)
                     uniqueSelectedStatements.add(exploitedStatement)
                 })
                 uniqueSelectedStatements
