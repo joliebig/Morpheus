@@ -151,7 +151,7 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
     }
 
     // removes element remove from t, but does not traverse t entirely, since
-    // oncetd is top-down traversal, which stops at fist successful match
+    // oncetd is top-down traversal, which stops at first successful match
     def remove[T <: Product](t: T, remove: Opt[_])(implicit m: Manifest[T]): T = {
         val r = oncetd(rule {
             case l: List[Opt[_]] => l.flatMap(x => if (x.eq(remove)) Nil else x :: Nil)
