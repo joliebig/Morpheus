@@ -36,7 +36,7 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
     }
 
     /**
-     * Replace a list of ids in AST with copied instance with as pointer.
+     * Replace a list of ids in AST with copied instances using pointers.
      */
     def replaceIdsWithPointers[T <: Product](t: T, ids: List[Id]): T = {
         val r = manybu(rule {
