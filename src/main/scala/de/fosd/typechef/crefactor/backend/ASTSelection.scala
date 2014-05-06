@@ -36,13 +36,11 @@ trait ASTSelection extends Logging {
     /**
      * Remove all AST elements except those that belong to the given file.
      */
-    def filterASTElementsForFile[T <: AST](selection: List[T], file: String): List[T] = {
-        // offset 5 because file path of callId contains the string "file "
-        val offset = 5
-        selection.filter(p => p.getFile.get.regionMatches(true, offset, file, 0, file.length())).toList
-    }
+    def filterASTElementsForFile[T <: AST](selection: List[T], file: String): List[T] =
+        selection.filter(p => isPartOfFile(p, file)).toList
 
     def isPartOfFile[T <: AST](element: T, file: String) =
+        // offset 5 because file path of callId contains the string "file "
         element.getFile.get.regionMatches(true, 5, file, 0, file.length())
 
     // Determine whether a given AST element is part of a code selection in an editor.
