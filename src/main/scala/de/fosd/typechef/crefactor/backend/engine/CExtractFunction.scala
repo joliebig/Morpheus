@@ -246,14 +246,14 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
                     FunctionCall(ExprList(callParameters)))))
 
             // Keep changes at the AST as local as possible
-            // TODO: Check with single compound statements.
+            // TODO: Check with single line compound statements.
             val tunitWithFCall = insertBefore(compStmt.innerStatements,
                 selectedOptStatements.head, functionCall)
             val ccStmtWithRemovedStmts = removeStatementInTUnit(tunitWithFCall, selectedOptStatements)
             val tunitWithFDef = insertBeforeAndAfter(morpheus.getTranslationUnit,
                 parentFunctionOpt, newFDefForwardOpt, newFDefOpt)
 
-            val refAST = replaceCompoundStmt(tunitWithFDef, compStmt, ccStmtWithRemovedStmts)
+            val refAST = replaceCompoundStmt(tunitWithFDef, compStmt, compStmt.copy(innerStatements = ccStmtWithRemovedStmts))
             Right(refAST)
         } catch {
             case r: RefactorException => Left(r.error)
