@@ -310,8 +310,8 @@ trait DefaultRename extends Refactoring with Evaluation {
         val exports = morpheus.getTypeSystem.getInferredInterface().exports
         val imports = morpheus.getTypeSystem.getInferredInterface().imports
 
-        val local = exports.exists(_.name.equals(id.name)) ||
-            imports.exists(_.name.equals(id.name))
+        val local = exports.exists(_.name == id.name) ||
+            imports.exists(_.name == id.name)
 
         val global = if (morpheus.getModuleInterface == null)
                          false
