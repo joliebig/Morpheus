@@ -27,6 +27,11 @@ trait DefaultRename extends Refactoring with Evaluation {
 
     private val linkedRenamedFiles = mutable.HashMap[String, Morpheus]()
 
+    def getAvailableElementsForEvaluation[Id](morpheus : Morpheus) = {
+        val moduleInterface = morpheus.getModuleInterface
+        List()
+    }
+
     // refactor attempts to make REFACTOR_AMOUNT renamings in a file
     def refactor(morpheus: Morpheus): (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)]) = {
         var succ = false

@@ -55,18 +55,6 @@ trait CRefactor
      */
     def isReservedLanguageKeyword(name: String) = LANGUAGE_KEYWORDS.contains(name)
 
-    // TODO @ajanker: What is the purpose of this function? It is only used in CExtractFunction and
-    // I don't get the purpose there either.
-    def getOrFeatures(a: Any): FeatureExpr = {
-        var featureSet: Set[FeatureExpr] = Set()
-        val r = manytd(query {
-            case Opt(ft, _) => featureSet += ft
-            case Choice(ft, _, _) => featureSet += ft
-        })
-        r(a).get
-        featureSet.foldRight(FeatureExprFactory.True)(_ or _)
-    }
-
     def buildVariableCompoundStatement(stmts: List[(CompoundStatementExpr, FeatureExpr)]): CompoundStatementExpr = {
         // move several compoundStatement into one and apply their feature.
         val innerstmts = stmts.foldLeft(List[Opt[Statement]]())((innerstmts, stmtEntry) => stmtEntry._1 match {

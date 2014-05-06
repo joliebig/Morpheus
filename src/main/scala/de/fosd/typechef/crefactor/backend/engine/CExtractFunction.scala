@@ -15,6 +15,45 @@ import de.fosd.typechef.crefactor.evaluation.StatsCan
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.crewrite.IntraCFG
 import scala.collection.JavaConversions._
+import org.kiama.rewriting.Rewriter._
+import de.fosd.typechef.parser.c.EnumSpecifier
+import scala.Some
+import de.fosd.typechef.parser.c.TypeDefTypeSpecifier
+import de.fosd.typechef.parser.c.Initializer
+import de.fosd.typechef.crefactor.backend.engine.CExtractSelection
+import de.fosd.typechef.parser.c.VoidSpecifier
+import de.fosd.typechef.conditional.One
+import de.fosd.typechef.parser.c.DeclParameterDeclList
+import de.fosd.typechef.parser.c.Pointer
+import de.fosd.typechef.parser.c.Id
+import de.fosd.typechef.crefactor.backend.RefactorException
+import de.fosd.typechef.parser.c.ExprList
+import de.fosd.typechef.parser.c.ContinueStatement
+import de.fosd.typechef.parser.c.CompoundStatement
+import de.fosd.typechef.conditional.Opt
+import de.fosd.typechef.parser.c.CaseStatement
+import de.fosd.typechef.parser.c.PostfixExpr
+import de.fosd.typechef.parser.c.ReturnStatement
+import de.fosd.typechef.parser.c.AtomicNamedDeclarator
+import de.fosd.typechef.parser.c.StructOrUnionSpecifier
+import de.fosd.typechef.parser.c.PointerCreationExpr
+import de.fosd.typechef.conditional.Choice
+import de.fosd.typechef.parser.c.TranslationUnit
+import de.fosd.typechef.typesystem.CUnknown
+import de.fosd.typechef.typesystem.CFunction
+import de.fosd.typechef.parser.c.FunctionCall
+import de.fosd.typechef.parser.c.DeclArrayAccess
+import de.fosd.typechef.parser.c.InitDeclaratorI
+import de.fosd.typechef.parser.c.Declaration
+import de.fosd.typechef.parser.c.LabelStatement
+import de.fosd.typechef.parser.c.ExprStatement
+import de.fosd.typechef.parser.c.GotoStatement
+import de.fosd.typechef.parser.c.FunctionDef
+import de.fosd.typechef.parser.c.NestedFunctionDef
+import de.fosd.typechef.parser.c.BreakStatement
+import de.fosd.typechef.parser.c.ParameterDeclarationD
+import de.fosd.typechef.parser.c.RegisterSpecifier
+import de.fosd.typechef.parser.c.ConstSpecifier
 
 
 /**
@@ -22,16 +61,7 @@ import scala.collection.JavaConversions._
  */
 object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
-    private var lastSelection: CodeSelection = null
-
-    // TODO @ajanker: It's not much of a cache if it stores only one list of AST elements, right?
-    private var cachedSelectedElements: List[AST] = null
-
     def getSelectedElements(morpheus: Morpheus, selection: CodeSelection): List[AST] = {
-        if (lastSelection.eq(selection))
-            return cachedSelectedElements
-
-        lastSelection = selection
         val ids = filterASTElementsForFile[Id](
             filterASTElems[Id](morpheus.getTranslationUnit).par.filter(x => isPartOfSelection(x, selection)).toList, selection.getFilePath)
 
@@ -104,9 +134,9 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         }
 
 
-        cachedSelectedElements = selectedElements.toList.sortWith(comparePosition)
-        logger.info("ExtractFuncSelection: " + cachedSelectedElements)
-        cachedSelectedElements
+        val selected = selectedElements.toList.sortWith(comparePosition)
+        logger.info("ExtractFuncSelection: " + selected)
+        selected
     }
 
     def getAvailableIdentifiers(morpheus: Morpheus, selection: CodeSelection): List[Id] =
@@ -509,8 +539,24 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
 
         /**
          * Helping method for fake choice nodes retrieved from typesystem.
+         * Fake choice nodes are nodes representing variability of the same exact element under different features.
+         * Consider the following example:
+         * int foo(unit_8 a, int b) with unit_8 as variable TypeDef defined in a header file under
+         * two different features A and B.
+         * Due to code code duplication of TypeChef int b would be also variable with following choices: A, !A, B, !B
+         * This has caused some compile issues and therefore we put all choices to a big OR feature.
          */
         def addChoiceOne(c: Choice[_], id: Id, ft: FeatureExpr = FeatureExprFactory.True) = {
+            def getOrFeatures(a: Any): FeatureExpr = {
+                var featureSet: Set[FeatureExpr] = Set()
+                val r = manytd(query {
+                    case Opt(ft, _) => featureSet += ft
+                    case Choice(ft, _, _) => featureSet += ft
+                })
+                r(a).get
+                featureSet.foldRight(FeatureExprFactory.True)(_ or _)
+            }
+
             val orFeatures = getOrFeatures(c)
             val featureExpr = ft.and(orFeatures)
             addParameterFromDeclaration(id, featureExpr, true, false)
