@@ -11,11 +11,40 @@ import de.fosd.typechef.crefactor.evaluation.Stats._
 
 trait DefaultInline extends Refactoring with Evaluation {
 
-    private def isFunctionCall(p: PostfixExpr): Boolean = {
-        p match {
-            case PostfixExpr(Id(_), FunctionCall(_)) => true
-            case _ => false
-        }
+    // not supported
+    def getValidStatementsForEvaluation(morpheus: Morpheus): List[Statement] = List()
+
+    def getValidIdsForEvaluation(morpheus : Morpheus) : List[Id] = {
+        val psExpr = filterAllASTElems[PostfixExpr](morpheus.getTranslationUnit)
+        val funcCalls = psExpr.filter(isFunctionCall)
+        val availableFuncCalls = funcCalls.flatMap(p => {
+            p.p match {
+                case i: Id =>
+                    if (hasSameFileName(i, morpheus) && CInlineFunction.isAvailable(morpheus, i)) Some(i)
+                    else None
+                case _ => None
+            }
+        })
+
+        logger.info("Function calls found to inline: " + availableFuncCalls.size)
+
+        // Prefer var func calls
+        val variableFuncCalls = availableFuncCalls.flatMap(call => {
+            val callsDeclDef = CInlineFunction.divideCallDeclDef(call, morpheus)
+            val varCalls = callsDeclDef._1.exists(isVariable)
+            val varDecls = callsDeclDef._2.exists(isVariable)
+            val varDefs = callsDeclDef._3.exists(isVariable)
+            val varExpr = callsDeclDef._4.exists(isVariable)
+
+            if (varCalls || varDecls || varDefs || varExpr) Some(call)
+            else None
+        })
+
+        logger.info("Variable function calls found to inline: " + variableFuncCalls.size)
+
+        if (FORCE_VARIABILITY && variableFuncCalls.nonEmpty) Random.shuffle(variableFuncCalls)
+        else if (FORCE_VARIABILITY) List()
+        else Random.shuffle(availableFuncCalls)
     }
 
     def refactor(morpheus: Morpheus): (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)]) = {
@@ -88,6 +117,13 @@ trait DefaultInline extends Refactoring with Evaluation {
                 e.printStackTrace()
                 return (false, null, List(), List())
             }
+        }
+    }
+
+    private def isFunctionCall(p: PostfixExpr): Boolean = {
+        p match {
+            case PostfixExpr(Id(_), FunctionCall(_)) => true
+            case _ => false
         }
     }
 
