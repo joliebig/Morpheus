@@ -11,7 +11,7 @@ import de.fosd.typechef.crefactor.backend.CModuleInterface
 /**
  * Interface for generating linking informations of a whole given project
  */
-trait CLinkingInterfaceGenerator extends Evaluation with App with Logging {
+trait CModuleInterfaceGenerator extends Evaluation with App with Logging {
 
     val filename = "CLinking"
     val linkExt = ".interface"
@@ -54,7 +54,7 @@ trait CLinkingInterfaceGenerator extends Evaluation with App with Logging {
             if (!(left isCompatibleTo right)) {
                 logger.error(conflicts + " is not compatible with feature model.")
                 left
-            } else left link right
+            } else left linkWithOutElimination right
         } else if (l.size == 1) l(0)
         else {
             assert(false, l)
