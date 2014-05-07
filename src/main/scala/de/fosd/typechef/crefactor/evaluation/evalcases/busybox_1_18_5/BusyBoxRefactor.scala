@@ -13,12 +13,17 @@ import de.fosd.typechef.crefactor.backend.CModuleInterface
 
 object BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
 
-    def rename(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
+    override def rename(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
         evaluate(tunit, fm, file, linkInterface, Rename)
-    def extract(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
+    override def extract(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
         evaluate(tunit, fm, file, linkInterface, Extract)
-    def inline(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
+    override def inline(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
         evaluate(tunit, fm, file, linkInterface, Inline)
+
+    override def prepareForEvaluation(tunit: TranslationUnit, fm: FeatureModel, file: String,
+                                      linkInterface: CModuleInterface) = {
+
+    }
 
     private def evaluate(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface, r: Refactoring): Unit = {
         logger.info("File to engine: " + getFileName(file) + " +++")
@@ -58,4 +63,5 @@ object BusyBoxRefactor extends BusyBoxEvaluation with Refactor {
             }
         }
     }
+
 }

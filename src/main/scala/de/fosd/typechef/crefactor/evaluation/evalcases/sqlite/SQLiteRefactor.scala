@@ -12,12 +12,17 @@ import de.fosd.typechef.crefactor.backend.CModuleInterface
 
 
 object SQLiteRefactor extends SQLiteEvaluation with Refactor {
-    def rename(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
+    override def rename(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
         evaluate(tunit, fm, file, linkInterface, Rename)
-    def inline(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
+    override def inline(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
         evaluate(tunit, fm, file, linkInterface, Inline)
-    def extract(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
+    override def extract(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
         evaluate(tunit, fm, file, linkInterface, Extract)
+
+    override def prepareForEvaluation(tunit: TranslationUnit, fm: FeatureModel, file: String,
+                                      linkInterface: CModuleInterface) = {
+
+    }
 
     private def evaluate(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface, r: Refactoring): Unit = {
         println("+++ File to engine: " + getFileName(file) + " +++")

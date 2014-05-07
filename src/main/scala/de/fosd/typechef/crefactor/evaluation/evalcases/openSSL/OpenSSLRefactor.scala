@@ -11,12 +11,17 @@ import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.crefactor.backend.CModuleInterface
 
 object OpenSSLRefactor extends OpenSSLEvaluation with Refactor {
-    def rename(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
+    override def rename(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
         evaluate(tunit, fm, file, linkInterface, Rename)
-    def extract(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
+    override def extract(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
         evaluate(tunit, fm, file, linkInterface, Extract)
-    def inline(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
+    override def inline(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface) =
         evaluate(tunit, fm, file, linkInterface, Inline)
+
+    override def prepareForEvaluation(tunit: TranslationUnit, fm: FeatureModel, file: String,
+                                      linkInterface: CModuleInterface) = {
+
+    }
 
     private def evaluate(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface, r: Refactoring): Unit = {
         println("+++ File to engine: " + getFileName(file) + " +++")
