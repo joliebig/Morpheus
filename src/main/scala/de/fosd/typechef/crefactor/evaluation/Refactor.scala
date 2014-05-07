@@ -18,6 +18,9 @@ trait Refactoring {
 
 trait Refactor {
 
+    def prepareForEvaluation(tunit: TranslationUnit, fm: FeatureModel,
+                             file: String, linkInterface: CModuleInterface = null)
+
     def rename(tunit: TranslationUnit, fm: FeatureModel,
                file: String, linkInterface: CModuleInterface = null)
 

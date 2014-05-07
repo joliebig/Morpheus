@@ -10,7 +10,7 @@ import java.io._
 import de.fosd.typechef.parser.TokenReader
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.typesystem.linker.InterfaceWriter
-import de.fosd.typechef.crefactor.evaluation.{Refactor, StatsCan}
+import de.fosd.typechef.crefactor.evaluation.{Evaluation, Refactor, StatsCan}
 import de.fosd.typechef.crefactor.evaluation.setup.{CLinkingInterfaceGenerator, Building, BuildCondition}
 import java.util.zip.{GZIPOutputStream, GZIPInputStream}
 import de.fosd.typechef.parser.c.CTypeContext
@@ -99,6 +99,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
             else parseTUnit(fm, opt)
         prepareAST[TranslationUnit](tunit)
     }
+
     private def writeProjectInterface(options: FrontendOptions) = {
         val linker: CLinkingInterfaceGenerator = {
             if (options.getRefStudy.equalsIgnoreCase("busybox"))
@@ -125,7 +126,9 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
 
         if (opt.writeInterface) writeInterface(tunit, fm, opt)
 
-        if (opt.refEval) refactorEval(opt, tunit, fm, linkInf)
+        if (opt.prepareRef) prepareRefactor(opt, tunit, fm, linkInf)
+
+        if (opt.refEval) evaluateRefactor(opt, tunit, fm, linkInf)
 
         if (opt.prettyPrint) prettyPrint(tunit, opt)
 
@@ -181,14 +184,16 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         val canBuild = builder.canBuild(tunit, fm, opt.getFile)
         logger.info("Can build " + new File(opt.getFile).getName + " : " + canBuild)
     }
-    private def refactorEval(opt: FrontendOptions, tunit: TranslationUnit,
+    private def prepareRefactor(opt: FrontendOptions, tunit: TranslationUnit,
+                                 fm: FeatureModel, linkInf: CModuleInterface) {
+        val caseStudy: Refactor = getRefactorStudy(opt)
+        caseStudy.prepareForEvaluation(tunit, fm, opt.getFile, linkInf)
+    }
+
+
+    private def evaluateRefactor(opt: FrontendOptions, tunit: TranslationUnit,
                              fm: FeatureModel, linkInf: CModuleInterface) {
-        val caseStudy: Refactor = {
-            if (opt.getRefStudy.equalsIgnoreCase("busybox")) BusyBoxRefactor
-            else if (opt.getRefStudy.equalsIgnoreCase("openssl")) OpenSSLRefactor
-            else if (opt.getRefStudy.equalsIgnoreCase("sqlite")) SQLiteRefactor
-            else null
-        }
+        val caseStudy: Refactor = getRefactorStudy(opt)
 
         opt.getRefactorType match {
             case RefactorType.RENAME => caseStudy.rename(tunit, fm, opt.getFile, linkInf)
@@ -197,6 +202,12 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
             case RefactorType.NONE => println("No engine type defined")
         }
     }
+    private def getRefactorStudy(opt: FrontendOptions): Evaluation with Refactor =
+        if (opt.getRefStudy.equalsIgnoreCase("busybox")) BusyBoxRefactor
+        else if (opt.getRefStudy.equalsIgnoreCase("openssl")) OpenSSLRefactor
+        else if (opt.getRefStudy.equalsIgnoreCase("sqlite")) SQLiteRefactor
+        else null
+
     private def lex(opt: FrontendOptions): TokenReader[CToken, CTypeContext] = CLexer.prepareTokens(new lexer.Main().run(opt, opt.parse))
 
     private def serializeTUnit(ast: AST, filename: String) {
