@@ -10,7 +10,7 @@ import java.io._
 import de.fosd.typechef.parser.TokenReader
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.typesystem.linker.InterfaceWriter
-import de.fosd.typechef.crefactor.evaluation.{Evaluation, Refactor, StatsCan}
+import de.fosd.typechef.crefactor.evaluation.{PreparedRefacotrings, Evaluation, Refactor, StatsCan}
 import de.fosd.typechef.crefactor.evaluation.setup.{CLinkingInterfaceGenerator, Building, BuildCondition}
 import java.util.zip.{GZIPOutputStream, GZIPInputStream}
 import de.fosd.typechef.parser.c.CTypeContext
@@ -218,11 +218,22 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
 
     private def loadSerializedTUnit(filename: String): TranslationUnit = {
         val fr = new ObjectInputStream(new GZIPInputStream(new FileInputStream(filename))) {
-            override protected def resolveClass(desc: ObjectStreamClass) = { /*println(desc);*/ super.resolveClass(desc) }
+            override protected def resolveClass(desc: ObjectStreamClass) = { super.resolveClass(desc) }
         }
         val ast = fr.readObject().asInstanceOf[TranslationUnit]
         fr.close()
         ast
+    }
+
+    private def loadPreparedRefactorings(filename: String) : PreparedRefacotrings = {
+        val fr = new ObjectInputStream(new GZIPInputStream(new FileInputStream(filename))) {
+            override protected def resolveClass(desc: ObjectStreamClass) = { super.resolveClass(desc) }
+        }
+        val preparedRefactorings = fr.readObject().asInstanceOf[PreparedRefacotrings]
+        fr.close()
+
+        preparedRefactorings
+
     }
 
     private def prettyPrint(tunit: TranslationUnit, options: FrontendOptions) = {
