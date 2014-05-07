@@ -216,24 +216,18 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         fw.close()
     }
 
-    private def loadSerializedTUnit(filename: String): TranslationUnit = {
+    private def loadSerializedTUnit(filename: String): TranslationUnit = loadSerializedFile[TranslationUnit](filename)
+
+    private def loadPreparedRefactorings(filename: String) : PreparedRefacotrings = loadSerializedFile[PreparedRefacotrings](filename)
+
+    private def loadSerializedFile[T](filename : String) : T = {
         val fr = new ObjectInputStream(new GZIPInputStream(new FileInputStream(filename))) {
             override protected def resolveClass(desc: ObjectStreamClass) = { super.resolveClass(desc) }
         }
-        val ast = fr.readObject().asInstanceOf[TranslationUnit]
-        fr.close()
-        ast
-    }
-
-    private def loadPreparedRefactorings(filename: String) : PreparedRefacotrings = {
-        val fr = new ObjectInputStream(new GZIPInputStream(new FileInputStream(filename))) {
-            override protected def resolveClass(desc: ObjectStreamClass) = { super.resolveClass(desc) }
-        }
-        val preparedRefactorings = fr.readObject().asInstanceOf[PreparedRefacotrings]
+        val loaded = fr.readObject().asInstanceOf[T]
         fr.close()
 
-        preparedRefactorings
-
+        loaded
     }
 
     private def prettyPrint(tunit: TranslationUnit, options: FrontendOptions) = {
