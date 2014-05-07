@@ -11,7 +11,7 @@ import de.fosd.typechef.parser.TokenReader
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.typesystem.linker.InterfaceWriter
 import de.fosd.typechef.crefactor.evaluation.{Refactor, StatsCan}
-import de.fosd.typechef.crefactor.evaluation.setup.{CLinkingInterfaceGenerator, Building, BuildCondition}
+import de.fosd.typechef.crefactor.evaluation.setup.{CModuleInterfaceGenerator, Building, BuildCondition}
 import java.util.zip.{GZIPOutputStream, GZIPInputStream}
 import de.fosd.typechef.parser.c.CTypeContext
 import de.fosd.typechef.typesystem.{CDeclUse, CTypeCache, CTypeSystemFrontend}
@@ -38,7 +38,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
             case o: OptionException => printInvokationErrorAndExit(o.getMessage)
         }
 
-        if (runOpt.writeProjectInterface) writeProjectInterface(runOpt)
+        if (runOpt.writeProjectInterface) writeProjectModuleInterface(runOpt)
 
         else if (runOpt.parse) parseOrLoadTUnitandProcess(args, true)
 
@@ -99,14 +99,14 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
             else parseTUnit(fm, opt)
         prepareAST[TranslationUnit](tunit)
     }
-    private def writeProjectInterface(options: FrontendOptions) = {
-        val linker: CLinkingInterfaceGenerator = {
+    private def writeProjectModuleInterface(options: FrontendOptions) = {
+        val linker: CModuleInterfaceGenerator = {
             if (options.getRefStudy.equalsIgnoreCase("busybox"))
-                de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking.BusyBoxLinkInterfaceGenerator
+                de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking.BusyBoxModuleInterfaceGenerator
             else if (options.getRefStudy.equalsIgnoreCase("openssl"))
-                de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.setup.OpenSSLLinkInterfaceGenerator
+                de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.setup.OpenSSLLinkModuleInterfaceGenerator
             else if (options.getRefStudy.equalsIgnoreCase("sqlite"))
-                de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.setup.SQLiteInterfaceGenerator
+                de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.setup.SQLiteModuleInterfaceGenerator
             else null
         }
 
