@@ -10,7 +10,7 @@ import java.io._
 import de.fosd.typechef.parser.TokenReader
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.typesystem.linker.InterfaceWriter
-import de.fosd.typechef.crefactor.evaluation.{PreparedRefacotrings, Evaluation, Refactor, StatsCan}
+import de.fosd.typechef.crefactor.evaluation.{PreparedRefactorings, Evaluation, Refactor, StatsCan}
 import de.fosd.typechef.crefactor.evaluation.setup.{CLinkingInterfaceGenerator, Building, BuildCondition}
 import java.util.zip.{GZIPOutputStream, GZIPInputStream}
 import de.fosd.typechef.parser.c.CTypeContext
@@ -185,9 +185,10 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         logger.info("Can build " + new File(opt.getFile).getName + " : " + canBuild)
     }
     private def prepareRefactor(opt: FrontendOptions, tunit: TranslationUnit,
-                                 fm: FeatureModel, linkInf: CModuleInterface) {
+                                 fm: FeatureModel, linkInf: CModuleInterface)  {
         val caseStudy: Refactor = getRefactorStudy(opt)
-        caseStudy.prepareForEvaluation(tunit, fm, opt.getFile, linkInf)
+        val prepared = caseStudy.prepareForEvaluation(tunit, fm, opt.getFile, linkInf)
+        serializePreparedRefactorings(prepared, opt.getPreparedRefactoringsFileName)
     }
 
 
@@ -208,19 +209,28 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         else if (opt.getRefStudy.equalsIgnoreCase("sqlite")) SQLiteRefactorEvaluation
         else null
 
-    private def lex(opt: FrontendOptions): TokenReader[CToken, CTypeContext] = CLexer.prepareTokens(new lexer.Main().run(opt, opt.parse))
+    private def lex(opt: FrontendOptions): TokenReader[CToken, CTypeContext] =
+        CLexer.prepareTokens(new lexer.Main().run(opt, opt.parse))
 
-    private def serializeTUnit(ast: AST, filename: String) {
+    private def serializeTUnit(tUnit: TranslationUnit, filename: String) =
+        serializeFile(tUnit, filename)
+    
+    private def serializePreparedRefactorings(prepared : PreparedRefactorings, filename: String) =
+        serializeFile(prepared, filename)
+
+    private def loadSerializedTUnit(filename: String): TranslationUnit =
+        loadSerializedGZipFile[TranslationUnit](filename)
+
+    private def loadPreparedRefactorings(filename: String) : PreparedRefactorings =
+        loadSerializedGZipFile[PreparedRefactorings](filename)
+    
+    private def serializeFile(obj: AnyRef, filename: String) {
         val fw = new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(filename)))
-        fw.writeObject(ast)
+        fw.writeObject(obj)
         fw.close()
     }
 
-    private def loadSerializedTUnit(filename: String): TranslationUnit = loadSerializedFile[TranslationUnit](filename)
-
-    private def loadPreparedRefactorings(filename: String) : PreparedRefacotrings = loadSerializedFile[PreparedRefacotrings](filename)
-
-    private def loadSerializedFile[T](filename : String) : T = {
+    private def loadSerializedGZipFile[T](filename : String) : T = {
         val fr = new ObjectInputStream(new GZIPInputStream(new FileInputStream(filename))) {
             override protected def resolveClass(desc: ObjectStreamClass) = { super.resolveClass(desc) }
         }

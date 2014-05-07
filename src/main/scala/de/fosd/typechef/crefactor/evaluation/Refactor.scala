@@ -21,19 +21,12 @@ trait Refactoring {
 trait Refactor extends Evaluation {
 
     def prepareForEvaluation(tunit: TranslationUnit, fm: FeatureModel,
-                             file: String, linkInterface: CModuleInterface = null) = {
+                             file: String, linkInterface: CModuleInterface = null) : PreparedRefactorings = {
         val morpheus = new Morpheus(tunit, fm, linkInterface, file)
         val renameIDs = renameEngine.getValidIdsForEvaluation(morpheus)
         val extractStmts = extractEngine.getValidStatementsForEvaluation(morpheus)
         val inlineIDs = inlineEngine.getValidIdsForEvaluation(morpheus)
-        val preparedRefactorings = PreparedRefacotrings(renameIDs, extractStmts, inlineIDs)
-
-        val filename = file.replace(".c", ".pr")
-
-        val oos = new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(filename)))
-
-        oos.writeObject(preparedRefactorings)
-        oos.close
+        PreparedRefactorings(renameIDs, extractStmts, inlineIDs)
     }
 
     def rename(tunit: TranslationUnit, fm: FeatureModel,
@@ -49,7 +42,7 @@ trait Refactor extends Evaluation {
         evaluate(tunit, fm, file, linkInterface, inlineEngine)
 }
 
-case class PreparedRefacotrings(renaming : List[Id], extract : List[List[Statement]], inline: List[Id]) extends Serializable {
+case class PreparedRefactorings(renaming : List[Id], extract : List[List[Statement]], inline: List[Id]) extends Serializable {
 
 }
 
