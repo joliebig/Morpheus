@@ -9,7 +9,7 @@ import java.util.zip.GZIPOutputStream
 
 trait Refactoring {
 
-    def refactor(morpheus: Morpheus):
+    def refactor(morpheus: Morpheus, preparedRefactorings : PreparedRefactorings):
     (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)])
 
     def getValidIdsForEvaluation(morpheus: Morpheus): List[Id]
@@ -29,22 +29,20 @@ trait Refactor extends Evaluation {
         PreparedRefactorings(renameIDs, extractStmts, inlineIDs)
     }
 
-    def rename(tunit: TranslationUnit, fm: FeatureModel,
+    def rename(preparedRefactorings : PreparedRefactorings, tunit: TranslationUnit, fm: FeatureModel,
                file: String, linkInterface: CModuleInterface = null) =
-        evaluate(tunit, fm, file, linkInterface, renameEngine)
+        evaluate(preparedRefactorings, tunit, fm, file, linkInterface, renameEngine)
 
-    def extract(tunit: TranslationUnit, fm: FeatureModel,
+    def extract(preparedRefactorings : PreparedRefactorings, tunit: TranslationUnit, fm: FeatureModel,
                 file: String, linkInterface: CModuleInterface = null) =
-        evaluate(tunit, fm, file, linkInterface, extractEngine)
+        evaluate(preparedRefactorings, tunit, fm, file, linkInterface, extractEngine)
 
-    def inline(tunit: TranslationUnit, fm: FeatureModel,
+    def inline(preparedRefactorings : PreparedRefactorings, tunit: TranslationUnit, fm: FeatureModel,
                file: String, linkInterface: CModuleInterface = null) =
-        evaluate(tunit, fm, file, linkInterface, inlineEngine)
+        evaluate(preparedRefactorings, tunit, fm, file, linkInterface, inlineEngine)
 }
 
-case class PreparedRefactorings(renaming : List[Id], extract : List[List[Statement]], inline: List[Id]) extends Serializable {
-
-}
+case class PreparedRefactorings(renaming : List[Id], extract : List[List[Statement]], inline: List[Id]) extends Serializable {}
 
 
 

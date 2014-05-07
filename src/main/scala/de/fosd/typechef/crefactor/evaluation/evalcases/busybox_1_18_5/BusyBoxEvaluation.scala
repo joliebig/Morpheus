@@ -1,7 +1,7 @@
 package de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5
 
 import java.io._
-import de.fosd.typechef.crefactor.evaluation.{StatsCan, Refactoring, Evaluation}
+import de.fosd.typechef.crefactor.evaluation.{PreparedRefactorings, StatsCan, Refactoring, Evaluation}
 import scala.io.Source
 import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.refactor.{Inline, Extract, Rename}
 import de.fosd.typechef.parser.c.TranslationUnit
@@ -45,7 +45,8 @@ trait BusyBoxEvaluation extends Evaluation {
     val extractEngine = Extract
     val inlineEngine = Inline
 
-    override def evaluate(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface, r: Refactoring): Unit = {
+    override def evaluate(preparedRefactorings : PreparedRefactorings, tunit: TranslationUnit, fm: FeatureModel,
+                          file: String, linkInterface: CModuleInterface, r: Refactoring): Unit = {
         logger.info("File to engine: " + getFileName(file) + " +++")
         val resultDir = getResultDir(file)
         val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(file)
@@ -56,7 +57,7 @@ trait BusyBoxEvaluation extends Evaluation {
                 val morpheus = new Morpheus(tunit, fm, linkInterface, file)
                 // reset test environment
                 runScript("./cleanAndReset.sh", sourcePath)
-                val result = r.refactor(morpheus)
+                val result = r.refactor(morpheus, preparedRefactorings)
                 if (result._1) {
                     write(result._2, morpheus.getFile)
                     result._4.foreach(linked => writePrettyPrintedTUnit(linked._2, linked._1))

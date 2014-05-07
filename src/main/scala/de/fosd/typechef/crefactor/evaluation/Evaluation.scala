@@ -46,7 +46,7 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
     val extractEngine : DefaultExtractEngine
     val inlineEngine : DefaultInlineEngine
 
-    def evaluate(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface, r: Refactoring)
+    def evaluate(preparedRefactorings : PreparedRefactorings, tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface, r: Refactoring)
 
     def copyFile(file1: File, file2: File) = new FileOutputStream(file2).getChannel.transferFrom(new FileInputStream(file1).getChannel, 0, Long.MaxValue)
 

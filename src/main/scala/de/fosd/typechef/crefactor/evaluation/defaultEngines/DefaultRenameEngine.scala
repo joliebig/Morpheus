@@ -59,7 +59,8 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
     }
 
     // refactor attempts to make REFACTOR_AMOUNT renamings in a file
-    def refactor(morpheus: Morpheus): (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)]) = {
+    def refactor(morpheus: Morpheus, preparedRefactorings : PreparedRefactorings):
+    (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)]) = {
         var succ = false
         var runMorpheus = morpheus
         var affectedFeatures = List[List[FeatureExpr]]()

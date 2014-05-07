@@ -1,6 +1,6 @@
 package de.fosd.typechef.crefactor.evaluation.defaultEngines
 
-import de.fosd.typechef.crefactor.evaluation.{StatsCan, Evaluation, Refactoring}
+import de.fosd.typechef.crefactor.evaluation.{PreparedRefactorings, StatsCan, Evaluation, Refactoring}
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.featureexpr.FeatureExpr
@@ -47,7 +47,8 @@ trait DefaultInlineEngine extends Refactoring with Evaluation {
         else Random.shuffle(availableFuncCalls)
     }
 
-    def refactor(morpheus: Morpheus): (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)]) = {
+    def refactor(morpheus: Morpheus, preparedRefactorings : PreparedRefactorings):
+    (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)]) = {
         val psExpr = filterAllASTElems[PostfixExpr](morpheus.getTranslationUnit)
         val funcCalls = psExpr.filter(isFunctionCall)
         val availableFuncCalls = funcCalls.flatMap(p => {

@@ -2,7 +2,7 @@ package de.fosd.typechef.crefactor.evaluation.evalcases.sqlite
 
 import de.fosd.typechef.parser.c.{TranslationUnit, ConditionalNavigation, ASTNavigation}
 import java.io.{FileWriter, File}
-import de.fosd.typechef.crefactor.evaluation.{StatsCan, Refactoring, Evaluation}
+import de.fosd.typechef.crefactor.evaluation.{PreparedRefactorings, StatsCan, Refactoring, Evaluation}
 import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.refactor.{Inline, Extract, Rename}
 import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
 import de.fosd.typechef.crefactor.backend.CModuleInterface
@@ -42,7 +42,8 @@ trait SQLiteEvaluation extends Evaluation with ASTNavigation with ConditionalNav
     val extractEngine = Extract
     val inlineEngine = Inline
 
-    override def evaluate(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface, r: Refactoring): Unit = {
+    override def evaluate(preparedRefactorings : PreparedRefactorings, tunit: TranslationUnit, fm: FeatureModel,
+                          file: String, linkInterface: CModuleInterface, r: Refactoring): Unit = {
         println("+++ File to engine: " + getFileName(file) + " +++")
         val resultDir = getResultDir(file)
         val path = resultDir.getCanonicalPath + File.separatorChar
@@ -55,7 +56,7 @@ trait SQLiteEvaluation extends Evaluation with ASTNavigation with ConditionalNav
                 val morpheus = new Morpheus(tunit, fm, linkInterface, file)
                 // reset test environment
                 runScript("./clean.sh", sourcePath)
-                val result = r.refactor(morpheus)
+                val result = r.refactor(morpheus, preparedRefactorings)
                 if (result._1) {
                     write(result._2, morpheus.getFile)
                     StatsCan.addStat(file, AffectedFeatures, result._2)

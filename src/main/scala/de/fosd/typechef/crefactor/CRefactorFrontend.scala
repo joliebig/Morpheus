@@ -196,10 +196,12 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
                              fm: FeatureModel, linkInf: CModuleInterface) {
         val caseStudy: Refactor = getRefactorStudy(opt)
 
+        val preparedRefactor = loadPreparedRefactorings(opt.getPreparedRefactoringsFileName)
+
         opt.getRefactorType match {
-            case RefactorType.RENAME => caseStudy.rename(tunit, fm, opt.getFile, linkInf)
-            case RefactorType.EXTRACT => caseStudy.extract(tunit, fm, opt.getFile, linkInf)
-            case RefactorType.INLINE => caseStudy.inline(tunit, fm, opt.getFile, linkInf)
+            case RefactorType.RENAME => caseStudy.rename(preparedRefactor, tunit, fm, opt.getFile, linkInf)
+            case RefactorType.EXTRACT => caseStudy.extract(preparedRefactor, tunit, fm, opt.getFile, linkInf)
+            case RefactorType.INLINE => caseStudy.inline(preparedRefactor, tunit, fm, opt.getFile, linkInf)
             case RefactorType.NONE => println("No engine type defined")
         }
     }

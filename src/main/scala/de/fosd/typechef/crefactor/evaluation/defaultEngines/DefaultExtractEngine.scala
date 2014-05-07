@@ -1,6 +1,6 @@
 package de.fosd.typechef.crefactor.evaluation.defaultEngines
 
-import de.fosd.typechef.crefactor.evaluation.{StatsCan, Evaluation, Refactoring}
+import de.fosd.typechef.crefactor.evaluation.{PreparedRefactorings, StatsCan, Evaluation, Refactoring}
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.featureexpr.FeatureExpr
@@ -59,7 +59,8 @@ trait DefaultExtractEngine extends Refactoring with Evaluation {
     def getValidIdsForEvaluation(morpheus : Morpheus) : List[Id] = List()
 
 
-    def refactor(morpheus: Morpheus): (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)]) = {
+    def refactor(morpheus: Morpheus, preparedRefactorings : PreparedRefactorings):
+        (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)]) = {
         val resultDir = getResultDir(morpheus.getFile)
         val path = resultDir.getCanonicalPath + File.separatorChar + getFileName(morpheus.getFile)
 
