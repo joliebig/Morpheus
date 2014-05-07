@@ -60,88 +60,9 @@ import de.fosd.typechef.crefactor.backend.codeselection.ASTSelection
 /**
  * Implements extract-function refactoring.
  */
-object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
+object CExtractFunction extends CRefactor with IntraCFG {
 
-    def getSelectedElements(morpheus: Morpheus, selection: CodeSelection): List[AST] = {
-        val ids = filterASTElementsForFile[Id](
-            filterASTElems[Id](morpheus.getTranslationUnit).par.filter(x => isPartOfSelection(x, selection)).toList, selection.getFilePath)
-
-        // this function tries to find the greatest statement of a selection: for example:
-        // if (1) {
-        //     i++;
-        // }
-        // in case the whole if statement is selected we don't want to add the i++ statement to our selection list,
-        // as it is already part of the if statement
-        def exploitStatement(stmt: Statement): Statement = {
-            try {
-                parentAST(stmt, morpheus.getASTEnv) match {
-                    case null => throw new RefactorException("No proper selection for extract function.")
-                    case _: FunctionDef       => stmt
-                    case _: NestedFunctionDef => stmt
-                    case p =>
-                        if (isElementOfSelection(p, selection)) {
-                            exploitStatement(p.asInstanceOf[Statement])
-                        } else
-                            stmt
-                }
-            } catch {
-                case _: Throwable => stmt
-            }
-        }
-
-        // TODO @ajanker: I don't get the purpose of this function?
-        // if an control statement was hit - we look if the the afterwards, possible embedded stmts are also selected.
-        def lookupControlStatements(stmt: Statement): Statement = {
-                nextAST(stmt, morpheus.getASTEnv) match {
-                    case ns @ ( ContinueStatement(_) | BreakStatement() | CaseStatement(_) |
-                             GotoStatement(_) | ReturnStatement(_)) =>
-                        if (isElementOfSelection(ns, selection))
-                            ns.asInstanceOf[Statement]
-                        else
-                            stmt
-                    case _ => stmt
-                }
-        }
-        val uniqueSelectedStatements = Collections.newSetFromMap[Statement](new java.util.IdentityHashMap())
-        val uniqueSelectedExpressions = Collections.newSetFromMap[Expr](new java.util.IdentityHashMap())
-
-        ids.foreach(id => {
-            val parent = findPriorASTElem[Statement](id, morpheus.getASTEnv)
-            parent match {
-                case Some(stmt) =>
-                    stmt.setPositionRange(id)
-                    uniqueSelectedStatements.add(stmt)
-                    uniqueSelectedStatements.add(lookupControlStatements(stmt))
-                case None => // logger.info("There may have been an expression!")
-            }
-        })
-
-        val selectedElements = {
-            if (!uniqueSelectedStatements.isEmpty) {
-                val parents = uniqueSelectedStatements.toList
-                uniqueSelectedStatements.clear()
-                parents.foreach(statement => {
-                    val exploitedStatement = exploitStatement(statement)
-                    uniqueSelectedStatements.add(exploitedStatement)
-                })
-                uniqueSelectedStatements
-            } else
-                uniqueSelectedExpressions
-        }
-
-
-        val selected = selectedElements.toList.sortWith(comparePosition)
-        logger.info("ExtractFuncSelection: " + selected)
-        selected
-    }
-
-    def getAvailableIdentifiers(morpheus: Morpheus, selection: CodeSelection): List[Id] =
-        getSelectedElements(morpheus, selection).isEmpty match {
-            case true => null
-            case false => List[Id]() // returns a empty list to signalize a valid selection was found
-        }
-
-
+    // TODO Integrate in extract
     def canRefactor(morpheus: Morpheus, selection: List[AST]): Boolean = {
         if (selection.isEmpty) return false
 
@@ -163,19 +84,14 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
         else true
     }
 
-    def isAvailable(morpheus: Morpheus, selection: CodeSelection): Boolean =
-        canRefactor(morpheus, getSelectedElements(morpheus, selection))
-
     def extract(morpheus: Morpheus, selectedElements: List[AST], funcName: String): Either[String, TranslationUnit] = {
 
         if (!isValidName(funcName))
             return Left(Configuration.getInstance().getConfig("default.error.invalidName"))
 
-        val selection = selectedElements.sortWith(comparePosition)
-
         // Reference check is performed as soon as we know the featureExpr the new function is going to have!
 
-        val oldFDef = findPriorASTElem[FunctionDef](selection.head, morpheus.getASTEnv)
+        val oldFDef = findPriorASTElem[FunctionDef](selectedElements.head, morpheus.getASTEnv)
         if (isValidInProgram(Opt(morpheus.getASTEnv.featureExpr(oldFDef.get), funcName), morpheus))
             return Left(Configuration.getInstance().getConfig(
                 "default.error.isInConflictWithSymbolInModuleInterface"))
@@ -185,19 +101,19 @@ object CExtractFunction extends ASTSelection with CRefactor with IntraCFG {
             return Left(Configuration.getInstance().getConfig("default.error.isInConflictWithSymbolInModule"))
 
         // we can only handle statements. report error otherwise.
-        if (selection.exists {
+        if (selectedElements.exists {
             case _: Expr => true
             case _ => false
         })
             return Left(Configuration.getInstance().getConfig("refactor.extractFunction.failed.unsupported"))
 
-        if (!selection.forall {
+        if (!selectedElements.forall {
             case _: Statement => true
             case _ => false
         })
             return Left(Configuration.getInstance().getConfig("refactor.extractFunction.failed.invalidSelection"))
 
-        extractStatements(morpheus, selection, funcName)
+        extractStatements(morpheus, selectedElements, funcName)
     }
 
     private def extractStatements(morpheus: Morpheus, selection: List[AST], funcName: String):

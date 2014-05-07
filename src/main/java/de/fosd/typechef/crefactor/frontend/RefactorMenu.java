@@ -1,9 +1,10 @@
 package de.fosd.typechef.crefactor.frontend;
 
 import de.fosd.typechef.crefactor.Morpheus;
-import de.fosd.typechef.crefactor.backend.engine.CExtractFunction;
+import de.fosd.typechef.crefactor.backend.codeselection.CExtractSelection;
+import de.fosd.typechef.crefactor.backend.codeselection.CInlineSelection;
+import de.fosd.typechef.crefactor.backend.codeselection.CRenameSelection;
 import de.fosd.typechef.crefactor.backend.engine.CInlineFunction;
-import de.fosd.typechef.crefactor.backend.engine.CRenameIdentifier;
 import de.fosd.typechef.crefactor.evaluation_utils.Configuration;
 import de.fosd.typechef.crefactor.frontend.actions.refactor.CRefactorAction;
 import de.fosd.typechef.crefactor.frontend.util.CodeSelection;
@@ -55,15 +56,16 @@ public class RefactorMenu implements MenuListener {
         /**
          * Refactor Renaming
          */
-        final List<Id> availableIds = CRenameIdentifier.getAvailableIdentifiers(morpheus, codeSelection);
+        final List<Id> availableIds = CRenameSelection.getAvailableIdentifiers(morpheus, codeSelection);
         if (!availableIds.isEmpty()) {
             final JMenu rename = new JMenu(Configuration.getInstance().getConfig("refactor.rename.name"));
             this.menu.add(rename);
             addRenamingsToMenu(availableIds, rename);
 
 
-            if (CExtractFunction.isAvailable(morpheus, codeSelection)) {
-                final List<AST> extractSelection = CExtractFunction.getSelectedElements(morpheus, codeSelection);
+            final List<AST> extractSelection = CExtractSelection.getSelectedElements(morpheus, codeSelection);
+
+            if (!extractSelection.isEmpty()) {
                 final JMenuItem extract = new JMenuItem(CRefactorAction.getExtractFunction(morpheus, extractSelection));
                 this.menu.add(extract);
             }
@@ -71,7 +73,7 @@ public class RefactorMenu implements MenuListener {
             /**
              * Inline Function
              */
-            final List<Id> availableFuncIDs = CInlineFunction.getAvailableIdentifiers(morpheus, codeSelection);
+            final List<Id> availableFuncIDs = CInlineSelection.getAvailableIdentifiers(morpheus, codeSelection);
             if (!availableFuncIDs.isEmpty()) {
                 final JMenu inline = new JMenu(Configuration.getInstance().getConfig("refactor.inline.name"));
                 this.menu.add(inline);

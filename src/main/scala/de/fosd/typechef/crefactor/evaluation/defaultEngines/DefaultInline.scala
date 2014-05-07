@@ -12,15 +12,15 @@ import de.fosd.typechef.crefactor.evaluation.Stats._
 trait DefaultInline extends Refactoring with Evaluation {
 
     // not supported
-    def getValidStatementsForEvaluation(morpheus: Morpheus): List[Statement] = List()
+    override def getValidStatementsForEvaluation(morpheus: Morpheus): List[List[Statement]] = List()
 
-    def getValidIdsForEvaluation(morpheus : Morpheus) : List[Id] = {
+    override def getValidIdsForEvaluation(morpheus : Morpheus) : List[Id] = {
         val psExpr = filterAllASTElems[PostfixExpr](morpheus.getTranslationUnit)
         val funcCalls = psExpr.filter(isFunctionCall)
         val availableFuncCalls = funcCalls.flatMap(p => {
             p.p match {
                 case i: Id =>
-                    if (hasSameFileName(i, morpheus) && CInlineFunction.isAvailable(morpheus, i)) Some(i)
+                    if (hasSameFileName(i, morpheus) && CInlineFunction.canInline(morpheus, i)) Some(i)
                     else None
                 case _ => None
             }
@@ -53,7 +53,7 @@ trait DefaultInline extends Refactoring with Evaluation {
         val availableFuncCalls = funcCalls.flatMap(p => {
             p.p match {
                 case i: Id =>
-                    if (hasSameFileName(i, morpheus) && CInlineFunction.isAvailable(morpheus, i)) Some(i)
+                    if (hasSameFileName(i, morpheus) && CInlineFunction.canInline(morpheus, i)) Some(i)
                     else None
                 case _ => None
             }

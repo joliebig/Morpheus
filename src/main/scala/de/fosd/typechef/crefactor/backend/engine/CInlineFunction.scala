@@ -16,28 +16,10 @@ import de.fosd.typechef.crefactor.backend.codeselection.ASTSelection
 /**
  * Implements inline-function refactoring!
  */
-object CInlineFunction extends ASTSelection with CRefactor with IntraCFG {
+object CInlineFunction extends CRefactor with IntraCFG {
 
-    def getSelectedElements(morpheus: Morpheus, selection: CodeSelection): List[AST] = {
-        val functions = (filterASTElems[FunctionDef](morpheus.getTranslationUnit) :::
-            filterASTElems[FunctionCall](morpheus.getTranslationUnit) :::
-            filterASTElems[NestedFunctionDef](morpheus.getTranslationUnit)).filter(isSelected(_, morpheus.getASTEnv, selection))
-
-        filterASTElementsForFile(functions.map(getFunctionIdentifier(_, morpheus)), selection.getFilePath)
-    }
-
-    def getAvailableIdentifiers(morpheus: Morpheus, selection: CodeSelection): List[Id] = {
-        val ids = getSelectedElements(morpheus, selection).filter {
-            case i : Id => true
-            case _ => false
-        }.asInstanceOf[List[Id]]
-        ids.filter(id => isAvailable(morpheus, id))
-    }
-
-    def isAvailable(morpheus: Morpheus, selection: CodeSelection): Boolean =
-        getAvailableIdentifiers(morpheus, selection).nonEmpty
-
-    def isAvailable(morpheus: Morpheus, call: Id): Boolean = {
+    // TODO Integrate in inline
+    def canInline(morpheus: Morpheus, call: Id): Boolean = {
         if (!isFunctionCall(morpheus, call))
             return false
 

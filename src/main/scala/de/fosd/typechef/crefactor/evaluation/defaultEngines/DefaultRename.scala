@@ -27,9 +27,9 @@ trait DefaultRename extends Refactoring with Evaluation {
     private val linkedRenamedFiles = mutable.HashMap[String, Morpheus]()
 
     // not supported
-    def getValidStatementsForEvaluation(morpheus: Morpheus): List[Statement] = List()
+    override def getValidStatementsForEvaluation(morpheus: Morpheus): List[List[Statement]] = List()
 
-    def getValidIdsForEvaluation(morpheus : Morpheus) : List[Id] = {
+    override def getValidIdsForEvaluation(morpheus : Morpheus) : List[Id] = {
         val moduleInterface = morpheus.getModuleInterface
 
         val allIds = morpheus.getAllUses.filter(CRenameIdentifier.canRefactor(_, morpheus))
@@ -45,9 +45,9 @@ trait DefaultRename extends Refactoring with Evaluation {
         logger.info(morpheus.getFile  + ": Variable IDs found: " + variableIds.size)
 
         val randomIDs =
-            if (FORCE_VARIABILITY && !variableIds.isEmpty) Random.shuffle(variableIds)
+            if (FORCE_VARIABILITY && !variableIds.isEmpty) Random.shuffle(variableIds.toList)
             else if (FORCE_VARIABILITY) List()
-            else Random.shuffle(ids)
+            else Random.shuffle(ids.toList)
 
         val validIDs =
             if (moduleInterface == null) randomIDs

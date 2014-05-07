@@ -42,7 +42,7 @@ object CExtractSelection extends ASTSelection  {
         // if an control statement was hit - we look if the the afterwards, possible embedded stmts are also selected.
         def lookupControlStatements(stmt: Statement): Statement = {
             nextAST(stmt, morpheus.getASTEnv) match {
-                case ns @ ( ContinueStatement(_) | BreakStatement() | CaseStatement(_) |
+                case ns @ ( ContinueStatement() | BreakStatement() | CaseStatement(_) |
                             GotoStatement(_) | ReturnStatement(_)) =>
                     if (isElementOfSelection(ns, selection))
                         ns.asInstanceOf[Statement]

@@ -22,7 +22,7 @@ object CInlineSelection extends ASTSelection {
             case i : Id => true
             case _ => false
         }.asInstanceOf[List[Id]]
-        ids.filter(id => CInlineFunction.isAvailable(morpheus, id))
+        ids.filter(id => CInlineFunction.canInline(morpheus, id))
     }
 
     private def getFunctionIdentifier(function: AST, morpheus: Morpheus): Id = {

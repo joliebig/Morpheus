@@ -12,23 +12,9 @@ import de.fosd.typechef.crefactor.backend.codeselection.ASTSelection
 /**
  * Implements the technique of correctly renaming an identifier.
  */
-object CRenameIdentifier extends ASTSelection with CRefactor {
+object CRenameIdentifier extends  CRefactor {
 
-    // TODO @ajanker: Do the following three functions belong here?
-    def getSelectedElements(morpheus: Morpheus, selection: CodeSelection): List[AST] =
-        getAvailableIdentifiers(morpheus, selection)
-
-    // TODO Move
-    def getAvailableIdentifiers(morpheus: Morpheus, selection: CodeSelection): List[Id] =
-        filterASTElems[Id](morpheus.getTranslationUnit).
-            par.filter(x => isPartOfSelection(x, selection))
-            .filter(x => isPartOfFile(x, selection.getFilePath)).toList
-
-    // TODO ToRemove
-    def isAvailable(morpheus: Morpheus, selection: CodeSelection): Boolean =
-        !getAvailableIdentifiers(morpheus, selection).isEmpty
-
-    
+    // TODO Move in rename
     def canRefactor(id: Id, morpheus: Morpheus) : Boolean = {
         val rid = morpheus.getReferences(id).map(_.entry)
         
