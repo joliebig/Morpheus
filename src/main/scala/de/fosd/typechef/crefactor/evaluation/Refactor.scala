@@ -16,19 +16,27 @@ trait Refactoring {
 
 }
 
-trait Refactor {
+trait Refactor extends Evaluation {
 
     def prepareForEvaluation(tunit: TranslationUnit, fm: FeatureModel,
-                             file: String, linkInterface: CModuleInterface = null)
+                             file: String, linkInterface: CModuleInterface = null) = {
+        val morpheus = new Morpheus(tunit, fm, linkInterface, file)
+        val renameIDs = renameEngine.getValidIdsForEvaluation(morpheus)
+        val extractStmts = extractEngine.getValidStatementsForEvaluation(morpheus)
+        val inlineIDs = inlineEngine.getValidIdsForEvaluation(morpheus)
+    }
 
     def rename(tunit: TranslationUnit, fm: FeatureModel,
-               file: String, linkInterface: CModuleInterface = null)
+               file: String, linkInterface: CModuleInterface = null) =
+        evaluate(tunit, fm, file, linkInterface, renameEngine)
 
     def extract(tunit: TranslationUnit, fm: FeatureModel,
-                file: String, linkInterface: CModuleInterface = null)
+                file: String, linkInterface: CModuleInterface = null) =
+        evaluate(tunit, fm, file, linkInterface, extractEngine)
 
     def inline(tunit: TranslationUnit, fm: FeatureModel,
-               file: String, linkInterface: CModuleInterface = null)
+               file: String, linkInterface: CModuleInterface = null) =
+        evaluate(tunit, fm, file, linkInterface, inlineEngine)
 }
 
 

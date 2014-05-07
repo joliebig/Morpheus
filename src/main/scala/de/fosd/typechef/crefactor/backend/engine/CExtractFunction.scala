@@ -14,13 +14,11 @@ import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.StatsCan
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.crewrite.IntraCFG
-import scala.collection.JavaConversions._
 import org.kiama.rewriting.Rewriter._
 import de.fosd.typechef.parser.c.EnumSpecifier
 import scala.Some
 import de.fosd.typechef.parser.c.TypeDefTypeSpecifier
 import de.fosd.typechef.parser.c.Initializer
-import de.fosd.typechef.crefactor.backend.engine.CExtractSelection
 import de.fosd.typechef.parser.c.VoidSpecifier
 import de.fosd.typechef.conditional.One
 import de.fosd.typechef.parser.c.DeclParameterDeclList

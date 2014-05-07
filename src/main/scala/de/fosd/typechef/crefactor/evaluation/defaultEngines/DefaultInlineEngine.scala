@@ -9,7 +9,7 @@ import scala.util.Random
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.Stats._
 
-trait DefaultInline extends Refactoring with Evaluation {
+trait DefaultInlineEngine extends Refactoring with Evaluation {
 
     // not supported
     override def getValidStatementsForEvaluation(morpheus: Morpheus): List[List[Statement]] = List()

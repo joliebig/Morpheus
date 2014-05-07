@@ -14,7 +14,7 @@ import de.fosd.typechef.parser.c.CompoundStatement
 import de.fosd.typechef.conditional.Opt
 import scala.util.Random
 
-trait DefaultExtract extends Refactoring with Evaluation {
+trait DefaultExtractEngine extends Refactoring with Evaluation {
 
     val MAX_REC_DEPTH: Int = 100
 

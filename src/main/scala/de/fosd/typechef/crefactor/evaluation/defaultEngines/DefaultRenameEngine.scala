@@ -16,7 +16,7 @@ import de.fosd.typechef.featureexpr.FeatureExpr
 import de.fosd.typechef.parser.c.{Statement, Id, TranslationUnit}
 import de.fosd.typechef.typesystem._
 
-trait DefaultRename extends Refactoring with Evaluation {
+trait DefaultRenameEngine extends Refactoring with Evaluation {
 
     val REFACTOR_NAME = "refactoredID"
 

@@ -17,9 +17,9 @@ import de.fosd.typechef.parser.c.CTypeContext
 import de.fosd.typechef.typesystem.{CDeclUse, CTypeCache, CTypeSystemFrontend}
 import de.fosd.typechef.crefactor.frontend.Editor
 import javax.swing.SwingUtilities
-import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.SQLiteRefactor
-import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.BusyBoxRefactor
-import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.OpenSSLRefactor
+import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.SQLiteRefactorEvaluation
+import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.BusyBoxRefactorEvaluation
+import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.OpenSSLRefactorEvaluation
 import de.fosd.typechef.crefactor.backend.CModuleInterface
 import de.fosd.typechef.featureexpr.bdd.FeatureExprHelper
 
@@ -203,9 +203,9 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         }
     }
     private def getRefactorStudy(opt: FrontendOptions): Evaluation with Refactor =
-        if (opt.getRefStudy.equalsIgnoreCase("busybox")) BusyBoxRefactor
-        else if (opt.getRefStudy.equalsIgnoreCase("openssl")) OpenSSLRefactor
-        else if (opt.getRefStudy.equalsIgnoreCase("sqlite")) SQLiteRefactor
+        if (opt.getRefStudy.equalsIgnoreCase("busybox")) BusyBoxRefactorEvaluation
+        else if (opt.getRefStudy.equalsIgnoreCase("openssl")) OpenSSLRefactorEvaluation
+        else if (opt.getRefStudy.equalsIgnoreCase("sqlite")) SQLiteRefactorEvaluation
         else null
 
     private def lex(opt: FrontendOptions): TokenReader[CToken, CTypeContext] = CLexer.prepareTokens(new lexer.Main().run(opt, opt.parse))

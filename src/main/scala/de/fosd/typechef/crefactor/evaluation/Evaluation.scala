@@ -10,7 +10,8 @@ import java.util.{TimerTask, Timer, IdentityHashMap}
 import de.fosd.typechef.crefactor.evaluation.setup.BuildCondition
 import de.fosd.typechef.typesystem.linker.SystemLinker
 import de.fosd.typechef.conditional.Opt
-import java.util
+import de.fosd.typechef.crefactor.evaluation.defaultEngines.{DefaultInlineEngine, DefaultExtractEngine, DefaultRenameEngine}
+import de.fosd.typechef.crefactor.backend.CModuleInterface
 
 trait Evaluation extends Logging with BuildCondition with ASTNavigation with ConditionalNavigation {
 
@@ -40,6 +41,12 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
     val FORCE_LINKING: Boolean
 
     val maxConfigs: Int = 50
+    
+    val renameEngine : DefaultRenameEngine
+    val extractEngine : DefaultExtractEngine
+    val inlineEngine : DefaultInlineEngine
+
+    def evaluate(tunit: TranslationUnit, fm: FeatureModel, file: String, linkInterface: CModuleInterface, r: Refactoring)
 
     def copyFile(file1: File, file2: File) = new FileOutputStream(file2).getChannel.transferFrom(new FileInputStream(file1).getChannel, 0, Long.MaxValue)
 
