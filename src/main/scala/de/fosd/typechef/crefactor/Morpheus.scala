@@ -30,6 +30,7 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
     private var ts = new CTypeSystemFrontend(getTranslationUnit, getFM) with CTypeCache with CDeclUse
 
     // TODO @ajanker: type checking is done twice here; maybe move code to update function and do logging there.
+    // @joliebig: i don't understand completly why type checking is performed twice here?
     private val typeCheck = new StopClock
     getTypeSystem.typecheckTranslationUnit(getTranslationUnit)
     private val typeCheckTime = typeCheck.getTime

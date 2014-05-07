@@ -39,7 +39,7 @@ object CExtractSelection extends ASTSelection  {
         }
 
         // TODO @ajanker: I don't get the purpose of this function?
-        // if an control statement was hit - we look if the the afterwards, possible embedded stmts are also selected.
+        // if an control statement was hit - we look if the afterwards, possible embedded stmts are also selected.
         def lookupControlStatements(stmt: Statement): Statement = {
             nextAST(stmt, morpheus.getASTEnv) match {
                 case ns @ ( ContinueStatement() | BreakStatement() | CaseStatement(_) |
