@@ -43,9 +43,9 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         else if (runOpt.parse) parseOrLoadTUnitandProcess(args, true)
 
 
-        println("# unique Sat calls: " + FeatureExprHelper.uniqueSatCalls)
-        println("# cached Sat calls: " + FeatureExprHelper.cachedSatCalls)
-        println("# all Sat calls: " + (FeatureExprHelper.uniqueSatCalls + FeatureExprHelper.cachedSatCalls))
+        logger.info("# unique Sat calls: " + FeatureExprHelper.uniqueSatCalls)
+        logger.info("# cached Sat calls: " + FeatureExprHelper.cachedSatCalls)
+        logger.info("# all Sat calls: " + (FeatureExprHelper.uniqueSatCalls + FeatureExprHelper.cachedSatCalls))
     }
 
     def parseOrLoadTUnitandProcess(args: Array[String], saveArg: Boolean = false) = {
