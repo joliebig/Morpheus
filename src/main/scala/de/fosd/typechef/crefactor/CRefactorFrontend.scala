@@ -84,7 +84,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         val tunit = getTunit(opt, fm)
 
         if (tunit == null) {
-            logger.error("... failed reading AST " + opt.getFile + "\nExiting.")
+            logger.error("... failed reading TUnit " + opt.getFile + "\nExiting.")
             System.exit(-1)
         }
 
@@ -151,8 +151,8 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         fm
     }
 
-    private def writeInterface(ast: AST, fm: FeatureModel, opt: FrontendOptions) {
-        val ts = new CTypeSystemFrontend(ast.asInstanceOf[TranslationUnit], fm, opt) with CTypeCache with CDeclUse
+    private def writeInterface(tunit: TranslationUnit, fm: FeatureModel, opt: FrontendOptions) {
+        val ts = new CTypeSystemFrontend(tunit, fm, opt) with CTypeCache with CDeclUse
         ts.checkAST()
 
         val interface = {
