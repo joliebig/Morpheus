@@ -1,11 +1,14 @@
 package de.fosd.typechef.crefactor.evaluation
 
 import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
-import de.fosd.typechef.parser.c.{Statement, Id, AST, TranslationUnit}
+import de.fosd.typechef.parser.c._
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.backend.CModuleInterface
 import java.io.{ObjectOutputStream, FileOutputStream}
 import java.util.zip.GZIPOutputStream
+import de.fosd.typechef.parser.c.TranslationUnit
+import de.fosd.typechef.parser.c.Id
+import de.fosd.typechef.crefactor.evaluation.PreparedRefactorings
 
 trait Refactoring {
 
@@ -42,7 +45,15 @@ trait Refactor extends Evaluation {
         evaluate(preparedRefactorings, tunit, fm, file, linkInterface, inlineEngine)
 }
 
-case class PreparedRefactorings(renaming : List[Id], extract : List[List[Statement]], inline: List[Id]) extends Serializable {}
+case class PreparedRefactorings(renaming : List[Id], extract : List[List[Statement]], inline: List[Id])
+    extends Serializable with ASTNavigation with ConditionalNavigation {
+
+    def getCorrespondingIDinTUnit(id: Id, tunit : TranslationUnit, env : ASTEnv) : Option[Id] =
+        filterASTElems[Id](tunit, env).par.find(tunitId =>
+            (tunitId.name == id.name)
+                && tunitId.getPositionFrom.equals(id.getPositionFrom) && tunitId.getPositionTo.equals(id.getPositionTo))
+
+}
 
 
 
