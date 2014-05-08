@@ -48,10 +48,12 @@ trait Refactor extends Evaluation {
 case class PreparedRefactorings(renaming : List[Id], extract : List[List[Statement]], inline: List[Id])
     extends Serializable with ASTNavigation with ConditionalNavigation {
 
-    def getCorrespondingIDinTUnit(id: Id, tunit : TranslationUnit, env : ASTEnv) : Option[Id] =
-        filterASTElems[Id](tunit, env).par.find(tunitId =>
+    def getCorrespondingId(id: Id, morpheus : Morpheus) : Option[Id] =
+        filterASTElems[Id](morpheus.getTranslationUnit, morpheus.getASTEnv).par.find(tunitId =>
             (tunitId.name == id.name)
                 && tunitId.getPositionFrom.equals(id.getPositionFrom) && tunitId.getPositionTo.equals(id.getPositionTo))
+
+
 
 }
 
