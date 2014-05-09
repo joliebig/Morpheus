@@ -4,10 +4,7 @@ import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.crefactor.{Logging, Morpheus}
 import de.fosd.typechef.crefactor.backend.CModuleInterface
-import java.io.{ObjectOutputStream, FileOutputStream}
-import java.util.zip.GZIPOutputStream
-import de.fosd.typechef.parser.c.TranslationUnit
-import de.fosd.typechef.parser.c.Id
+
 
 trait Refactoring {
 
@@ -51,6 +48,7 @@ case class PreparedRefactorings(renaming : List[Id], extract : List[List[Stateme
         filterASTElems[Id](morpheus.getTranslationUnit, morpheus.getASTEnv).par.find(tunitId =>
             (tunitId.name == id.name)
                 && tunitId.getPositionFrom.equals(id.getPositionFrom) && tunitId.getPositionTo.equals(id.getPositionTo))
+
     /**
      * Statements have no position range. We filter for an id part of the selection and "bubble up" to find the
      * corresponding statement in the current tunit.
@@ -80,9 +78,6 @@ case class PreparedRefactorings(renaming : List[Id], extract : List[List[Stateme
         if (correspondingStmts.exists(_ == None)) None
         else Some(correspondingStmts.map(_.get))
     }
-
-
-
 }
 
 
