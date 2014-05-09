@@ -79,6 +79,3 @@ case class PreparedRefactorings(renaming : List[Id], extract : List[List[Stateme
         else Some(correspondingStmts.map(_.get))
     }
 }
-
-
-
