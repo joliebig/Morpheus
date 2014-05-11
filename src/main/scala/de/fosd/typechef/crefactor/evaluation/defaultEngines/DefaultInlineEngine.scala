@@ -47,7 +47,7 @@ trait DefaultInlineEngine extends Refactoring with Evaluation {
         else Random.shuffle(availableFuncCalls)
     }
 
-    def refactor(morpheus: Morpheus, preparedRefactorings : PreparedRefactorings):
+    def refactor(morpheus: Morpheus, preparedRefactorings: PreparedRefactorings):
     (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)]) = {
         if (preparedRefactorings.inline.isEmpty)
             return (false, null, List(), List())
@@ -65,47 +65,38 @@ trait DefaultInlineEngine extends Refactoring with Evaluation {
 
         logger.info("Trying to inline fcall: " + callIdToInline)
 
-        try {
-            val refTime = new StopClock
-            val refAST = CInlineFunction.inline(morpheus, callIdToInline, true)
+        val refTime = new StopClock
+        val refAST = CInlineFunction.inline(morpheus, callIdToInline, true)
 
-            refAST match {
-                case Left(errmsg) => {
-                    logger.error("Inlining failed! " + errmsg)
-                    (false, null, List(), List())
-                }
-                case Right(tunit) => {
-                    StatsCan.addStat(morpheus.getFile, RefactorTime, refTime.getTime)
-                    val callDeclDef = CInlineFunction.divideCallDeclDef(callIdToInline, morpheus)
-
-                    val callFeatures = callDeclDef._1.map(_.feature)
-                    val declFeatures = callDeclDef._2.flatMap(filterAllFeatureExpr(_))
-                    val defFeatures = callDeclDef._3.flatMap(filterAllFeatureExpr(_))
-
-                    val features = (callFeatures ::: declFeatures ::: defFeatures).distinct
-
-                    StatsCan.addStat(morpheus.getFile, Amount, callDeclDef._1.size)
-                    StatsCan.addStat(morpheus.getFile, InlinedFunction, callIdToInline)
-
-                    logger.info("Affected features: " + features)
-
-                    (true, tunit, List(features), List())
-                }
-            }
-        } catch {
-            case e: Exception => {
-                logger.error("Inlining failed with!" + e.getMessage)
-                e.printStackTrace()
+        refAST match {
+            case Left(errmsg) => {
+                logger.error("Inlining failed! " + errmsg)
                 (false, null, List(), List())
+            }
+            case Right(tunit) => {
+                StatsCan.addStat(morpheus.getFile, RefactorTime, refTime.getTime)
+                val callDeclDef = CInlineFunction.divideCallDeclDef(callIdToInline, morpheus)
+
+                val callFeatures = callDeclDef._1.map(_.feature)
+                val declFeatures = callDeclDef._2.flatMap(filterAllFeatureExpr(_))
+                val defFeatures = callDeclDef._3.flatMap(filterAllFeatureExpr(_))
+
+                val features = (callFeatures ::: declFeatures ::: defFeatures).distinct
+
+                StatsCan.addStat(morpheus.getFile, Amount, callDeclDef._1.size)
+                StatsCan.addStat(morpheus.getFile, InlinedFunction, callIdToInline)
+
+                logger.info("Affected features: " + features)
+
+                (true, tunit, List(features), List())
             }
         }
     }
 
-    private def isFunctionCall(p: PostfixExpr): Boolean = {
+    private def isFunctionCall(p: PostfixExpr): Boolean =
         p match {
             case PostfixExpr(Id(_), FunctionCall(_)) => true
             case _ => false
         }
-    }
 
 }

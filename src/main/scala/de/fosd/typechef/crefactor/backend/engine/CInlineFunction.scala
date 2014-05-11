@@ -66,21 +66,28 @@ object CInlineFunction extends CRefactor with IntraCFG {
         if (fDefs.isEmpty)
             Left("Inlining of external function definitions is not supported.")
 
-        var tunitRefactored = fCalls.foldLeft(morpheus.getTranslationUnit)((curTunit, curFCall) =>
-            inlineFuncCall(curTunit, new Morpheus(curTunit, morpheus.getFM), curFCall, fDefs))
+        try {
+            var tunitRefactored = fCalls.foldLeft(morpheus.getTranslationUnit)((curTunit, curFCall) =>
+                inlineFuncCall(curTunit, new Morpheus(curTunit, morpheus.getFM), curFCall, fDefs))
 
-        tunitRefactored =
-            callExpr.foldLeft(tunitRefactored)(
-                (curTunit, expr) => inlineFuncCallExpr(curTunit,
-                    new Morpheus(curTunit, morpheus.getFM), expr, fDefs))
+            tunitRefactored =
+                callExpr.foldLeft(tunitRefactored)(
+                    (curTunit, expr) => inlineFuncCallExpr(curTunit,
+                        new Morpheus(curTunit, morpheus.getFM), expr, fDefs))
 
-        // Remove old definition and declarations (note may cause linking error)
-        if (!keepDeclaration) {
-            tunitRefactored = fDefs.foldLeft(tunitRefactored)((workingAST, x) => remove(workingAST, x))
-            tunitRefactored = fDecls.foldLeft(tunitRefactored)((workingAST, x) => remove(workingAST, x))
+            // Remove old definition and declarations (note may cause linking error)
+            if (!keepDeclaration) {
+                tunitRefactored = fDefs.foldLeft(tunitRefactored)((workingAST, x) => remove(workingAST, x))
+                tunitRefactored = fDecls.foldLeft(tunitRefactored)((workingAST, x) => remove(workingAST, x))
+            }
+
+            Right(tunitRefactored)
+        } catch {
+            case e: Exception => {
+                e.printStackTrace()
+                Left(e.getMessage)
+            }
         }
-
-        Right(tunitRefactored)
     }
 
     def divideCallDeclDef(callId: Id, morpheus: Morpheus): (List[Opt[Statement]], List[Opt[AST]],
