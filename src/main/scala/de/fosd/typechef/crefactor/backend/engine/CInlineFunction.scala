@@ -46,13 +46,6 @@ object CInlineFunction extends CRefactor with IntraCFG {
             true
     }
 
-    def isFunctionCall(morpheus: Morpheus, id: Id): Boolean = {
-        parentAST(id, morpheus.getASTEnv) match {
-            case PostfixExpr(`id`, FunctionCall(_)) => true
-            case _ => false
-        }
-    }
-
     /**
      * Perform the actual inlining.
      *
@@ -734,5 +727,12 @@ object CInlineFunction extends CRefactor with IntraCFG {
             case Opt(_, _: ReturnStatement) => true
             case _ => false
         }.asInstanceOf[List[Opt[ReturnStatement]]]
+    }
+
+    private def isFunctionCall(morpheus: Morpheus, id: Id): Boolean = {
+        parentAST(id, morpheus.getASTEnv) match {
+            case PostfixExpr(`id`, FunctionCall(_)) => true
+            case _ => false
+        }
     }
 }
