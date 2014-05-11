@@ -75,7 +75,7 @@ case class PreparedRefactorings(renaming : List[Id], extract : List[List[Stateme
             }
         })
 
-        if (correspondingStmts.exists(_ == None)) None
+        if (correspondingStmts.contains(None)) None
         else Some(correspondingStmts.map(_.get))
     }
 }
