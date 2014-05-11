@@ -80,7 +80,6 @@ trait DefaultExtractEngine extends Refactoring with Evaluation {
 
         val features = filterAllOptElems(statements).map(morpheus.getASTEnv.featureExpr(_)).distinct
         val refactorTime = new StopClock
-        statements.foreach(stmt => println(stmt + " " + stmt.getPositionFrom))
         val refactored = CExtractFunction.extract(morpheus, statements, NAME)
         refactored match {
             case Right(a) => {
