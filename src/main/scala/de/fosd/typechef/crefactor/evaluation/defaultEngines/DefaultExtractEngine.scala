@@ -16,13 +16,7 @@ import scala.util.Random
 
 trait DefaultExtractEngine extends Refactoring with Evaluation {
 
-    val MAX_REC_DEPTH: Int = 100
-
-    // TODO @ajanker: What is RETRIES for?
-    val RETRIES: Int = 10
-
     val NAME = "refactored_func"
-
 
     def getValidStatementsForEvaluation(morpheus: Morpheus): List[List[Statement]] = {
         // Test all available combinations for extraction
