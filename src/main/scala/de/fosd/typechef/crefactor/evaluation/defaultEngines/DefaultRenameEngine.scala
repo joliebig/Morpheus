@@ -96,14 +96,23 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
 
     private def refactorRun(run : Int, morpheus : Morpheus, prepared : PreparedRefactorings) :
     (Boolean, TranslationUnit, List[FeatureExpr], List[(String, TranslationUnit)], PreparedRefactorings) = {
+        logger.info("+++ Start run: " + run)
+
         if (prepared.renaming.isEmpty)
             return (false, null, List(), List(), null)
 
         val moduleInterface = morpheus.getModuleInterface
         val name = REFACTOR_NAME + "_" + run
-        logger.info("+++ Start run: " + run)
 
-        val id = prepared.renaming.head
+        val preparedId = prepared.renaming.head
+
+        val id = prepared.getCorrespondingId(preparedId, morpheus) match {
+            case Some(id) => id
+            case _ => null
+        }
+
+        if (id == null)
+            return (false, null, List(), List(), null)
 
         StatsCan.addStat(morpheus.getFile, run, RenamedId, id.name)
 
