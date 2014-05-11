@@ -49,39 +49,19 @@ trait DefaultInlineEngine extends Refactoring with Evaluation {
 
     def refactor(morpheus: Morpheus, preparedRefactorings : PreparedRefactorings):
     (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)]) = {
-        val psExpr = filterAllASTElems[PostfixExpr](morpheus.getTranslationUnit)
-        val funcCalls = psExpr.filter(isFunctionCall)
-        val availableFuncCalls = funcCalls.flatMap(p => {
-            p.p match {
-                case i: Id =>
-                    if (hasSameFileName(i, morpheus) && CInlineFunction.canInline(morpheus, i)) Some(i)
-                    else None
-                case _ => None
-            }
-        })
-
-        logger.info("Function calls found to inline: " + availableFuncCalls.size)
-
-        if (availableFuncCalls.isEmpty)
+        if (preparedRefactorings.inline.isEmpty)
             return (false, null, List(), List())
 
-        // Prefer var func calls
-        val variableFuncCalls = availableFuncCalls.flatMap(call => {
-            val callsDeclDef = CInlineFunction.divideCallDeclDef(call, morpheus)
-            val varCalls = callsDeclDef._1.exists(isVariable)
-            val varDecls = callsDeclDef._2.exists(isVariable)
-            val varDefs = callsDeclDef._3.exists(isVariable)
-            val varExpr = callsDeclDef._4.exists(isVariable)
-
-            if (varCalls || varDecls || varDefs || varExpr) Some(call)
-            else None
-        })
-
-        logger.info("Variable function calls found to inline: " + variableFuncCalls.size)
+        val preparedCallId = preparedRefactorings.inline.head
 
         val callIdToInline =
-            if (variableFuncCalls.isEmpty) availableFuncCalls(Random.nextInt(availableFuncCalls.size))
-            else variableFuncCalls(Random.nextInt(variableFuncCalls.size))
+            preparedRefactorings.getCorrespondingId(preparedCallId, morpheus) match {
+                case Some(id) => id
+                case _ => null
+            }
+
+        if (callIdToInline == null)
+            return (false, null, List(), List())
 
         logger.info("Trying to inline fcall: " + callIdToInline)
 
@@ -114,9 +94,9 @@ trait DefaultInlineEngine extends Refactoring with Evaluation {
             }
         } catch {
             case e: Exception => {
-                logger.error("Inlining failed!")
+                logger.error("Inlining failed with!" + e.getMessage)
                 e.printStackTrace()
-                return (false, null, List(), List())
+                (false, null, List(), List())
             }
         }
     }
