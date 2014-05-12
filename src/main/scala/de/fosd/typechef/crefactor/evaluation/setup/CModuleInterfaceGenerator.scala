@@ -11,7 +11,7 @@ import de.fosd.typechef.crefactor.backend.CModuleInterface
 /**
  * Interface for generating linking information of a whole given project
  */
-trait CModuleInterfaceGenerator extends Evaluation with App with Logging {
+trait CModuleInterfaceGenerator extends Evaluation with App with Logging with InterfaceWriter {
 
     val filename = "CLinking"
     val linkExt = ".interface"
@@ -33,8 +33,7 @@ trait CModuleInterfaceGenerator extends Evaluation with App with Logging {
     val fm = FeatureExprFactory.default.featureModelFactory.createFromDimacsFile(featureModel_DIMACS, "")
     logger.info("Loaded feature model in " + fm_genClock.getTime + "ms.")
 
-    val reader = new InterfaceWriter() {}
-    val interfaces = fileList.map(f => reader.readInterface(new File(sourcePath + f + ".interface"))).map(SystemLinker.linkStdLib)
+    val interfaces = fileList.map(f => readInterface(new File(sourcePath + f + ".interface"))).map(SystemLinker.linkStdLib)
 
     def linkTreewise(l: List[CInterface]): CInterface = {
         if (l.size > 2) {
@@ -84,10 +83,10 @@ trait CModuleInterfaceGenerator extends Evaluation with App with Logging {
     val interfacePath = new File(completePath + "/" + filename + linkExt)
     val dbgInterfacePath = new File(completePath + "/" + filename + dbgLinkExt)
 
-    reader.writeInterface(finalInterface, interfacePath)
+    writeInterface(finalInterface, interfacePath)
     logger.info("Generated interface in " + interfacePath.getCanonicalPath)
 
-    reader.debugInterface(finalInterface, dbgInterfacePath)
+    debugInterface(finalInterface, dbgInterfacePath)
     logger.info("Generated debug interface in " + dbgInterfacePath.getCanonicalPath)
 
     new CModuleInterface(interfacePath.getCanonicalPath)
