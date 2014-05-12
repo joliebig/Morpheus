@@ -1,6 +1,5 @@
 package de.fosd.typechef.crefactor.evaluation.defaultEngines
 
-import java.io.File
 import java.util
 import scala.collection.mutable
 import scala.util.Random
