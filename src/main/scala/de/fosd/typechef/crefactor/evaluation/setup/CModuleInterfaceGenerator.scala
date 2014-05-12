@@ -9,7 +9,7 @@ import de.fosd.typechef.crefactor.Logging
 import de.fosd.typechef.crefactor.backend.CModuleInterface
 
 /**
- * Interface for generating linking informations of a whole given project
+ * Interface for generating linking information of a whole given project
  */
 trait CModuleInterfaceGenerator extends Evaluation with App with Logging {
 
@@ -78,8 +78,8 @@ trait CModuleInterfaceGenerator extends Evaluation with App with Logging {
     logger.info("Linked interface is fully configured:\t" + finalInterface.isFullyConfigured)
     logger.info("Linked interface is well-formed:\t" + finalInterface.isWellformed)
 
-    logger.info(finalInterface.exports.size + " exports: " + finalInterface.exports)
-    logger.info(finalInterface.imports.size + " imports: " + finalInterface.imports)
+    //logger.info(finalInterface.exports.size + " exports: " + finalInterface.exports)
+    //logger.info(finalInterface.imports.size + " imports: " + finalInterface.imports)
 
     val interfacePath = new File(completePath + "/" + filename + linkExt)
     val dbgInterfacePath = new File(completePath + "/" + filename + dbgLinkExt)
