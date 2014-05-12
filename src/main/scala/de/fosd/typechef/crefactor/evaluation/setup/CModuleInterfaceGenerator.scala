@@ -29,7 +29,6 @@ trait CModuleInterfaceGenerator extends Evaluation with App with Logging with In
     logger.info("Loaded constraints in " + fm_const_genClock.getTime + "ms.")
 
     val fm_genClock = new StopClock
-    //val fm = FeatureExprFactory.default.featureModelFactory.create(fm_constraints)
     val fm = FeatureExprFactory.default.featureModelFactory.createFromDimacsFile(featureModel_DIMACS, "")
     logger.info("Loaded feature model in " + fm_genClock.getTime + "ms.")
 
@@ -60,14 +59,6 @@ trait CModuleInterfaceGenerator extends Evaluation with App with Logging with In
             EmptyInterface
         }
     }
-
-    /** def linkIncrementally(l: List[CInterface]): CInterface = l.fold(EmptyInterface)((left, right) => {
-        if (!(left isCompatibleTo right)) {
-            println("Conflict: " + (left getConflicts right))
-            left
-        }
-        else left link right
-    }) */
 
     val linkingClock = new StopClock
     val finalInterface = linkTreewise(interfaces)//.packWithOutElimination //.andFM(fm_constraints)
