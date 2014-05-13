@@ -12,6 +12,8 @@ import de.fosd.typechef.parser.c._
 
 /**
  * Implements inline-function refactoring!
+ * We support inlining of function calls as part of expressions (e.g., x + foo();) and
+ * single statements (e.g., foo();).
  */
 object CInlineFunction extends CRefactor with IntraCFG {
 
