@@ -141,7 +141,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
     private def isRecursive(funcDef: FunctionDef): Boolean = {
         filterASTElems[PostfixExpr](funcDef).exists({
-            case PostfixExpr(Id(name), FunctionCall(_)) => name.equals(funcDef.getName)
+            case PostfixExpr(Id(name), FunctionCall(_)) => name == funcDef.getName
             case _ => false
         })
     }
