@@ -636,6 +636,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
         val env = morpheus.getEnv(compStmt.innerStatements.last.entry)
         val nameScope = env.varEnv.lookupScope(symbol)
 
+        // TODO ajanker: Is there a reason why we traverse nameScope without a feature expression?
         ConditionalLib.leaves(nameScope).exists(s => s == scope)
     }
 
