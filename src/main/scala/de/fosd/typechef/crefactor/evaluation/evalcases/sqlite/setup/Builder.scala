@@ -1,10 +1,11 @@
 package de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.setup
 
-import de.fosd.typechef.crefactor.evaluation.setup.Building
-import de.fosd.typechef.parser.c.TranslationUnit
 import java.io.File
-import de.fosd.typechef.featureexpr.FeatureModel
+
 import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.SQLiteEvaluation
+import de.fosd.typechef.crefactor.evaluation.setup.Building
+import de.fosd.typechef.featureexpr.FeatureModel
+import de.fosd.typechef.parser.c.TranslationUnit
 
 
 object Builder extends SQLiteEvaluation with Building {

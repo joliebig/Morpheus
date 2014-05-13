@@ -1,17 +1,18 @@
 package de.fosd.typechef.crefactor.evaluation
 
 import java.io._
-import de.fosd.typechef.parser.c._
-import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr, SingleFeatureExpr, FeatureModel}
 import java.util.regex.Pattern
-import scala.io.Source
-import de.fosd.typechef.crefactor.{Morpheus, Logging}
 import java.util.{TimerTask, Timer, IdentityHashMap}
-import de.fosd.typechef.crefactor.evaluation.setup.BuildCondition
-import de.fosd.typechef.typesystem.linker.SystemLinker
+import scala.io.Source
+
+import de.fosd.typechef.parser.c._
 import de.fosd.typechef.conditional.Opt
-import de.fosd.typechef.crefactor.evaluation.defaultEngines.{DefaultInlineEngine, DefaultExtractEngine, DefaultRenameEngine}
 import de.fosd.typechef.crefactor.backend.CModuleInterface
+import de.fosd.typechef.crefactor.evaluation.setup.BuildCondition
+import de.fosd.typechef.crefactor.evaluation.defaultEngines.{DefaultInlineEngine, DefaultExtractEngine, DefaultRenameEngine}
+import de.fosd.typechef.crefactor.{Morpheus, Logging}
+import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr, SingleFeatureExpr, FeatureModel}
+import de.fosd.typechef.typesystem.linker.SystemLinker
 
 trait Evaluation extends Logging with BuildCondition with ASTNavigation with ConditionalNavigation {
 

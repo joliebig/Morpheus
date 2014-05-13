@@ -1,16 +1,16 @@
 package de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5
 
 import java.io._
-import de.fosd.typechef.crefactor.evaluation.{PreparedRefactorings, StatsCan, Refactoring, Evaluation}
 import scala.io.Source
-import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.refactor.{Inline, Extract, Rename}
-import de.fosd.typechef.parser.c.TranslationUnit
-import de.fosd.typechef.featureexpr.FeatureModel
+
 import de.fosd.typechef.crefactor.backend.CModuleInterface
-import de.fosd.typechef.crefactor.Morpheus
+import de.fosd.typechef.crefactor.evaluation.{PreparedRefactorings, StatsCan, Refactoring, Evaluation}
+import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.refactor.{Inline, Extract, Rename}
 import de.fosd.typechef.crefactor.evaluation.Stats._
-import de.fosd.typechef.parser.c.TranslationUnit
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
+import de.fosd.typechef.crefactor.Morpheus
+import de.fosd.typechef.featureexpr.FeatureModel
+import de.fosd.typechef.parser.c.TranslationUnit
 
 
 trait BusyBoxEvaluation extends Evaluation {

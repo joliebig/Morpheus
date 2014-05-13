@@ -1,13 +1,10 @@
 package de.fosd.typechef.crefactor.backend.engine
 
 import de.fosd.typechef.crefactor.backend.CRefactor
-import de.fosd.typechef.parser.c.{TranslationUnit, AST, Id}
-import de.fosd.typechef.crefactor.frontend.util.CodeSelection
+import de.fosd.typechef.parser.c.{TranslationUnit, Id}
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.evaluation_utils.Configuration
-import java.io.File
 import de.fosd.typechef.conditional.Opt
-import de.fosd.typechef.crefactor.backend.codeselection.ASTSelection
 
 /**
  * Implements the technique of correctly renaming an identifier.

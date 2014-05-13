@@ -1,10 +1,10 @@
 package de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5
 
 import java.io.{FilenameFilter, File}
-import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
+
 import de.fosd.typechef.crefactor.evaluation.{StatsCan, Verification}
 import de.fosd.typechef.crefactor.evaluation.Stats._
-import de.fosd.typechef.SimpleConfiguration
+import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
 
 object BusyBoxVerification extends BusyBoxEvaluation with Verification {
 

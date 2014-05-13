@@ -1,15 +1,14 @@
 package de.fosd.typechef.crefactor.evaluation.evalcases.sqlite
 
-import de.fosd.typechef.parser.c.{TranslationUnit, ConditionalNavigation, ASTNavigation}
 import java.io.{FileWriter, File}
-import de.fosd.typechef.crefactor.evaluation.{PreparedRefactorings, StatsCan, Refactoring, Evaluation}
-import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.refactor.{Inline, Extract, Rename}
-import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
-import de.fosd.typechef.crefactor.backend.CModuleInterface
-import de.fosd.typechef.crefactor.Morpheus
-import de.fosd.typechef.crefactor.evaluation.Stats._
-import de.fosd.typechef.parser.c.TranslationUnit
 
+import de.fosd.typechef.parser.c.{ConditionalNavigation, ASTNavigation, TranslationUnit}
+import de.fosd.typechef.crefactor.backend.CModuleInterface
+import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.refactor.{Inline, Extract, Rename}
+import de.fosd.typechef.crefactor.evaluation.{PreparedRefactorings, StatsCan, Refactoring, Evaluation}
+import de.fosd.typechef.crefactor.evaluation.Stats._
+import de.fosd.typechef.crefactor.Morpheus
+import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
 
 trait SQLiteEvaluation extends Evaluation with ASTNavigation with ConditionalNavigation {
 

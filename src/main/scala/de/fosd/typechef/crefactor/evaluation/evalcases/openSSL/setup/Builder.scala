@@ -1,12 +1,13 @@
 package de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.setup
 
-import de.fosd.typechef.crefactor.evaluation.setup.Building
-import de.fosd.typechef.parser.c.TranslationUnit
 import java.io.File
-import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.OpenSSLEvaluation
-import de.fosd.typechef.featureexpr.{SingleFeatureExpr, FeatureModel}
 import java.nio.file.{Paths, Files}
 import scala.io.Source
+
+import de.fosd.typechef.crefactor.evaluation.setup.Building
+import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.OpenSSLEvaluation
+import de.fosd.typechef.featureexpr.{SingleFeatureExpr, FeatureModel}
+import de.fosd.typechef.parser.c.TranslationUnit
 import de.fosd.typechef.{TUnitFeatures, ConfigurationHandling}
 
 
