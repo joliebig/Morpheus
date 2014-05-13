@@ -31,6 +31,8 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
 
     // TODO @ajanker: type checking is done twice here; maybe move code to update function and do logging there.
     // @joliebig: i don't understand completly why type checking is performed twice here?
+    // @ajanker: There are two places in which type checking is performed here. The following lines and
+    // the update function.
     private val typeCheck = new StopClock
     getTypeSystem.typecheckTranslationUnit(getTranslationUnit)
     private val typeCheckTime = typeCheck.getTime
