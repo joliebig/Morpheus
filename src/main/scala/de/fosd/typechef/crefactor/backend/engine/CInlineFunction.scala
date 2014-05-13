@@ -694,14 +694,19 @@ object CInlineFunction extends CRefactor with IntraCFG {
             }
         }
         // TODO Safe solution -> features
+        // TODO ajanker: Previous comment is unclear!
         val exprList = filterASTElems[FunctionCall](call).head.params.exprs
-        params.flatMap(parameter => {
-            if (exprList.isEmpty) None
-            else generateInitializer(parameter, exprList) match {
-                case null => None
-                case x => Some(x)
-            }
-        }).flatten
+
+        if (exprList.isEmpty) {
+            List()
+        } else {
+            params.flatMap(param => {
+                generateInitializer(param, exprList) match {
+                    case null => List()
+                    case x => x
+                }
+            })
+        }
     }
 
     private def renameShadowedIds(idsToRename: List[Id], fDef: Opt[FunctionDef], fCall: Opt[AST],
