@@ -1,16 +1,13 @@
 package de.fosd.typechef.crefactor.backend.engine
 
+import java.util.Collections
+
 import de.fosd.typechef.conditional._
 import de.fosd.typechef.crefactor._
 import de.fosd.typechef.crefactor.backend.{RefactorException, CRefactor}
-import de.fosd.typechef.crefactor.frontend.util.CodeSelection
 import de.fosd.typechef.crewrite.IntraCFG
 import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureExprFactory}
 import de.fosd.typechef.parser.c._
-import scala._
-import java.util.Collections
-import scala.Some
-import de.fosd.typechef.crefactor.backend.codeselection.ASTSelection
 
 
 /**
@@ -51,7 +48,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
      *
      * @param morpheus the morpheus environment
      * @param id the function's identifier
-     * @return the refactored tunit
+     * @return error string (left) or the refactored tunit (right)
      */
     def inline(morpheus: Morpheus, id: Id, keepDeclaration : Boolean): Either[String, TranslationUnit] = {
         val (fCalls, fDecls, fDefs, callExpr) = divideCallDeclDef(id, morpheus)
@@ -76,10 +73,9 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
             Right(tunitRefactored)
         } catch {
-            case e: Exception => {
+            case e: Exception =>
                 e.printStackTrace()
                 Left(e.getMessage)
-            }
         }
     }
 
@@ -223,7 +219,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
         }
 
         findPriorASTElem[Statement](call.entry, morpheus.getASTEnv) match {
-            case Some(entry) =>{
+            case Some(entry) =>
                 val inlineExprStatements = generateInlineExprStmts
                 val parent = parentOpt(entry, morpheus.getASTEnv).asInstanceOf[Opt[Statement]]
                 var replaceStmt: CompoundStatement = null
@@ -275,8 +271,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
                         logger.error("Missed InlineStatementExpr" + x)
                         throw new RefactorException("Refactoring failed - missed InlineStatementExpr")
                 }
-                insertRefactoredAST(morpheus, getCompStatement(call, morpheus.getASTEnv),
-                    replaceStmt)}
+                insertRefactoredAST(morpheus, getCompStatement(call, morpheus.getASTEnv), replaceStmt)
             case _ => throw new RefactorException("FunctionCall to inline is no statement.")
         }
     }
@@ -575,12 +570,11 @@ object CInlineFunction extends CRefactor with IntraCFG {
     private def isTypeDef(refs: List[Opt[Id]], morpheus: Morpheus): Boolean = {
         refs.map(_.entry).exists(ref => {
             findPriorASTElem[Declaration](ref, morpheus.getASTEnv) match {
-                case Some(decl) => {
-                    decl.init.exists(_.entry.getName.equals(ref.name)) && decl.declSpecs.exists(_.entry match {
+                case Some(decl) =>
+                    decl.init.exists(_.entry.getName == ref.name) && decl.declSpecs.exists(_.entry match {
                         case _: TypedefSpecifier => true
                         case _ => false
                     })
-                }
                 case _ => false
             }
         })

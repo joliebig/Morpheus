@@ -60,7 +60,12 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
 
     def insertBefore[T <: Product](t: T, mark: Opt[_], insert: Opt[_]): T = {
         val r = oncetd(rule {
-            case l: List[Opt[_]] => l.flatMap(x => if (x.eq(mark)) insert :: x :: Nil else x :: Nil)
+            case l: List[_] =>
+                l.flatMap(x =>
+                    if (x.asInstanceOf[AnyRef].eq(mark))
+                        insert :: x :: Nil
+                    else
+                        x :: Nil)
         })
         r(t).get.asInstanceOf[T]
     }
@@ -70,21 +75,35 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
      */
     def insertBeforeAndAfter[T <: Product](t: T, mark: Opt[_], before: Opt[_], after: Opt[_]): T = {
         val r = oncetd(rule {
-            case l: List[Opt[_]] => l.flatMap(x => if (x.eq(mark)) before :: x :: after :: Nil else x :: Nil)
+            case l: List[_] =>
+                l.flatMap(x =>
+                    if (x.asInstanceOf[AnyRef].eq(mark))
+                        before :: x :: after :: Nil
+                    else
+                        x :: Nil)
         })
         r(t).get.asInstanceOf[T]
     }
 
     def insertListBefore[T <: Product](t: T, mark: Opt[_], insert: List[Opt[_]]): T = {
         val r = oncetd(rule {
-            case l: List[Opt[_]] => l.flatMap(x => if (x.eq(mark)) insert ::: x :: Nil else x :: Nil)
+            case l: List[_] =>
+                l.flatMap(x =>
+                    if (x.asInstanceOf[AnyRef].eq(mark))
+                        insert ::: x :: Nil
+                    else
+                        x :: Nil)
         })
         r(t).get.asInstanceOf[T]
     }
 
     def replace[T <: Product](t: T, mark: Opt[_], replace: Opt[_]): T = {
         val r = manybu(rule {
-            case l: List[Opt[_]] => l.flatMap(x => if (x.eq(mark)) replace :: Nil else x :: Nil)
+            case l: List[_] => l.flatMap(x =>
+                if (x.asInstanceOf[AnyRef].eq(mark))
+                    replace :: Nil
+                else
+                    x :: Nil)
         })
         r(t).get.asInstanceOf[T]
     }
@@ -99,7 +118,12 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
 
     def replaceOnceTD[T <: Product](t: T, mark: Opt[_], replace: Opt[_]): T = {
         val r = oncetd(rule {
-            case l: List[Opt[_]] => l.flatMap(x => if (x.eq(mark)) replace :: Nil else x :: Nil)
+            case l: List[_] =>
+                l.flatMap(x =>
+                    if (x.asInstanceOf[AnyRef].eq(mark))
+                        replace :: Nil
+                    else
+                        x :: Nil)
         })
         r(t).get.asInstanceOf[T]
     }
@@ -120,16 +144,21 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
 
     def replaceStmtWithStmtsInCompStmt[T <: Product](t: CompoundStatement, e: Opt[Statement], n: List[Opt[Statement]]): T = {
         val r = manybu(rule {
-            case l: List[Opt[_]] => l.flatMap(x => if (x eq e) Some(n) else x :: Nil)
+            case l: List[_] =>
+                l.flatMap(x =>
+                    if (x.asInstanceOf[AnyRef] eq e)
+                        Some(n)
+                    else
+                        x :: Nil)
         })
         r(t).get.asInstanceOf[T]
     }
 
     // generic replace function; possible replacement for replaceId and
     // replaceCompoundStatement, and maybe more?
-    def replace[T <: Product, U <: AnyRef](t: T, e: U, n: U): T = {
+    def replace[T <: Product, U](t: T, e: U, n: U): T = {
         val r = manybu(rule {
-            case i: U if i eq e => n
+            case i if i.asInstanceOf[AnyRef] eq e.asInstanceOf[AnyRef] => n
         })
         r(t).getOrElse(t).asInstanceOf[T]
     }
@@ -138,7 +167,12 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
     // oncetd is top-down traversal, which stops at first successful match
     def remove[T <: Product](t: T, remove: Opt[_]): T = {
         val r = oncetd(rule {
-            case l: List[Opt[_]] => l.flatMap(x => if (x.eq(remove)) Nil else x :: Nil)
+            case l: List[_] =>
+                l.flatMap(x =>
+                    if (x.asInstanceOf[AnyRef].eq(remove))
+                        Nil
+                    else
+                        x :: Nil)
         })
         r(t).get.asInstanceOf[T]
     }
