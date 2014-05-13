@@ -113,7 +113,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
     /*
      * Retrieves if there are bad conditional return during control flow.
      */
-    private def hasIncompatibleCFG(func: FunctionDef, morpheus: Morpheus): Boolean = {
+    private def hasIncompatibleCFG(fDef: FunctionDef, morpheus: Morpheus): Boolean = {
 
         // this function determines for a given AST node the corresponding statement
         // in the compound statement that is directly attached to the function definition
@@ -128,7 +128,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
             }
         }
 
-        val fPreds = pred(func, morpheus.getASTEnv).filterNot(x => x.feature isSatisfiable morpheus.getFM)
+        val fPreds = pred(fDef, morpheus.getASTEnv).filterNot(x => x.feature isSatisfiable morpheus.getFM)
         val fReturnStmts = fPreds.map(_.entry).filter { case _: ReturnStatement => true; case _ => false }
 
         if (fReturnStmts.size > 0) {
