@@ -662,6 +662,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
     private def getInitializers(call: Opt[AST], params: List[Opt[DeclaratorExtension]],
                                 morpheus: Morpheus): List[Opt[DeclarationStatement]] = {
 
+        // TODO ajanker: I do not understand what the code does. Please comment!
         def generateInitializer(param: Opt[DeclaratorExtension], exprList: List[Opt[Expr]]):
         List[Opt[DeclarationStatement]] = {
             var exprs = exprList
