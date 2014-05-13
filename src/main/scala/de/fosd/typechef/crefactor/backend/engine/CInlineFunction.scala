@@ -524,6 +524,12 @@ object CInlineFunction extends CRefactor with IntraCFG {
     private def isValidFDef(fDef: Opt[FunctionDef], fCall: Opt[_], morpheus: Morpheus): Boolean = {
         // If a function call's feature does not imply a function definition's feature,
         // then there is no need to inline this definition at this call.
+        // TODO ajanker: The comment does not reflect the following condition.
+        // fcall.feature.implies(fDef.feature).isTautology(morpheus.getFM)
+        // Furthermore, the isTautology seems overly strict because function definition and function
+        // call have to have the same (i.e., equivalent) annotation.
+        // fcall.feature.implies(fDef.feature).isSatisfiable(morpheus.getFM) should do it.
+        // I suggest You check it with an example.
         if (!(fDef.feature.equivalentTo(FeatureExprFactory.True)
             || fDef.feature.implies(fCall.feature).isTautology(morpheus.getFM)))
             return false
