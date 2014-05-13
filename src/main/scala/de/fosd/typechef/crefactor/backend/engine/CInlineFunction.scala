@@ -473,12 +473,12 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
         val idsToRename = getIdsToRename(fDef.entry, workingStatement, morpheus)
 
-        val renamed = renameShadowedIds(idsToRename, fDef, fCall, morpheus)
-        val initializer = getInitializers(fCall, renamed._2, morpheus)
-        var stmts = applyFeaturesOnInlineStmts(renamed._1, fCall, morpheus)
+        val (renamedIdsStmts, renamedIdsParams) = renameShadowedIds(idsToRename, fDef, fCall, morpheus)
+        val initializer = getInitializers(fCall, renamedIdsParams, morpheus)
+        var stmts = applyFeaturesOnInlineStmts(renamedIdsStmts, fCall, morpheus)
         val returnStmts = getReturnStmts(stmts)
 
-        // remove return statements
+        // replace (return expr; => expr;) or remove (return; => <removed>) return statements
         stmts = returnStmts.foldLeft(stmts)((stmts, returnStmt) =>
             returnStmt.entry.expr match {
                 case None => remove(stmts, returnStmt)
