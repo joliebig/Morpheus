@@ -111,7 +111,15 @@ object CInlineFunction extends CRefactor with IntraCFG {
     }
 
     /*
-     * Retrieves if there are bad conditional return during control flow.
+     * We do not support the integration of functions with multiple return statements because integrating their
+     * control flow on the call site is complex.
+     *
+     * We check the function definition (fDef) for return expressions that belong to different return statements.
+     * If fDef has varying return statements, it is incompatible, otherwise fDef is compatible.
+     *
+     * Example:
+     * int foo() { ... return x; }                              // is compatible
+     * int foo() { if (...) { return x+1;} else { return x+2; } // is not compatible
      */
     private def hasIncompatibleCFG(fDef: FunctionDef, morpheus: Morpheus): Boolean = {
 

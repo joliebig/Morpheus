@@ -69,11 +69,10 @@ trait DefaultInlineEngine extends Refactoring with Evaluation {
         val refAST = CInlineFunction.inline(morpheus, callIdToInline, true)
 
         refAST match {
-            case Left(errmsg) => {
+            case Left(errmsg) =>
                 logger.error("Inlining failed! " + errmsg)
                 (false, null, List(), List())
-            }
-            case Right(tunit) => {
+            case Right(tunit) =>
                 StatsCan.addStat(morpheus.getFile, RefactorTime, refTime.getTime)
                 val callDeclDef = CInlineFunction.getCallDeclDefCallExprs(callIdToInline, morpheus)
 
@@ -89,7 +88,6 @@ trait DefaultInlineEngine extends Refactoring with Evaluation {
                 logger.info("Affected features: " + features)
 
                 (true, tunit, List(features), List())
-            }
         }
     }
 
