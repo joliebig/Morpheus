@@ -427,7 +427,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
     private def inlineFDefInCompStmt(compStmt: CompoundStatement, morpheus: Morpheus, fCall: Opt[Statement],
                                      fDef: Opt[FunctionDef]): CompoundStatement = {
-        if (!isValidFDef(fDef, fCall, compStmt, morpheus))
+        if (!isValidFDef(fDef, fCall, morpheus))
             return compStmt
 
         var workingStatement = compStmt
@@ -451,7 +451,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
     private def inlineFDefInExprStmt(compStmt: CompoundStatement, morpheus: Morpheus, fCall: Opt[AST],
                                      fDef: Opt[FunctionDef]): ExprStatement = {
-        if (!isValidFDef(fDef, fCall, compStmt, morpheus))
+        if (!isValidFDef(fDef, fCall, morpheus))
             return null
 
         val compoundStmtExpr: CompoundStatementExpr =
@@ -521,13 +521,13 @@ object CInlineFunction extends CRefactor with IntraCFG {
         }
     }
 
-    private def isValidFDef(fDef: Opt[FunctionDef], call: Opt[_], ccStatement: CompoundStatement,
-                            morpheus: Morpheus): Boolean = {
+    private def isValidFDef(fDef: Opt[FunctionDef], fCall: Opt[_], morpheus: Morpheus): Boolean = {
+        // If a function call's feature does not imply a function definition's feature,
+        // then there is no need to inline this definition at this call.
         if (!(fDef.feature.equivalentTo(FeatureExprFactory.True)
-            || fDef.feature.implies(call.feature).isTautology(morpheus.getFM)))
+            || fDef.feature.implies(fCall.feature).isTautology(morpheus.getFM)))
             return false
 
-        // stmt's feature does not imply fDef's feature -> no need to inline this def at this position
         if (isRecursive(fDef.entry))
             throw new RefactorException("Can not inline - method is recursive.")
         if (hasIncompatibleCFG(fDef.entry, morpheus))
@@ -536,8 +536,8 @@ object CInlineFunction extends CRefactor with IntraCFG {
         true
     }
 
-    private def getIdsToRename(funcDef: FunctionDef, compStmt: CompoundStatement, morpheus: Morpheus) = {
-        val idsToInline = filterAllASTElems[Id](funcDef)
+    private def getIdsToRename(fDEf: FunctionDef, compStmt: CompoundStatement, morpheus: Morpheus) = {
+        val idsToInline = filterAllASTElems[Id](fDEf)
         idsToInline.filter(isDeclaredInFunctionCallScope(_, compStmt, morpheus))
     }
 
@@ -551,7 +551,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
         morpheus.getReferences(id).map(_.entry).exists(ref => {
             findPriorASTElem[FunctionDef](ref, morpheus.getASTEnv) match {
-                case Some(f) => f.declarator.getName.equals(ref.name)
+                case Some(f) => f.declarator.getName == ref.name
                 case _ => false
             }
         })
@@ -618,16 +618,16 @@ object CInlineFunction extends CRefactor with IntraCFG {
     }
 
     /**
-     * Checks if a name is visibile at the place of the inlining function scope.
+     * Checks if a symbol is visible at the place of the inlining function scope.
      */
     private def isVisibleGlobalNameInFunctionScope(name: String, callCompStmt: CompoundStatement, morpheus: Morpheus) =
         isPartOfScope(name, callCompStmt, morpheus, 0)
 
     /**
-     * Checks if a name is visibile at the place of the inlining function scope.
+     * Checks if a symbol is visible at the place of the inlining function scope.
      */
-    private def isVisibleNameInFunctionScope(name: String, callCompStmt: CompoundStatement, morpheus: Morpheus) =
-        !isPartOfScope(name, callCompStmt, morpheus, -1)
+    private def isVisibleNameInFunctionScope(symbol: String, callCompStmt: CompoundStatement, morpheus: Morpheus) =
+        !isPartOfScope(symbol, callCompStmt, morpheus, -1)
 
     /**
      * Checks if a symbol is part of a specific scope.
