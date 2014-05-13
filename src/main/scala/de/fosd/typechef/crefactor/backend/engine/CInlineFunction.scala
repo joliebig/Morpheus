@@ -16,28 +16,26 @@ import de.fosd.typechef.parser.c._
 object CInlineFunction extends CRefactor with IntraCFG {
 
     // TODO Integrate in inline
-    def canInline(morpheus: Morpheus, call: Id): Boolean = {
-        if (!isFunctionCall(morpheus, call))
+    def canInline(morpheus: Morpheus, fCall: Id): Boolean = {
+        if (!isFunctionCall(morpheus, fCall))
             return false
 
-        val callsDeclDef = divideCallDeclDef(call, morpheus)
-        val fDefs = callsDeclDef._3
-        val calls = callsDeclDef._1
+        val (fCalls, _, fDefs, _) = getCallDeclDefCallExprs(fCall, morpheus)
 
         if (fDefs.isEmpty) {
-            logger.info(call + " is a imported function.")
+            logger.info(fCall + " is a imported function.")
             false
         } else if (fDefs.exists(func => hasIncompatibleCFG(func.entry, morpheus)
             || isRecursive(func.entry)))  {
-            logger.info(call + " is not compatible.")
+            logger.info(fCall + " is not compatible.")
             false
-        } else if (calls.exists(fCall => {
-            fDefs.exists(fDef => {
-                val callCompStmt = getCompStatement(fCall, morpheus.getASTEnv)
-                val ids = filterAllASTElems[Id](fDef)
+        } else if (fCalls.exists(fc => {
+            fDefs.exists(fd => {
+                val callCompStmt = getCompStatement(fc, morpheus.getASTEnv)
+                val ids = filterAllASTElems[Id](fd)
                 ids.exists(hasIncompatibleVariableScoping(_, callCompStmt, morpheus))
             })})) {
-            logger.info(call + " has different scopes.")
+            logger.info(fCall + " has different scopes.")
             false
         } else
             true
@@ -51,7 +49,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
      * @return error string (left) or the refactored tunit (right)
      */
     def inline(morpheus: Morpheus, id: Id, keepDeclaration : Boolean): Either[String, TranslationUnit] = {
-        val (fCalls, fDecls, fDefs, callExpr) = divideCallDeclDef(id, morpheus)
+        val (fCalls, fDecls, fDefs, callExpr) = getCallDeclDefCallExprs(id, morpheus)
 
         if (fDefs.isEmpty)
             Left("Inlining of external function definitions is not supported.")
@@ -79,27 +77,28 @@ object CInlineFunction extends CRefactor with IntraCFG {
         }
     }
 
-    def divideCallDeclDef(callId: Id, morpheus: Morpheus): (List[Opt[Statement]], List[Opt[AST]],
+    // Starting from a function-call identifier (fCall), we explore reference information to get
+    // function-call statements (fCallStmts), function declarations (fDecls), function definitions (fDefs),
+    // and function-call expressions (fCallExprs; function calls somewhere inside a statement or expression).
+    def getCallDeclDefCallExprs(fCall: Id, morpheus: Morpheus): (List[Opt[Statement]], List[Opt[AST]],
         List[Opt[FunctionDef]], List[Opt[AST]]) = {
         var fCallStmts = List[Opt[Statement]]()
         var fDecls = List[Opt[AST]]()
         var fDefs = List[Opt[FunctionDef]]()
         var fCallExprs = List[Opt[AST]]()
 
-        morpheus.getReferences(callId).map(_.entry).foreach(id => {
+        morpheus.getReferences(fCall).map(_.entry).foreach(id => {
             val parent = parentOpt(id, morpheus.getASTEnv)
             parent.entry match {
                 case _: NestedFunctionDef => // not supported
                 case _: WhileStatement => fCallExprs ::= parent.asInstanceOf[Opt[AST]]
                 case _: Statement => fCallStmts ::= parent.asInstanceOf[Opt[Statement]]
                 case _: FunctionDef => fDefs ::= parent.asInstanceOf[Opt[FunctionDef]]
-                case iI: InitDeclaratorI =>
-                    iI.i match {
-                        case None => fDecls ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[AST]]
-                        case _ => parentAST(parentAST(id, morpheus.getASTEnv), morpheus.getASTEnv) match {
-                            case a: ArrayAccess => logger.warn("hit array funccall " + a + " " + parent)
-                            case _ => fCallStmts ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[DeclarationStatement]]
-                        }
+                case InitDeclaratorI(_, _, None) => fDecls ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[AST]]
+                case InitDeclaratorI(_, _, Some(_)) =>
+                    parentAST(parentAST(id, morpheus.getASTEnv), morpheus.getASTEnv) match {
+                        case a: ArrayAccess => logger.warn("hit array funccall " + a + " " + parent)
+                        case _ => fCallStmts ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[DeclarationStatement]]
                     }
                 case _: InitDeclaratorE => fDecls ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[AST]]
                 case _: Expr => fCallExprs ::= parent.asInstanceOf[Opt[AST]]

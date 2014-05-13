@@ -30,7 +30,7 @@ trait DefaultInlineEngine extends Refactoring with Evaluation {
 
         // Prefer var func calls
         val variableFuncCalls = availableFuncCalls.flatMap(call => {
-            val callsDeclDef = CInlineFunction.divideCallDeclDef(call, morpheus)
+            val callsDeclDef = CInlineFunction.getCallDeclDefCallExprs(call, morpheus)
             val varCalls = callsDeclDef._1.exists(isVariable)
             val varDecls = callsDeclDef._2.exists(isVariable)
             val varDefs = callsDeclDef._3.exists(isVariable)
@@ -75,7 +75,7 @@ trait DefaultInlineEngine extends Refactoring with Evaluation {
             }
             case Right(tunit) => {
                 StatsCan.addStat(morpheus.getFile, RefactorTime, refTime.getTime)
-                val callDeclDef = CInlineFunction.divideCallDeclDef(callIdToInline, morpheus)
+                val callDeclDef = CInlineFunction.getCallDeclDefCallExprs(callIdToInline, morpheus)
 
                 val callFeatures = callDeclDef._1.map(_.feature)
                 val declFeatures = callDeclDef._2.flatMap(filterAllFeatureExpr(_))
