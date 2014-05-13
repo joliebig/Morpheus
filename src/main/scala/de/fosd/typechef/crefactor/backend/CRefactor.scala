@@ -1,13 +1,10 @@
 package de.fosd.typechef.crefactor.backend
 
-import org.kiama.rewriting.Rewriter._
-
 import de.fosd.typechef.typesystem.{CType, CEnvCache}
 import de.fosd.typechef.crefactor.{Logging, Morpheus}
 import de.fosd.typechef.parser.c._
-import de.fosd.typechef.crefactor.frontend.util.CodeSelection
 import de.fosd.typechef.conditional._
-import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
+import de.fosd.typechef.featureexpr.FeatureExpr
 import de.fosd.typechef.typesystem.linker.SystemLinker
 import java.io.File
 
@@ -52,7 +49,7 @@ trait CRefactor
     def isValidForRename(id: Id, morpheus : Morpheus): Boolean =
         !id.name.contains("_main") && !isSystemLinkedName(id.name) && {
             if (morpheus.getModuleInterface != null)
-                !(morpheus.getModuleInterface.isBlackListed(id.name))
+                !morpheus.getModuleInterface.isBlackListed(id.name)
             else true
         } && !hasConflictingLinking(id, morpheus) &&
             id.hasPosition && !hasConflictingLinking(id, morpheus)
