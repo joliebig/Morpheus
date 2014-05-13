@@ -327,8 +327,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
         }
 
     private def assignReturnValue(callCompStmt: CompoundStatement, fCall: Opt[Statement],
-                                  returnStmts: List[Opt[ReturnStatement]], morpheus: Morpheus):
-    CompoundStatement = {
+                                  returnStmts: List[Opt[ReturnStatement]], morpheus: Morpheus): CompoundStatement = {
         var wStmt = callCompStmt
 
         def initReturnStatement(decl: Declaration, returnStmt: Opt[ReturnStatement],
@@ -631,41 +630,26 @@ object CInlineFunction extends CRefactor with IntraCFG {
         !isPartOfScope(name, callCompStmt, morpheus, -1)
 
     /**
-     * Checks if a name is part of a specific scope.
+     * Checks if a symbol is part of a specific scope.
      */
-    private def isPartOfScope(name: String, compStmt: CompoundStatement, morpheus : Morpheus, scope : Int) : Boolean = {
+    private def isPartOfScope(symbol: String, compStmt: CompoundStatement, morpheus: Morpheus, scope: Int): Boolean = {
         val env = morpheus.getEnv(compStmt.innerStatements.last.entry)
-        val nameScope = env.varEnv.lookupScope(name)
+        val nameScope = env.varEnv.lookupScope(symbol)
 
-        def checkOne(one: Conditional[Int]): Boolean = {
-            one match {
-                case One(`scope`) => true
-                case _ => false
-            }
-        }
-
-        def checkConditionalScope(conditional: Conditional[Int]): Boolean = {
-            conditional match {
-                case Choice(_, thenB, elseB) =>
-                    checkConditionalScope(thenB) || checkConditionalScope(elseB)
-                case One((_)) => checkOne(conditional)
-            }
-        }
-
-        checkConditionalScope(nameScope)
+        ConditionalLib.leaves(nameScope).exists(s => s == scope)
     }
 
-    private def getInitializers(call: Opt[AST], parameters: List[Opt[DeclaratorExtension]],
+    private def getInitializers(call: Opt[AST], params: List[Opt[DeclaratorExtension]],
                                 morpheus: Morpheus): List[Opt[DeclarationStatement]] = {
 
-        def generateInitializer(parameter: Opt[DeclaratorExtension], exprList: List[Opt[Expr]]):
+        def generateInitializer(param: Opt[DeclaratorExtension], exprList: List[Opt[Expr]]):
         List[Opt[DeclarationStatement]] = {
             var exprs = exprList
-            parameter.entry match {
+            param.entry match {
                 case p: DeclParameterDeclList =>
                     p.parameterDecls.flatMap(pDecl => {
                         val expr = exprs.head
-                        val feature = expr.feature.and(parameter.feature)
+                        val feature = expr.feature.and(param.feature)
 
                         if (!feature.isSatisfiable(morpheus.getFM))
                             None
@@ -673,8 +657,11 @@ object CInlineFunction extends CRefactor with IntraCFG {
                             exprs = exprs.tail
                             pDecl.entry match {
                                 case p: ParameterDeclarationD =>
-                                    val spec = p.specifiers.map(specifier => specifier.copy(feature = feature.and(specifier.feature)))
-                                    Some(Opt(feature, DeclarationStatement(Declaration(spec, List(Opt(feature, InitDeclaratorI(p.decl, List(), Some(Initializer(None, expr.entry)))))))))
+                                    val spec = p.specifiers.map(s => s.copy(feature = feature.and(s.feature)))
+                                    Some(Opt(feature,
+                                        DeclarationStatement(
+                                            Declaration(spec, List(Opt(feature,
+                                                InitDeclaratorI(p.decl, List(), Some(Initializer(None, expr.entry)))))))))
                                 case x =>
                                     logger.warn("missed " + x)
                                     throw new RefactorException("No rule defined for initializing parameter:" + x)
@@ -688,7 +675,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
         }
         // TODO Safe solution -> features
         val exprList = filterASTElems[FunctionCall](call).head.params.exprs
-        parameters.flatMap(parameter => {
+        params.flatMap(parameter => {
             if (exprList.isEmpty) None
             else generateInitializer(parameter, exprList) match {
                 case null => None
@@ -698,10 +685,11 @@ object CInlineFunction extends CRefactor with IntraCFG {
     }
 
     private def renameShadowedIds(idsToRename: List[Id], fDef: Opt[FunctionDef], fCall: Opt[AST],
-                                  morpheus: Morpheus): (List[Opt[Statement]],
-        List[Opt[DeclaratorExtension]]) = {
-        val statements = idsToRename.foldLeft(fDef.entry.stmt.innerStatements)((statement, id) => replace(statement, id, id.copy(name = generateValidNewName(id, fCall, morpheus))))
-        val parameters = idsToRename.foldLeft(fDef.entry.declarator.extensions)((extension, id) => replace(extension, id, id.copy(name = generateValidNewName(id, fCall, morpheus))))
+                                  morpheus: Morpheus): (List[Opt[Statement]], List[Opt[DeclaratorExtension]]) = {
+        val statements = idsToRename.foldLeft(fDef.entry.stmt.innerStatements)(
+            (statement, id) => replace(statement, id, id.copy(name = generateValidNewName(id, fCall, morpheus))))
+        val parameters = idsToRename.foldLeft(fDef.entry.declarator.extensions)(
+            (extension, id) => replace(extension, id, id.copy(name = generateValidNewName(id, fCall, morpheus))))
         (statements, parameters)
     }
 
