@@ -701,7 +701,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
                 case null => None
                 case x => Some(x)
             }
-        }).foldLeft(List[Opt[DeclarationStatement]]())((result, entry) => result ::: entry)
+        }).flatten
     }
 
     private def renameShadowedIds(idsToRename: List[Id], fDef: Opt[FunctionDef], fCall: Opt[AST],
