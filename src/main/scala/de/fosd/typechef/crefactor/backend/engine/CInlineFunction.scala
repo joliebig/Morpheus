@@ -489,14 +489,18 @@ object CInlineFunction extends CRefactor with IntraCFG {
     }
 
     /**
-     * Determines if a function has an identifier which has a different scope under different presence condition.
-     * As renaming of globally scoped variables causes to alter the behaviour, we do not allow inining of functions
-     * containing variables which are not in the same scope under each condition.
+     * Determines if the identifier id occurs in different scopes.
+     * TODO ajanker: The following comment is unclear. Please describe the problem in more detail!
+     * As renaming of globally scoped variables causes to alter the behaviour, we do not allow inlining of functions
+     * containing identifiers of variables which are not in the same scope under each condition.
      */
     private def hasIncompatibleVariableScoping(id: Id, compStmt: CompoundStatement, morpheus: Morpheus): Boolean = {
         val env = morpheus.getEnv(compStmt.innerStatements.last.entry)
         val condScope = env.varEnv.lookupScope(id.name)
         val variableScope = -1
+
+        // TODO ajanker: Could be rewritten with:
+        // ConditionalLib.leaves(condScope).forall(cs => cs == variableScope)
 
         def checkConditional(conditional: Conditional[Int]): Boolean = {
             def checkScopes(condScope: Conditional[Int]): Int = {
