@@ -113,7 +113,7 @@ trait CRefactor
     }
 
     /**
-     * Checks if the local linking informations are also globally visible
+     * Checks if the local linking information are also globally visible
      // TODO: bug in interface gen
      */
     private def hasConflictingLinking(id: Id, morpheus : Morpheus) = {
