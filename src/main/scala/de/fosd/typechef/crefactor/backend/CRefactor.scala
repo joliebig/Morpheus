@@ -47,6 +47,7 @@ trait CRefactor
      * Checks if the id valid for renaming
      */
     def isValidForRename(id: Id, morpheus : Morpheus): Boolean =
+        // TODO ajanker: Checking identifier for "_main" is specific for Busybox case study!
         !id.name.contains("_main") && !isSystemLinkedName(id.name) && {
             if (morpheus.getModuleInterface != null)
                 !morpheus.getModuleInterface.isBlackListed(id.name)
