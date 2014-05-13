@@ -560,7 +560,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
         idsToInline.filter(isDeclaredInFunctionCallScope(_, compStmt, morpheus))
     }
 
-    private def isFunctionDefOrDecl(id: Id, morpheus: Morpheus): Boolean = {
+    private def isFDefOrFDecl(id: Id, morpheus: Morpheus): Boolean = {
         try {
             if (morpheus.getEnv(id).varEnv.lookupType(id.name).forall(_.isFunction))
                 return true
@@ -622,7 +622,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
             return false
 
         // id is function -> no rename
-        if (isFunctionDefOrDecl(id, morpheus))
+        if (isFDefOrFDecl(id, morpheus))
             return false
 
         // id is part of struct -> no rename
