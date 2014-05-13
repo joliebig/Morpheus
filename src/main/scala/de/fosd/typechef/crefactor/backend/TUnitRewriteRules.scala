@@ -125,28 +125,11 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
         r(t).get.asInstanceOf[T]
     }
 
-    def replaceCompoundStatement[T <: Product](t: T, mark: CompoundStatement, replace: CompoundStatement): T = {
-        val r = manybu(rule {
-            case c: CompoundStatement => if (c eq mark) replace else c
-        })
-        r(t).get.asInstanceOf[T]
-    }
-
-    // single identifier replacement
-    def replaceId[T <: Product](t: T, e: Id, n: Id): T = {
-        val r = manybu(rule {
-            case i: Id => if (i eq e) n else i
-            case x => x
-        })
-        r(t).get.asInstanceOf[T]
-    }
-
     // generic replace function; possible replacement for replaceId and
     // replaceCompoundStatement, and maybe more?
     def replace[T <: Product, U <: AnyRef](t: T, e: U, n: U): T = {
         val r = manybu(rule {
-            case i: U => if (i eq e) n else i
-            case x => x
+            case i: U if i eq e => n
         })
         r(t).getOrElse(t).asInstanceOf[T]
     }
@@ -180,7 +163,7 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
         parent.entry match {
             case f: FunctionDef => replaceOnceTD(morpheus.getTranslationUnit, parent,
                 parent.copy(entry = f.copy(stmt = workingCallCompStmt)))
-            case c: CompoundStatement => replaceCompoundStatement(morpheus.getTranslationUnit, c,
+            case c: CompoundStatement => replace(morpheus.getTranslationUnit, c,
                 c.copy(innerStatements = workingCallCompStmt.innerStatements))
                 .asInstanceOf[TranslationUnit]
             case _ => throw RefactorException("No valid rewrite rule.")

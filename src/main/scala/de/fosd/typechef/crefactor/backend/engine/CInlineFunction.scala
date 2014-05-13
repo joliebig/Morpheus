@@ -706,8 +706,8 @@ object CInlineFunction extends CRefactor with IntraCFG {
     private def renameShadowedIds(idsToRename: List[Id], fDef: Opt[FunctionDef], fCall: Opt[AST],
                                   morpheus: Morpheus): (List[Opt[Statement]],
         List[Opt[DeclaratorExtension]]) = {
-        val statements = idsToRename.foldLeft(fDef.entry.stmt.innerStatements)((statement, id) => replaceId(statement, id, id.copy(name = generateValidNewName(id, fCall, morpheus))))
-        val parameters = idsToRename.foldLeft(fDef.entry.declarator.extensions)((extension, id) => replaceId(extension, id, id.copy(name = generateValidNewName(id, fCall, morpheus))))
+        val statements = idsToRename.foldLeft(fDef.entry.stmt.innerStatements)((statement, id) => replace(statement, id, id.copy(name = generateValidNewName(id, fCall, morpheus))))
+        val parameters = idsToRename.foldLeft(fDef.entry.declarator.extensions)((extension, id) => replace(extension, id, id.copy(name = generateValidNewName(id, fCall, morpheus))))
         (statements, parameters)
     }
 
