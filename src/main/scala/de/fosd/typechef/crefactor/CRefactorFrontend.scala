@@ -5,7 +5,7 @@ import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.featureexpr.FeatureModel
 import de.fosd.typechef.options.{RefactorType, FrontendOptions, OptionException, FrontendOptionsWithConfigFiles}
-import de.fosd.typechef.lexer
+import de.fosd.typechef.{VALexer, lexer}
 import java.io._
 import de.fosd.typechef.parser.TokenReader
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
@@ -204,14 +204,16 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
             case RefactorType.NONE => println("No engine type defined")
         }
     }
+    private def lex(opt: FrontendOptions): TokenReader[CToken, CTypeContext] = {
+        val tokens = new lexer.LexerFrontend().run(opt, opt.parse)
+        val in = CLexerAdapter.prepareTokens(tokens)
+        in
+    }
     private def getRefactorStudy(opt: FrontendOptions): Evaluation with Refactor =
         if (opt.getRefStudy.equalsIgnoreCase("busybox")) BusyBoxRefactorEvaluation
         else if (opt.getRefStudy.equalsIgnoreCase("openssl")) OpenSSLRefactorEvaluation
         else if (opt.getRefStudy.equalsIgnoreCase("sqlite")) SQLiteRefactorEvaluation
         else null
-
-    private def lex(opt: FrontendOptions): TokenReader[CToken, CTypeContext] =
-        CLexer.prepareTokens(new lexer.Main().run(opt, opt.parse))
 
     private def serializeTUnit(tUnit: TranslationUnit, filename: String) =
         serializeFile(tUnit, filename)
