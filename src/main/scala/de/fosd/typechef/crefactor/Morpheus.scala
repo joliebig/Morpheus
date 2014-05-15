@@ -23,21 +23,12 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
     def this(tunit: TranslationUnit, fm: FeatureModel) = this(tunit, fm, null, null)
     def this(tunit: TranslationUnit, fm: FeatureModel, file: String) = this(tunit, fm, null, file)
 
-    private var tunitCached: TranslationUnit = tunit
-    private var astEnvCached: ASTEnv = CASTEnv.createASTEnv(getTranslationUnit)
+    private var tunitCached: TranslationUnit = null
+    private var astEnvCached: ASTEnv = null
+    private var ts : CTypeSystemFrontend with CTypeCache with CDeclUse = null
+    private var tcStatsGen : Boolean = true
 
-    // type checking
-    private var ts = new CTypeSystemFrontend(getTranslationUnit, getFM) with CTypeCache with CDeclUse
-
-    // TODO @ajanker: type checking is done twice here; maybe move code to update function and do logging there.
-    // @joliebig: i don't understand completly why type checking is performed twice here?
-    // @ajanker: There are two places in which type checking is performed here. The following lines and
-    // the update function.
-    private val typeCheck = new StopClock
-    getTypeSystem.typecheckTranslationUnit(getTranslationUnit)
-    private val typeCheckTime = typeCheck.getTime
-    if (file != null)
-        StatsCan.addStat(file, TypeCheck, typeCheckTime)
+    update(tunit)
 
     def getDecls(id: Id): List[Id] = getSatisfiableReferences(id, getTypeSystem.getUseDeclMap)
 
@@ -99,7 +90,15 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
         tunitCached = tunit
         astEnvCached = CASTEnv.createASTEnv(getTranslationUnit)
         ts = new CTypeSystemFrontend(getTranslationUnit, getFM) with CTypeCache with CDeclUse
+
+        val typeCheck = new StopClock
         getTypeSystem.typecheckTranslationUnit(getTranslationUnit)
+        val typeCheckTime = typeCheck.getTime
+
+        if (file != null && !tcStatsGen) {
+            tcStatsGen = true
+            StatsCan.addStat(file, TypeCheck, typeCheckTime)
+        }
         setChanged()
         notifyObservers()
     }
