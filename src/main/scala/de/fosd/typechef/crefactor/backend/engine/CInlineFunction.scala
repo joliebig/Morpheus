@@ -503,35 +503,25 @@ object CInlineFunction extends CRefactor with IntraCFG {
      * TODO ajanker: The following comment is unclear. Please describe the problem in more detail!
      * As renaming of globally scoped variables causes to alter the behaviour, we do not allow inlining of functions
      * containing identifiers of variables which are not in the same scope under each condition.
+     *
+     * Example for incompatible variable (variable i) scoping:
+     *
+     * int i;
+     *
+     * int foo() {
+     * #ifdef A
+     *  int i;
+     * #endif
+     *     i = 5;
+     * }
      */
     private def hasIncompatibleVariableScoping(id: Id, compStmt: CompoundStatement, morpheus: Morpheus): Boolean = {
         val env = morpheus.getEnv(compStmt.innerStatements.last.entry)
         val condScope = env.varEnv.lookupScope(id.name)
-        val variableScope = -1
-
-        // TODO ajanker: Could be rewritten with:
-        // ConditionalLib.leaves(condScope).forall(cs => cs == variableScope)
-
-        def checkConditional(conditional: Conditional[Int]): Boolean = {
-            def checkScopes(condScope: Conditional[Int]): Int = {
-                condScope match {
-                    case Choice(_, thenB, elseB) =>
-                        val thenScope = checkScopes(thenB)
-                        val elseScope = checkScopes(elseB)
-
-                        if (thenScope == variableScope || elseScope == variableScope) variableScope
-                        else if (thenScope != elseScope) variableScope
-                        else thenScope
-                    case One(scope) => scope
-                }
-            }
-            
-            checkScopes(conditional) == variableScope
-        }
 
         condScope match {
             case One(scope) => false
-            case _ => checkConditional(condScope)
+            case _ => ConditionalLib.leaves(condScope).distinct.tail.nonEmpty
         }
     }
 
