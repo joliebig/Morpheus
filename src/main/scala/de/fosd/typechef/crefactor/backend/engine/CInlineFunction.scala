@@ -443,7 +443,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
         var workingStatement = compStmt
         val idsToRename = getIdsToRename(fDef.entry, workingStatement, morpheus)
         val renamed = renameShadowedIds(idsToRename, fDef, fCall, morpheus)
-        val initializer = getInitializers(fCall, renamed._2, morpheus)
+        val initializer = getDeclarationsFromCallParameters(fCall, renamed._2, morpheus)
 
         // apply feature environment
         val statements = applyFeaturesOnInlineStmts(renamed._1, fCall, morpheus)
@@ -484,7 +484,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
         val idsToRename = getIdsToRename(fDef.entry, workingStatement, morpheus)
 
         val (renamedIdsStmts, renamedIdsParams) = renameShadowedIds(idsToRename, fDef, fCall, morpheus)
-        val initializer = getInitializers(fCall, renamedIdsParams, morpheus)
+        val initializer = getDeclarationsFromCallParameters(fCall, renamedIdsParams, morpheus)
         var stmts = applyFeaturesOnInlineStmts(renamedIdsStmts, fCall, morpheus)
         val returnStmts = getReturnStmts(stmts)
 
@@ -647,54 +647,67 @@ object CInlineFunction extends CRefactor with IntraCFG {
             (cond._2 == scope) && symbol.feature.and(cond._1).isSatisfiable(morpheus.getFM))
     }
 
-    private def getInitializers(call: Opt[AST], params: List[Opt[DeclaratorExtension]],
-                                morpheus: Morpheus): List[Opt[DeclarationStatement]] = {
-
-        //TODO Rewrite and comment
-
-        def generateInitializer(param: Opt[DeclaratorExtension], exprList: List[Opt[Expr]]):
-        List[Opt[DeclarationStatement]] = {
-            var exprs = exprList
-            param.entry match {
-                case p: DeclParameterDeclList =>
-                    p.parameterDecls.flatMap(pDecl => {
-                        val expr = exprs.head
-                        val feature = expr.feature.and(param.feature)
-
-                        if (!feature.isSatisfiable(morpheus.getFM))
-                            None
-                        else {
-                            exprs = exprs.tail
-                            pDecl.entry match {
-                                case p: ParameterDeclarationD =>
-                                    val spec = p.specifiers.map(s => s.copy(feature = feature.and(s.feature)))
-                                    Some(Opt(feature,
-                                        DeclarationStatement(
-                                            Declaration(spec, List(Opt(feature,
-                                                InitDeclaratorI(p.decl, List(), Some(Initializer(None, expr.entry)))))))))
-                                case x =>
-                                    logger.warn("missed " + x)
-                                    throw new RefactorException("No rule defined for initializing parameter:" + x)
-                            }
-                        }
-                    })
-                case x =>
-                    logger.warn("missed " + x)
-                    throw new RefactorException("No rule defined for initializing parameter list:" + x)
-            }
+    /**
+     * Converts the parameters of a function call into declarations for the inlined function.
+     * e.g:
+     *
+     * void foo(int a, int b) {
+     *   a + b;
+     * }
+     *
+     * void bar() {
+     *  int i = 5;
+     *  int j = 6;
+     *
+     *  foo(i, j);
+     *
+     *  }
+     *
+     * would generate the following declarations for the parameters a and b of foo:
+     *
+     * int a = i;
+     * int b = j;
+     *
+     */
+    private def getDeclarationsFromCallParameters(callStmt: Opt[AST], parameters: List[Opt[DeclaratorExtension]],
+                                morpheus: Morpheus): List[Opt[DeclarationStatement]] =
+        findPriorASTElem[FunctionCall](callStmt, morpheus.getASTEnv) match {
+            case Some(fCall) => parameters.flatMap(generateDeclarationsFromCallParamExpr(_, fCall.params.exprs, morpheus))
+            case None => throw new RefactorException("Invalid function call has been selected: " + callStmt)
         }
 
-        val exprList = filterASTElems[FunctionCall](call).head.params.exprs
+    /*
+     * Helping function to map the function call parameter to the corresponding inline function parameter
+     * and generate its declaration.
+     */
+    private def generateDeclarationsFromCallParamExpr(parameters: Opt[DeclaratorExtension], callExprs: List[Opt[Expr]],
+                                                        morpheus : Morpheus): List[Opt[DeclarationStatement]] = {
+        var callParams = callExprs
+        parameters.entry match {
+            case DeclParameterDeclList(paramDecls) => paramDecls.flatMap(convertParameterToDeclaration)
+            case missed => throw new RefactorException("No rule defined for converterting parameter to initializer:" + missed)
+        }
 
-        if (exprList.isEmpty) {
-            List()
-        } else {
-            params.flatMap(param => {
-                generateInitializer(param, exprList) match {
-                    case null => List()
-                    case x => x
+        def convertParameterToDeclaration(paramDecl : Opt[ParameterDeclaration])  = {
+            val currentCallParam = callParams.head
+            val declFeature = currentCallParam.feature.and(morpheus.getASTEnv.featureExpr(paramDecl))
+
+            if (!declFeature.isSatisfiable(morpheus.getFM))
+                None
+            else {
+                // call parameter and function parameter have matched - remove call parameter from working list
+                callParams = callParams.tail
+                paramDecl.entry match {
+                    case p: ParameterDeclarationD =>
+                        val specifier = p.specifiers.map(spec => spec.copy(feature = declFeature.and(spec.feature)))
+                        Some(Opt(declFeature,
+                            DeclarationStatement(
+                                Declaration(specifier, List(Opt(declFeature,
+                                    InitDeclaratorI(p.decl, List(),
+                                        Some(Initializer(None, currentCallParam.entry)))))))))
+                    case missed => throw new RefactorException("No rule defined for initializing parameter:" + missed)
                 }
-            })
+            }
         }
     }
 
