@@ -10,7 +10,7 @@ import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.featureexpr.FeatureModel
-import de.fosd.typechef.parser.c.TranslationUnit
+import de.fosd.typechef.parser.c.{Id, TranslationUnit}
 
 
 trait BusyBoxEvaluation extends Evaluation {
@@ -84,6 +84,8 @@ trait BusyBoxEvaluation extends Evaluation {
             }
         }
     }
+
+    override def isValidIdForRename(id : Id, morpheus : Morpheus) : Boolean = !id.name.contains("_main")
 
 }
 

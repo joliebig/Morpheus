@@ -5,17 +5,19 @@ import de.fosd.typechef.parser.c.{TranslationUnit, Id}
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.evaluation_utils.Configuration
 import de.fosd.typechef.conditional.Opt
+import de.fosd.typechef.crefactor.evaluation.Evaluation
 
 /**
  * Implements the technique of correctly renaming an identifier.
  */
-object CRenameIdentifier extends  CRefactor {
+object CRenameIdentifier extends CRefactor {
 
     // TODO Move in rename
-    def canRefactor(id: Id, morpheus: Morpheus) : Boolean = {
+    def canRefactor(id: Id, morpheus: Morpheus,
+                    validIdForRenameInCaseStudy: (Id, Morpheus) => Boolean = (i, m) => true) : Boolean = {
         val rid = morpheus.getReferences(id).map(_.entry)
         
-        if (!isValidForRename(id, morpheus))
+        if (!isValidIdForRename(id, morpheus, validIdForRenameInCaseStudy))
             false
         else if (!rid.par.forall(isWritable(_, morpheus)))
             false

@@ -7,6 +7,7 @@ import de.fosd.typechef.conditional._
 import de.fosd.typechef.featureexpr.FeatureExpr
 import de.fosd.typechef.typesystem.linker.SystemLinker
 import java.io.File
+import de.fosd.typechef.crefactor.evaluation.Evaluation
 
 trait CRefactor
     extends CEnvCache with ASTNavigation with ConditionalNavigation with TUnitRewriteRules
@@ -46,14 +47,13 @@ trait CRefactor
     /**
      * Checks if the id valid for renaming
      */
-    def isValidForRename(id: Id, morpheus : Morpheus): Boolean =
-        // TODO ajanker: Checking identifier for "_main" is specific for Busybox case study!
-        !id.name.contains("_main") && !isSystemLinkedName(id.name) && {
+    def isValidIdForRename(id: Id, morpheus : Morpheus,
+                           validIdForRenameInCaseStudy: (Id, Morpheus) => Boolean = (i, m) => true): Boolean =
+        !(id.name == "main") && validIdForRenameInCaseStudy(id, morpheus) && !isSystemLinkedName(id.name) && {
             if (morpheus.getModuleInterface != null)
                 !morpheus.getModuleInterface.isBlackListed(id.name)
             else true
-        } && !hasConflictingLinking(id, morpheus) &&
-            id.hasPosition && !hasConflictingLinking(id, morpheus)
+        } && !hasConflictingLinking(id, morpheus) && id.hasPosition && !hasConflictingLinking(id, morpheus)
 
     def isWritable(id: Id, morpheus : Morpheus) : Boolean = {
         val path =
