@@ -51,8 +51,6 @@ public class RefactorMenu implements MenuListener {
         final CodeSelection codeSelection = new CodeSelection(editor);
         final Morpheus morpheus = this.editor.getMorpheus();
 
-        // TODO Apply a nice design pattern
-
         /**
          * Refactor Renaming
          */
@@ -61,7 +59,6 @@ public class RefactorMenu implements MenuListener {
             final JMenu rename = new JMenu(Configuration.getInstance().getConfig("refactor.rename.name"));
             this.menu.add(rename);
             addRenamingsToMenu(availableIds, rename);
-
 
             final List<AST> extractSelection = CExtractSelection.getSelectedElements(morpheus, codeSelection);
 
