@@ -692,6 +692,9 @@ object CInlineFunction extends CRefactor with IntraCFG {
             val currentCallParam = callParams.head
             val declFeature = currentCallParam.feature.and(morpheus.getASTEnv.featureExpr(paramDecl))
 
+            if (callParams.isEmpty)
+                throw new RefactorException("Failed to correctly map call parameters with function parameters.")
+
             if (!declFeature.isSatisfiable(morpheus.getFM))
                 None
             else {
