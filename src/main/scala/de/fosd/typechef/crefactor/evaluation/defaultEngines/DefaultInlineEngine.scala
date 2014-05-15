@@ -29,15 +29,14 @@ trait DefaultInlineEngine extends Refactoring with Evaluation {
         logger.info(morpheus.getFile +  " Function calls found to inline: " + availableFuncCalls.size)
 
         // Prefer var func calls
-        val variableFuncCalls = availableFuncCalls.flatMap(call => {
+        val variableFuncCalls = availableFuncCalls.filter(call => {
             val callsDeclDef = CInlineFunction.getCallDeclDefCallExprs(call, morpheus)
             val varCalls = callsDeclDef._1.exists(isVariable)
             val varDecls = callsDeclDef._2.exists(isVariable)
             val varDefs = callsDeclDef._3.exists(isVariable)
             val varExpr = callsDeclDef._4.exists(isVariable)
 
-            if (varCalls || varDecls || varDefs || varExpr) Some(call)
-            else None
+            (varCalls || varDecls || varDefs || varExpr)
         })
 
         logger.info(morpheus.getFile +  " Variable function calls found to inline: " + variableFuncCalls.size)
