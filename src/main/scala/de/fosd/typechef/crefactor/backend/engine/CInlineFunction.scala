@@ -226,7 +226,8 @@ object CInlineFunction extends CRefactor with IntraCFG {
             }
 
         }
-
+        // inline a function call which is part of a control statement like
+        // if(callToInline()) or while(callToInline())
         findPriorASTElem[Statement](call.entry, morpheus.getASTEnv) match {
             case Some(entry) =>
                 val inlineExprStatements = generateInlineExprStmts
@@ -235,8 +236,8 @@ object CInlineFunction extends CRefactor with IntraCFG {
                 var callParent = parentAST(call.entry, morpheus.getASTEnv)
                 entry match {
                     case i@IfStatement(c@condition, _, elifs, _) =>
-                        // TODO Refactor for performance
-                        // TODO: @andreas: unclear; What does the code do?
+                        // determine if inline call expression is part of a "if(callToInline)" or in a
+                        // "else if (callToInline())" statement
                         if (callParent.eq(i))
                             callParent = call.entry
 
