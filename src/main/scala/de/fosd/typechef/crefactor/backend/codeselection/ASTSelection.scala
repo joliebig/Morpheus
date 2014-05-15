@@ -11,16 +11,14 @@ trait ASTSelection extends Logging with ASTNavigation with ConditionalNavigation
 
     def getAvailableIdentifiers(morpheus: Morpheus, selection: CodeSelection): List[Id]
 
-    def isPartOfSelection(node: AST, selection: CodeSelection): Boolean = {
+    def isPartOfSelection(node: AST, selection: CodeSelection): Boolean =
         /**
          * Annotated AST nodes have often the same starting line. As workaround we only identify
-         * the element by its end value.
+         * the element by its end value. Note: not really stable. May cause to not find the appropriated selected
+         * statement in same cases.
          */
         isInRange(node.getPositionTo.getLine, selection.getLineStart + 1, selection.getLineEnd - 1)
-        // TODO FIX IT -> Broken!
-        // && ((selection.getRowEnd <= value.getPositionTo.getColumn)
-        // || (selection.getRowEnd <= value.getPositionTo.getColumn)))
-    }
+
 
     /**
      * Compare the position of two AST nodes.
