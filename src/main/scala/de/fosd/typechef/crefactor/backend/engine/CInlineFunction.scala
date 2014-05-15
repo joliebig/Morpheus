@@ -586,9 +586,10 @@ object CInlineFunction extends CRefactor with IntraCFG {
      * Checks if an id is only declared at the place of the inlining function scope.
      */
     private def isDeclaredInFunctionCallScope(id: Id, callCompStmt: CompoundStatement, morpheus: Morpheus): Boolean = {
+        val idContion = Opt(morpheus.getASTEnv.featureExpr(id), id.name)
 
         // lookup if name is visible in current scope
-        if (!isVisibleNameInFunctionScope(id.name, callCompStmt, morpheus))
+        if (!isVisibleNameInFunctionScope(idContion, callCompStmt, morpheus))
             return false
 
         // check if any reference of the inline id links into the calling scope - if so no renaming is required
@@ -599,10 +600,13 @@ object CInlineFunction extends CRefactor with IntraCFG {
         if (idReferences.exists(idsInCompStmt.contains))
             return false
 
+
+
         // in both places the has the same global visibility -> no need to rename
+        val idCondition = morpheus.getASTEnv.featureExpr(id)
         val localCompStmt = getCompStatement(parentOpt(id, morpheus.getASTEnv).asInstanceOf[Opt[AST]], morpheus.getASTEnv)
-        if((localCompStmt != null) && isVisibleGlobalNameInFunctionScope(id.name, callCompStmt, morpheus)
-            && isVisibleGlobalNameInFunctionScope(id.name, localCompStmt, morpheus))
+        if((localCompStmt != null) && isVisibleGlobalNameInFunctionScope(idContion, callCompStmt, morpheus)
+            && isVisibleGlobalNameInFunctionScope(idContion, localCompStmt, morpheus))
             return false
 
         // id is function -> no rename
@@ -623,24 +627,24 @@ object CInlineFunction extends CRefactor with IntraCFG {
     /**
      * Checks if a symbol is visible at the place of the inlining function scope.
      */
-    private def isVisibleGlobalNameInFunctionScope(name: String, callCompStmt: CompoundStatement, morpheus: Morpheus) =
+    private def isVisibleGlobalNameInFunctionScope(name: Opt[String], callCompStmt: CompoundStatement, morpheus: Morpheus) =
         isPartOfScope(name, callCompStmt, morpheus, 0)
 
     /**
      * Checks if a symbol is visible at the place of the inlining function scope.
      */
-    private def isVisibleNameInFunctionScope(symbol: String, callCompStmt: CompoundStatement, morpheus: Morpheus) =
+    private def isVisibleNameInFunctionScope(symbol: Opt[String], callCompStmt: CompoundStatement, morpheus: Morpheus) =
         !isPartOfScope(symbol, callCompStmt, morpheus, -1)
 
     /**
      * Checks if a symbol is part of a specific scope.
      */
-    private def isPartOfScope(symbol: String, compStmt: CompoundStatement, morpheus: Morpheus, scope: Int): Boolean = {
+    private def isPartOfScope(symbol: Opt[String], compStmt: CompoundStatement, morpheus: Morpheus, scope: Int): Boolean = {
         val env = morpheus.getEnv(compStmt.innerStatements.last.entry)
-        val nameScope = env.varEnv.lookupScope(symbol)
+        val nameScope = env.varEnv.lookupScope(symbol.entry)
 
-        // TODO ajanker: Is there a reason why we traverse nameScope without a feature expression?
-        ConditionalLib.leaves(nameScope).exists(s => s == scope)
+        ConditionalLib.items(nameScope).exists(cond =>
+            (cond._2 == scope) && symbol.feature.and(cond._1).isSatisfiable(morpheus.getFM))
     }
 
     private def getInitializers(call: Opt[AST], params: List[Opt[DeclaratorExtension]],
