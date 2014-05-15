@@ -99,6 +99,7 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
             tcStatsGen = false
             StatsCan.addStat(file, TypeCheck, typeCheckTime)
         }
+
         setChanged()
         notifyObservers()
     }
