@@ -95,8 +95,8 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
         getTypeSystem.typecheckTranslationUnit(getTranslationUnit)
         val typeCheckTime = typeCheck.getTime
 
-        if (file != null && !tcStatsGen) {
-            tcStatsGen = true
+        if (file != null && tcStatsGen) {
+            tcStatsGen = false
             StatsCan.addStat(file, TypeCheck, typeCheckTime)
         }
         setChanged()
