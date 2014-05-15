@@ -6,7 +6,7 @@ import de.fosd.typechef.conditional._
 import de.fosd.typechef.crefactor._
 import de.fosd.typechef.crefactor.backend.{RefactorException, CRefactor}
 import de.fosd.typechef.crewrite.IntraCFG
-import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureExprFactory}
+import de.fosd.typechef.featureexpr.FeatureExpr
 import de.fosd.typechef.parser.c._
 
 
