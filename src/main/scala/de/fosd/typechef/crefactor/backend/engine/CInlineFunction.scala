@@ -500,7 +500,6 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
     /**
      * Determines if the identifier id occurs in different scopes.
-     * TODO ajanker: The following comment is unclear. Please describe the problem in more detail!
      * As renaming of globally scoped variables causes to alter the behaviour, we do not allow inlining of functions
      * containing identifiers of variables which are not in the same scope under each condition.
      *
