@@ -7,7 +7,6 @@ import de.fosd.typechef.featureexpr.FeatureExpr
 import de.fosd.typechef.crefactor.backend.engine.CExtractFunction
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.Stats._
-import de.fosd.typechef.conditional.Opt
 import java.io.File
 import de.fosd.typechef.parser.c.TranslationUnit
 import de.fosd.typechef.parser.c.CompoundStatement
@@ -40,7 +39,11 @@ trait DefaultExtractEngine extends Refactoring with Evaluation {
 
         logger.info(morpheus.getFile + " Statements found to extract: " + allCombinations.size)
 
-        val variableCombinations = allCombinations.par.filter(_.exists(isVariable)).toList
+        val variableCombinations = allCombinations.par.filter {
+            sel => sel.exists {
+                stmt => isVariable(stmt, morpheus.getASTEnv)
+            }
+        }.toList
 
         logger.info(morpheus.getFile + " Variable statements found to extract: " + allCombinations.size)
 

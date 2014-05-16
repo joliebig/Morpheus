@@ -31,10 +31,10 @@ trait DefaultInlineEngine extends Refactoring with Evaluation {
         // Prefer var func calls
         val variableFuncCalls = availableFuncCalls.filter(call => {
             val callsDeclDef = CInlineFunction.getCallDeclDefCallExprs(call, morpheus)
-            val varCalls = callsDeclDef._1.exists(isVariable)
-            val varDecls = callsDeclDef._2.exists(isVariable)
-            val varDefs = callsDeclDef._3.exists(isVariable)
-            val varExpr = callsDeclDef._4.exists(isVariable)
+            val varCalls = callsDeclDef._1.exists(isVariable(_, morpheus.getASTEnv))
+            val varDecls = callsDeclDef._2.exists(isVariable(_, morpheus.getASTEnv))
+            val varDefs = callsDeclDef._3.exists(isVariable(_, morpheus.getASTEnv))
+            val varExpr = callsDeclDef._4.exists(isVariable(_, morpheus.getASTEnv))
 
             (varCalls || varDecls || varDefs || varExpr)
         })

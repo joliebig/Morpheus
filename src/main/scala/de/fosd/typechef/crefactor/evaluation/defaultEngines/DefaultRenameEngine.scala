@@ -40,7 +40,7 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
         val ids = if (linkedIds.isEmpty) allIds else linkedIds
         logger.info(morpheus.getFile + ": IDs found: " + ids.size)
 
-        val variableIds = ids.par.filter(id => isVariable(parentOpt(id, morpheus.getASTEnv)))
+        val variableIds = ids.par.filter(id => isVariable(id, morpheus.getASTEnv))
         logger.info(morpheus.getFile  + ": Variable IDs found: " + variableIds.size)
 
         val randomIDs =
