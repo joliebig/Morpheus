@@ -683,12 +683,15 @@ object CInlineFunction extends CRefactor with IntraCFG {
     private def generateDeclarationsFromCallParamExpr(parameters: Opt[DeclaratorExtension], callExprs: List[Opt[Expr]],
                                                         morpheus : Morpheus): List[Opt[DeclarationStatement]] = {
         var callParams = callExprs
+        var declStmts : List[Opt[DeclarationStatement]] = List()
         parameters.entry match {
-            case DeclParameterDeclList(paramDecls) => paramDecls.flatMap(convertParameterToDeclaration)
-            case missed => throw new RefactorException("No rule defined for converterting parameter to initializer:" + missed)
+            case DeclParameterDeclList(paramDecls) =>
+                declStmts = paramDecls.flatMap(convertParameterToDeclaration)
+            case missed =>
+                throw new RefactorException("No rule defined for converterting parameter to initializer:" + missed)
         }
 
-        def convertParameterToDeclaration(paramDecl : Opt[ParameterDeclaration])  = {
+        def convertParameterToDeclaration(paramDecl : Opt[ParameterDeclaration]) : Option[Opt[DeclarationStatement]]  = {
             val currentCallParam = callParams.head
             val declFeature = currentCallParam.feature.and(morpheus.getASTEnv.featureExpr(paramDecl))
 
@@ -708,10 +711,12 @@ object CInlineFunction extends CRefactor with IntraCFG {
                                 Declaration(specifier, List(Opt(declFeature,
                                     InitDeclaratorI(p.decl, List(),
                                         Some(Initializer(None, currentCallParam.entry)))))))))
-                    case missed => throw new RefactorException("No rule defined for initializing parameter:" + missed)
+                    case missed =>
+                        throw new RefactorException("No rule defined for initializing parameter:" + missed)
                 }
             }
         }
+        declStmts
     }
 
     private def renameShadowedIds(idsToRename: List[Id], fDef: Opt[FunctionDef], fCall: Opt[AST],
