@@ -28,6 +28,9 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
     private var ts : CTypeSystemFrontend with CTypeCache with CDeclUse = null
     private var tcStatsGen : Boolean = true
 
+    // cache for getReferences
+    private val idRefsCache: java.util.IdentityHashMap[Id, List[Opt[Id]]] = new java.util.IdentityHashMap()
+
     update(tunit)
 
     def getDecls(id: Id): List[Id] = getSatisfiableReferences(id, getTypeSystem.getUseDeclMap)
@@ -45,9 +48,6 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
 
     // retrieves all missed but referenced id declarations passed in the argument id list
     def getExternalDefs(ids: List[Id]) = getExternalVariableReferences(ids, getDecls)
-
-    // cache for getReferences
-    private val idRefsCache: java.util.IdentityHashMap[Id, List[Opt[Id]]] = new java.util.IdentityHashMap()
 
     // determines reference information between id uses and id declarations
     // compute transitive closure of identifier uses and declarations starting from id
