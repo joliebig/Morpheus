@@ -2,6 +2,8 @@ package de.fosd.typechef.crefactor.backend.engine
 
 import java.util.Collections
 
+import org.kiama.rewriting.Rewriter._
+
 import de.fosd.typechef.conditional._
 import de.fosd.typechef.crefactor._
 import de.fosd.typechef.crefactor.backend.{RefactorException, CRefactor}
@@ -174,48 +176,26 @@ object CInlineFunction extends CRefactor with IntraCFG {
         def inlineInCorrectConditionalStmt(current: Conditional[Expr], call: AST, expr: AST,
                                            inlineChoice: CompoundStatementExpr): Conditional[Expr] = {
 
-            def inlineInOne(entry: Expr, expr: AST, o: One[Expr], call: AST, inlineChoice: CompoundStatementExpr):
-            Conditional[Expr] = {
-                if (!entry.eq(expr))
-                    return o
+            val rw = manytd( rule {
+                case o@One(entry) if entry.asInstanceOf[AnyRef].eq(expr) =>
+                    expr match {
+                        case NAryExpr(e, others) =>
+                            call match {
+                                case n@NArySubExpr(op, _) =>
+                                    val replacement = replaceNArySubExpr(others, n, n.copy(e = inlineChoice))
+                                    o.copy(value = NAryExpr(e, replacement))
+                                case x =>
+                                    logger.warn("missed " + x)
+                                    throw new RefactorException("No rule defined for:" + x)
+                            }
+                        case p: PostfixExpr => o.copy(value = inlineChoice)
+                        case x =>
+                            logger.warn("missed " + x)
+                            throw new RefactorException("No rule defined for:" + x)
+                    }
+            })
 
-                expr match {
-                    case NAryExpr(e, others) =>
-                        call match {
-                            case n@NArySubExpr(op, _) =>
-                                val replacement = replaceNArySubExpr(others, n, n.copy(e = inlineChoice))
-                                o.copy(value = NAryExpr(e, replacement))
-                            case x =>
-                                logger.warn("missed " + x)
-                                throw new RefactorException("No rule defined for:" + x)
-                        }
-                    case p: PostfixExpr => o.copy(value = inlineChoice)
-                    case x =>
-                        logger.warn("missed " + x)
-                        throw new RefactorException("No rule defined for:" + x)
-                }
-            }
-
-            // TODO: @andreas This code has potential for simplification. I do not fully understand what it does.
-            // Simply traversing done to a one and make the appropriate transformation with inlineOne, right?
-            // Should be rewritten with a kiama rule.
-            current match {
-                case o@One(entry) =>
-                    inlineInOne(entry, expr, o, call, inlineChoice)
-                case c@Choice(_, c1@Choice(_, _, _), c2@Choice(_, _, _)) =>
-                    c.copy(thenBranch = inlineInCorrectConditionalStmt(c1, call, expr, inlineChoice),
-                        elseBranch = inlineInCorrectConditionalStmt(c2, call, expr, inlineChoice))
-                case c@Choice(_, o1@One(_), c2@Choice(_, _, _)) =>
-                    c.copy(thenBranch = inlineInCorrectConditionalStmt(o1, call, expr, inlineChoice),
-                        elseBranch = inlineInCorrectConditionalStmt(c2, call, expr, inlineChoice))
-                case c@Choice(_, c1@Choice(_, _, _), o2@One(_)) =>
-                    c.copy(thenBranch = inlineInCorrectConditionalStmt(c1, call, expr, inlineChoice),
-                        elseBranch = inlineInCorrectConditionalStmt(o2, call, expr, inlineChoice))
-                case c@Choice(_, o1@One(_), o2@One(_)) =>
-                    c.copy(thenBranch = inlineInCorrectConditionalStmt(o1, call, expr, inlineChoice),
-                        elseBranch = inlineInCorrectConditionalStmt(o2, call, expr, inlineChoice))
-                case _ => current
-            }
+            rw(current).getOrElse(current).asInstanceOf[Conditional[Expr]]
         }
 
         def inlineInExpr(expr: Expr, inlineExprStatements: List[(CompoundStatementExpr, FeatureExpr)]) = {
