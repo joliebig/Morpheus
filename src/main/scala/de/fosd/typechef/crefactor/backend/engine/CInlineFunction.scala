@@ -665,7 +665,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
             case DeclParameterDeclList(paramDecls) =>
                 declStmts = paramDecls.flatMap(convertParameterToDeclaration)
             case missed =>
-                throw new RefactorException("No rule defined for converterting parameter to initializer:" + missed)
+                throw new RefactorException("No rule defined for converting parameter to initializer:" + missed)
         }
 
         def convertParameterToDeclaration(paramDecl: Opt[ParameterDeclaration]): Option[Opt[DeclarationStatement]] = {
