@@ -658,7 +658,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
      * and generate its declaration.
      */
     private def generateDeclarationsFromCallParamExpr(parameters: Opt[DeclaratorExtension], callExprs: List[Opt[Expr]],
-                                                        morpheus : Morpheus): List[Opt[DeclarationStatement]] = {
+                                                      morpheus: Morpheus): List[Opt[DeclarationStatement]] = {
         var callParams = callExprs
         var declStmts : List[Opt[DeclarationStatement]] = List()
         parameters.entry match {
@@ -668,7 +668,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
                 throw new RefactorException("No rule defined for converterting parameter to initializer:" + missed)
         }
 
-        def convertParameterToDeclaration(paramDecl : Opt[ParameterDeclaration]) : Option[Opt[DeclarationStatement]]  = {
+        def convertParameterToDeclaration(paramDecl: Opt[ParameterDeclaration]): Option[Opt[DeclarationStatement]] = {
             if (callParams.isEmpty)
                 throw new RefactorException("Failed to correctly map call parameters with function parameters.")
 
