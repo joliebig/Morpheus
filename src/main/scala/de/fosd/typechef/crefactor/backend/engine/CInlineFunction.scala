@@ -580,10 +580,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
         if (idReferences.exists(idsInCompStmt.contains))
             return false
 
-
-
         // in both places the has the same global visibility -> no need to rename
-        val idCondition = morpheus.getASTEnv.featureExpr(id)
         val localCompStmt = getCompStatement(parentOpt(id, morpheus.getASTEnv).asInstanceOf[Opt[AST]], morpheus.getASTEnv)
         if((localCompStmt != null) && isVisibleGlobalNameInFunctionScope(idContion, callCompStmt, morpheus)
             && isVisibleGlobalNameInFunctionScope(idContion, localCompStmt, morpheus))
