@@ -57,7 +57,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         }).toArray
 
         val fm = getFM(runOpt)
-        runOpt.setFeatureModel(fm)
+        runOpt.setFullFeatureModel(fm)
 
         val tunit = getTunit(runOpt, fm)
 
@@ -79,7 +79,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         opt.parseOptions(file +: command.clone())
 
         val fm = getFM(opt)
-        opt.setFeatureModel(fm) //otherwise the lexer does not get the updated feature model with file presence conditions
+        opt.setFullFeatureModel(fm) //otherwise the lexer does not get the updated feature model with file presence conditions
 
         val tunit = getTunit(opt, fm)
 
@@ -138,9 +138,10 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
     }
 
     private def getFM(opt: FrontendOptions): FeatureModel = {
+        // note: we use the full feature model instead of the small one
         val fm = {
-            if (opt.getUseDefaultPC) opt.getLexerFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
-            else opt.getLexerFeatureModel.and(opt.getLocalFeatureModel)
+            if (opt.getUseDefaultPC) opt.getFullFeatureModel.and(opt.getLocalFeatureModel).and(opt.getFilePresenceCondition)
+            else opt.getFullFeatureModel.and(opt.getLocalFeatureModel)
         }
 
         if (opt.getUseDefaultPC && !opt.getFilePresenceCondition.isSatisfiable(fm)) {
@@ -166,7 +167,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
     private def parseTUnit(fm: FeatureModel, opt: FrontendOptions): TranslationUnit = {
         val parsingTime = new StopClock
         val parserMain = new ParserMain(new CParser(fm))
-        val tUnit = parserMain.parserMain(lex(opt), opt)
+        val tUnit = parserMain.parserMain(lex(opt), opt, fm)
 
         StatsCan.addStat(opt.getFile, Parsing, parsingTime.getTime)
 
