@@ -61,7 +61,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
         try {
             var tunitRefactored =
                 fCalls.foldLeft(morpheus.getTranslationUnit)((curTunit, curFCall) =>
-                inlineFuncCall(curTunit, new Morpheus(curTunit, morpheus.getFM), curFCall, fDefs))
+                    inlineFuncCallStmt(curTunit, new Morpheus(curTunit, morpheus.getFM), curFCall, fDefs))
 
             tunitRefactored =
                 fCallsExpr.foldLeft(tunitRefactored)(
@@ -267,48 +267,45 @@ object CInlineFunction extends CRefactor with IntraCFG {
         }
     }
 
-    private def inlineFuncCall(tunit: TranslationUnit, morpheus: Morpheus, call: Opt[Statement],
+    private def inlineFuncCallStmt(tunit: TranslationUnit, morpheus: Morpheus, fCall: Opt[Statement],
                                fDefs: List[Opt[_]]): TranslationUnit = {
-        var workingCallCompStmt = getCompStatement(call, morpheus.getASTEnv)
+        var workingCallCompStmt = getCompStatement(fCall, morpheus.getASTEnv)
 
-        def inlineIfStmt(funcDefs: List[Opt[_]], callCompStmt: CompoundStatement): CompoundStatement = {
+        def inlineFCallInIfStmt(funcDefs: List[Opt[_]], fCallCompStmt: CompoundStatement): CompoundStatement = {
             val stmtsToInline = funcDefs.flatMap({
                 case f: Opt[FunctionDef] =>
-                    val inlineStmt = inlineFDefInExprStmt(callCompStmt, morpheus, call, f)
+                    val inlineStmt = inlineFDefInExprStmt(fCallCompStmt, morpheus, fCall, f)
                     inlineStmt match {
                         case null => None
-                        case _ => Some(inlineStmt, f.feature.and(call.feature))
+                        case _ => Some(inlineStmt, f.feature.and(fCall.feature))
                     }
-                case x =>
-                    logger.error("Forgotten definition: " + x)
-                    None
+                case x => throw new RefactorException("No rule for inlining in if statement: " + x)
             })
             // Remove fCall and inline function
-            replaceStmtWithStmtsInCompStmt(callCompStmt, call,
+            replaceStmtWithStmtsInCompStmt(fCallCompStmt, fCall,
                 stmtsToInline.map(toInline => Opt(toInline._2, toInline._1)))
         }
 
-        def inlineCompStmt(fDefs: List[Opt[_]], callCompStmt: CompoundStatement): CompoundStatement = {
+        def inlineFCallInCompStmt(fDefs: List[Opt[_]], callCompStmt: CompoundStatement): CompoundStatement = {
             val workingCallCompStmt =
                 fDefs.foldLeft(callCompStmt)(
                     (curStmt, fDef) => fDef match {
-                        case f: Opt[FunctionDef] => inlineFDefInCompStmt(curStmt, morpheus, call, f)
+                        case f: Opt[FunctionDef] => inlineFDefInCompStmt(curStmt, morpheus, fCall, f)
                         case x =>
                             logger.error("Forgotten definition" + x)
                             curStmt
                     })
             // Remove stmt
-            remove(workingCallCompStmt, call)
+            remove(workingCallCompStmt, fCall)
         }
 
-        parentAST(call.entry, morpheus.getASTEnv) match {
-            case _: CompoundStatement => workingCallCompStmt = inlineCompStmt(fDefs, workingCallCompStmt)
-            case _: IfStatement => workingCallCompStmt = inlineIfStmt(fDefs, workingCallCompStmt)
-            case _: ElifStatement => workingCallCompStmt = inlineIfStmt(fDefs, workingCallCompStmt)
-            case x => logger.warn("forgotten " + x)
+        parentAST(fCall.entry, morpheus.getASTEnv) match {
+            case _: CompoundStatement => workingCallCompStmt = inlineFCallInCompStmt(fDefs, workingCallCompStmt)
+            case _ : IfStatement | _: ElifStatement => workingCallCompStmt = inlineFCallInIfStmt(fDefs, workingCallCompStmt)
+            case x => throw new RefactorException("No rule for inlining: " + x)
         }
 
-        insertRefactoredAST(morpheus, getCompStatement(call, morpheus.getASTEnv), workingCallCompStmt)
+        insertRefactoredAST(morpheus, getCompStatement(fCall, morpheus.getASTEnv), workingCallCompStmt)
     }
 
     private def getCompStatement(call: Opt[AST], astEnv: ASTEnv): CompoundStatement =
