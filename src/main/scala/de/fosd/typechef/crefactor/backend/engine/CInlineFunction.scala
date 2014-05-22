@@ -58,6 +58,9 @@ object CInlineFunction extends CRefactor with IntraCFG {
         if (fDefs.isEmpty)
             Left("Inlining of external function definitions is not supported.")
 
+        if (fCalls.exists(fCall => fDefs.exists(!isValidFDef(_, fCall, morpheus))))
+            Left("Invalid selection")
+
         try {
             var tunitRefactored =
                 fCalls.foldLeft(morpheus.getTranslationUnit)((curTunit, curFCall) =>
@@ -160,16 +163,15 @@ object CInlineFunction extends CRefactor with IntraCFG {
     }
 
     private def inlineFuncCallExpr(ast: AST, morpheus: Morpheus, call: Opt[AST],
-                                   fDefs: List[Opt[_]]): TranslationUnit = {
+                                   fDefs: List[Opt[FunctionDef]]): TranslationUnit = {
         val workingCallCompStmt = getCompStatement(call, morpheus.getASTEnv)
 
         def generateInlineExprStmts: List[(CompoundStatementExpr, FeatureExpr)] = {
-            fDefs.flatMap({
-                case f: Opt[FunctionDef] =>
-                    val inlineExpr = inlineFDefInExpr(workingCallCompStmt, f, call, morpheus)
+            fDefs.flatMap(fDef => {
+                    val inlineExpr = inlineFDefInExpr(workingCallCompStmt, fDef, call, morpheus)
                     inlineExpr match {
                         case null => None
-                        case _ => Some(CompoundStatementExpr(inlineExpr), f.feature.and(call.feature))
+                        case _ => Some(CompoundStatementExpr(inlineExpr), fDef.feature.and(call.feature))
                     }
             })
         }
@@ -268,44 +270,32 @@ object CInlineFunction extends CRefactor with IntraCFG {
     }
 
     private def inlineFuncCallStmt(tunit: TranslationUnit, morpheus: Morpheus, fCall: Opt[Statement],
-                               fDefs: List[Opt[_]]): TranslationUnit = {
-        var workingCallCompStmt = getCompStatement(fCall, morpheus.getASTEnv)
+                               fDefs: List[Opt[FunctionDef]]): TranslationUnit = {
 
-        def inlineFCallInIfStmt(funcDefs: List[Opt[_]], fCallCompStmt: CompoundStatement): CompoundStatement = {
-            val stmtsToInline = funcDefs.flatMap({
-                case f: Opt[FunctionDef] =>
-                    val inlineStmt = inlineFDefInExprStmt(fCallCompStmt, morpheus, fCall, f)
-                    inlineStmt match {
-                        case null => None
-                        case _ => Some(inlineStmt, f.feature.and(fCall.feature))
-                    }
-                case x => throw new RefactorException("No rule for inlining in if statement: " + x)
-            })
-            // Remove fCall and inline function
+        def inlineFCallInIfStmt(fCallCompStmt: CompoundStatement): CompoundStatement = {
+            val stmtsToInline = fDefs.map(fDef =>
+                    (inlineFDefInExprStmt(fCallCompStmt, morpheus, fCall, fDef), fDef.feature.and(fCall.feature)))
+
+            // Remove fCall and inline function definition
             replaceStmtWithStmtsInCompStmt(fCallCompStmt, fCall,
                 stmtsToInline.map(toInline => Opt(toInline._2, toInline._1)))
         }
 
-        def inlineFCallInCompStmt(fDefs: List[Opt[_]], callCompStmt: CompoundStatement): CompoundStatement = {
-            val workingCallCompStmt =
-                fDefs.foldLeft(callCompStmt)(
-                    (curStmt, fDef) => fDef match {
-                        case f: Opt[FunctionDef] => inlineFDefInCompStmt(curStmt, morpheus, fCall, f)
-                        case x =>
-                            logger.error("Forgotten definition" + x)
-                            curStmt
-                    })
-            // Remove stmt
-            remove(workingCallCompStmt, fCall)
+        def inlineFCallInCompStmt(callCompStmt: CompoundStatement): CompoundStatement = {
+            val inlinedFCallCompStmt =
+                fDefs.foldLeft(callCompStmt)((curStmt, fDef) => inlineFDefInCompStmt(curStmt, morpheus, fCall, fDef))
+            // Remove function call
+            remove(inlinedFCallCompStmt, fCall)
         }
 
-        parentAST(fCall.entry, morpheus.getASTEnv) match {
-            case _: CompoundStatement => workingCallCompStmt = inlineFCallInCompStmt(fDefs, workingCallCompStmt)
-            case _ : IfStatement | _: ElifStatement => workingCallCompStmt = inlineFCallInIfStmt(fDefs, workingCallCompStmt)
+        val fCallCompStmt = getCompStatement(fCall, morpheus.getASTEnv)
+        val inlinedFCallCompStmt = parentAST(fCall.entry, morpheus.getASTEnv) match {
+            case _: CompoundStatement => inlineFCallInCompStmt(fCallCompStmt)
+            case _: IfStatement | _: ElifStatement => inlineFCallInIfStmt(fCallCompStmt)
             case x => throw new RefactorException("No rule for inlining: " + x)
         }
 
-        insertRefactoredAST(morpheus, getCompStatement(fCall, morpheus.getASTEnv), workingCallCompStmt)
+        insertRefactoredAST(morpheus, getCompStatement(fCall, morpheus.getASTEnv), inlinedFCallCompStmt)
     }
 
     private def getCompStatement(call: Opt[AST], astEnv: ASTEnv): CompoundStatement =
@@ -415,9 +405,6 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
     private def inlineFDefInCompStmt(compStmt: CompoundStatement, morpheus: Morpheus, fCall: Opt[Statement],
                                      fDef: Opt[FunctionDef]): CompoundStatement = {
-        if (!isValidFDef(fDef, fCall, morpheus))
-            return compStmt
-
         var workingStatement = compStmt
         val idsToRename = getIdsToRename(fDef.entry, workingStatement, morpheus)
         val renamed = renameShadowedIds(idsToRename, fDef, fCall, morpheus)
@@ -439,18 +426,13 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
     private def inlineFDefInExprStmt(compStmt: CompoundStatement, morpheus: Morpheus, fCall: Opt[AST],
                                      fDef: Opt[FunctionDef]): ExprStatement = {
-        if (!isValidFDef(fDef, fCall, morpheus))
-            return null
-
         val compoundStmtExpr: CompoundStatementExpr =
             CompoundStatementExpr(inlineFDefInExpr(compStmt, fDef, fCall, morpheus))
 
         fCall.entry match {
             case ExprStatement(PostfixExpr(_, FunctionCall(_))) => ExprStatement(compoundStmtExpr)
             case ExprStatement(AssignExpr(target, op, _)) => ExprStatement(AssignExpr(target, op, compoundStmtExpr))
-            case x =>
-                logger.warn("missed " + x)
-                throw new RefactorException("No rule defined for assigning for following return statement:" + x)
+            case x => throw new RefactorException("No rule defined for assigning for following return statement:" + x)
         }
     }
 
