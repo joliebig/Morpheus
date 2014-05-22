@@ -191,14 +191,14 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
             else s :: nl
         })
 
-    def insertRefactoredAST(morpheus: Morpheus, callCompStmt: CompoundStatement,
-                            workingCallCompStmt: CompoundStatement): TranslationUnit = {
-        val parent = parentOpt(callCompStmt, morpheus.getASTEnv)
+    def replace(morpheus: Morpheus, remove: CompoundStatement,
+                            insert: CompoundStatement): TranslationUnit = {
+        val parent = parentOpt(remove, morpheus.getASTEnv)
         parent.entry match {
             case f: FunctionDef => replaceOnceTD(morpheus.getTranslationUnit, parent,
-                parent.copy(entry = f.copy(stmt = workingCallCompStmt)))
+                parent.copy(entry = f.copy(stmt = insert)))
             case c: CompoundStatement => replace(morpheus.getTranslationUnit, c,
-                c.copy(innerStatements = workingCallCompStmt.innerStatements))
+                c.copy(innerStatements = insert.innerStatements))
                 .asInstanceOf[TranslationUnit]
             case _ => throw RefactorException("No valid rewrite rule.")
         }

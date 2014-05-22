@@ -264,7 +264,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
                         logger.error("Missed InlineStatementExpr" + x)
                         throw new RefactorException("Refactoring failed - missed InlineStatementExpr")
                 }
-                insertRefactoredAST(morpheus, getCompStatement(call, morpheus.getASTEnv), replaceStmt)
+                replace(morpheus, getCompStatement(call, morpheus.getASTEnv), replaceStmt)
             case _ => throw new RefactorException("FunctionCall to inline is no statement.")
         }
     }
@@ -281,9 +281,9 @@ object CInlineFunction extends CRefactor with IntraCFG {
                 stmtsToInline.map(toInline => Opt(toInline._2, toInline._1)))
         }
 
-        def inlineFCallInCompStmt(callCompStmt: CompoundStatement): CompoundStatement = {
+        def inlineFCallInCompStmt(fCallCompStmt: CompoundStatement): CompoundStatement = {
             val inlinedFCallCompStmt =
-                fDefs.foldLeft(callCompStmt)((curStmt, fDef) => inlineFDefInCompStmt(curStmt, morpheus, fCall, fDef))
+                fDefs.foldLeft(fCallCompStmt)((curStmt, fDef) => inlineFDefInCompStmt(curStmt, morpheus, fCall, fDef))
             // Remove function call
             remove(inlinedFCallCompStmt, fCall)
         }
@@ -295,7 +295,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
             case x => throw new RefactorException("No rule for inlining: " + x)
         }
 
-        insertRefactoredAST(morpheus, getCompStatement(fCall, morpheus.getASTEnv), inlinedFCallCompStmt)
+        replace(morpheus, getCompStatement(fCall, morpheus.getASTEnv), inlinedFCallCompStmt)
     }
 
     private def getCompStatement(call: Opt[AST], astEnv: ASTEnv): CompoundStatement =
