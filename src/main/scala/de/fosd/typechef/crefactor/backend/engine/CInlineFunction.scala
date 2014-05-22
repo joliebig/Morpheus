@@ -53,17 +53,18 @@ object CInlineFunction extends CRefactor with IntraCFG {
      * @return error string (left) or the refactored tunit (right)
      */
     def inline(morpheus: Morpheus, id: Id, keepDeclaration : Boolean): Either[String, TranslationUnit] = {
-        val (fCalls, fDecls, fDefs, callExpr) = getCallDeclDefCallExprs(id, morpheus)
+        val (fCalls, fDecls, fDefs, fCallsExpr) = getCallDeclDefCallExprs(id, morpheus)
 
         if (fDefs.isEmpty)
             Left("Inlining of external function definitions is not supported.")
 
         try {
-            var tunitRefactored = fCalls.foldLeft(morpheus.getTranslationUnit)((curTunit, curFCall) =>
+            var tunitRefactored =
+                fCalls.foldLeft(morpheus.getTranslationUnit)((curTunit, curFCall) =>
                 inlineFuncCall(curTunit, new Morpheus(curTunit, morpheus.getFM), curFCall, fDefs))
 
             tunitRefactored =
-                callExpr.foldLeft(tunitRefactored)(
+                fCallsExpr.foldLeft(tunitRefactored)(
                     (curTunit, expr) => inlineFuncCallExpr(curTunit,
                         new Morpheus(curTunit, morpheus.getFM), expr, fDefs))
 
