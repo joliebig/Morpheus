@@ -561,9 +561,9 @@ object CInlineFunction extends CRefactor with IntraCFG {
             return false
 
         // in both places the has the same global visibility -> no need to rename
-        val localCompStmt = getCompStatement(parentOpt(id, morpheus.getASTEnv).asInstanceOf[Opt[AST]], morpheus.getASTEnv)
-        if((localCompStmt != null) && isVisibleGlobalNameInFunctionScope(nameWithFeature, callCompStmt, morpheus)
-            && isVisibleGlobalNameInFunctionScope(nameWithFeature, localCompStmt, morpheus))
+        val fDefCompStmt = getCompStatement(parentOpt(id, morpheus.getASTEnv).asInstanceOf[Opt[AST]], morpheus.getASTEnv)
+        if((fDefCompStmt != null) && isVisibleGlobalNameInFunctionScope(nameWithFeature, callCompStmt, morpheus)
+            && isVisibleGlobalNameInFunctionScope(nameWithFeature, fDefCompStmt, morpheus))
             return false
 
         // id is function -> no rename
