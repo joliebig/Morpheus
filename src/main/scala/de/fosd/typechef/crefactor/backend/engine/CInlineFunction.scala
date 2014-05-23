@@ -546,10 +546,10 @@ object CInlineFunction extends CRefactor with IntraCFG {
      * Checks if an id is only declared at the place of the inlining function scope.
      */
     private def isDeclaredInFunctionCallScope(id: Id, callCompStmt: CompoundStatement, morpheus: Morpheus): Boolean = {
-        val idContion = Opt(morpheus.getASTEnv.featureExpr(id), id.name)
+        val nameWithFeature = Opt(morpheus.getASTEnv.featureExpr(id), id.name)
 
         // lookup if name is visible in current scope
-        if (!isVisibleNameInFunctionScope(idContion, callCompStmt, morpheus))
+        if (!isVisibleNameInFunctionScope(nameWithFeature, callCompStmt, morpheus))
             return false
 
         // check if any reference of the inline id links into the calling scope - if so no renaming is required
@@ -562,8 +562,8 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
         // in both places the has the same global visibility -> no need to rename
         val localCompStmt = getCompStatement(parentOpt(id, morpheus.getASTEnv).asInstanceOf[Opt[AST]], morpheus.getASTEnv)
-        if((localCompStmt != null) && isVisibleGlobalNameInFunctionScope(idContion, callCompStmt, morpheus)
-            && isVisibleGlobalNameInFunctionScope(idContion, localCompStmt, morpheus))
+        if((localCompStmt != null) && isVisibleGlobalNameInFunctionScope(nameWithFeature, callCompStmt, morpheus)
+            && isVisibleGlobalNameInFunctionScope(nameWithFeature, localCompStmt, morpheus))
             return false
 
         // id is function -> no rename
