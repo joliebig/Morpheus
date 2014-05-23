@@ -411,7 +411,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
         val initializer = getDeclarationsFromCallParameters(fCall, renamed._2, morpheus)
 
         // apply feature environment
-        val statements = applyFeaturesOnInlineStmts(renamed._1, fCall, morpheus)
+        val statements = mapFeaturesOnInlineStmts(renamed._1, fCall, morpheus)
 
         // find return statements
         val returnStmts = getReturnStmts(statements)
@@ -445,7 +445,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
         val (renamedIdsStmts, renamedIdsParams) = renameShadowedIds(idsToRename, fDef, fCall, morpheus)
         val initializer = getDeclarationsFromCallParameters(fCall, renamedIdsParams, morpheus)
-        var stmts = applyFeaturesOnInlineStmts(renamedIdsStmts, fCall, morpheus)
+        var stmts = mapFeaturesOnInlineStmts(renamedIdsStmts, fCall, morpheus)
         val returnStmts = getReturnStmts(stmts)
 
         // replace (return expr; => expr;) or remove (return; => <removed>) return statements
@@ -685,8 +685,8 @@ object CInlineFunction extends CRefactor with IntraCFG {
         (statements, parameters)
     }
 
-    private def applyFeaturesOnInlineStmts(statements: List[Opt[Statement]], call: Opt[AST],
-                                           morpheus: Morpheus): List[Opt[Statement]] = {
+    private def mapFeaturesOnInlineStmts(statements: List[Opt[Statement]], call: Opt[AST],
+                                           morpheus: Morpheus): List[Opt[Statement]] =
         statements.flatMap(statement => {
             val feature = statement.feature.and(call.feature)
             feature.isSatisfiable(morpheus.getFM) match {
@@ -694,19 +694,16 @@ object CInlineFunction extends CRefactor with IntraCFG {
                 case _ => None
             }
         })
-    }
 
-    private def getReturnStmts(statements: List[Opt[Statement]]): List[Opt[ReturnStatement]] = {
+    private def getReturnStmts(statements: List[Opt[Statement]]): List[Opt[ReturnStatement]] =
         filterAllOptElems(statements).filter {
             case Opt(_, _: ReturnStatement) => true
             case _ => false
         }.asInstanceOf[List[Opt[ReturnStatement]]]
-    }
 
-    private def isFunctionCall(morpheus: Morpheus, id: Id): Boolean = {
+    private def isFunctionCall(morpheus: Morpheus, id: Id): Boolean =
         parentAST(id, morpheus.getASTEnv) match {
             case PostfixExpr(`id`, FunctionCall(_)) => true
             case _ => false
         }
-    }
 }
