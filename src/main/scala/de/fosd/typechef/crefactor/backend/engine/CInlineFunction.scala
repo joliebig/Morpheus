@@ -439,9 +439,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
     private def inlineFDefInExpr(compStmt: CompoundStatement, fDef: Opt[FunctionDef],
                                  fCall: Opt[AST], morpheus: Morpheus): CompoundStatement = {
-        val workingStatement = compStmt
-
-        val idsToRename = getIdsToRename(fDef.entry, workingStatement, morpheus)
+        val idsToRename = getIdsToRename(fDef.entry, compStmt, morpheus)
 
         val (renamedIdsStmts, renamedIdsParams) = renameShadowedIds(idsToRename, fDef, fCall, morpheus)
         val initializer = getDeclarationsFromCallParameters(fCall, renamedIdsParams, morpheus)
