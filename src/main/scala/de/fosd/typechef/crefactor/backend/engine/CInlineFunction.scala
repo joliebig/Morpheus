@@ -68,12 +68,12 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
             tunitRefactored =
                 fCallsExpr.foldLeft(tunitRefactored)(
-                    (curTunit, expr) => inlineFuncCallExpr(new Morpheus(curTunit, morpheus.getFM), expr, fDefs))
+                    (curTunit, curFCall) => inlineFuncCallExpr(new Morpheus(curTunit, morpheus.getFM), curFCall, fDefs))
 
             // Remove old definition and declarations (note may cause linking error)
             if (!keepDeclaration) {
-                tunitRefactored = fDefs.foldLeft(tunitRefactored)((workingAST, x) => remove(workingAST, x))
-                tunitRefactored = fDecls.foldLeft(tunitRefactored)((workingAST, x) => remove(workingAST, x))
+                tunitRefactored = fDefs.foldLeft(tunitRefactored)((curTunit, fDef) => remove(curTunit, fDef))
+                tunitRefactored = fDecls.foldLeft(tunitRefactored)((curTunit, fDecl) => remove(curTunit, fDecl))
             }
 
             Right(tunitRefactored)
@@ -98,19 +98,20 @@ object CInlineFunction extends CRefactor with IntraCFG {
             val parent = parentOpt(id, morpheus.getASTEnv)
             parent.entry match {
                 case _: NestedFunctionDef => // not supported
-                case _: WhileStatement => fCallExprs ::= parent.asInstanceOf[Opt[AST]]
+                case WhileStatement(PostfixExpr(`fCall`, _)) | DoStatement(PostfixExpr(`fCall`, _))
+                => fCallExprs ::= parent.asInstanceOf[Opt[AST]]
                 case _: Statement => fCallStmts ::= parent.asInstanceOf[Opt[Statement]]
                 case _: FunctionDef => fDefs ::= parent.asInstanceOf[Opt[FunctionDef]]
                 case InitDeclaratorI(_, _, None) => fDecls ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[AST]]
                 case InitDeclaratorI(_, _, Some(_)) =>
                     parentAST(parentAST(id, morpheus.getASTEnv), morpheus.getASTEnv) match {
-                        case a: ArrayAccess => logger.warn("hit array funccall " + a + " " + parent)
+                        case a: ArrayAccess => throw new RefactorException("Hit invalid array access: " + a)
                         case _ => fCallStmts ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[DeclarationStatement]]
                     }
                 case _: InitDeclaratorE => fDecls ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[AST]]
                 case _: Expr => fCallExprs ::= parent.asInstanceOf[Opt[AST]]
                 case _: NArySubExpr => fCallExprs ::= parent.asInstanceOf[Opt[AST]]
-                case x => logger.warn("Invalid function found!" + x)
+                case x => throw new RefactorException("Invalid function found!" + x)
             }
         })
 
@@ -161,7 +162,10 @@ object CInlineFunction extends CRefactor with IntraCFG {
         })
     }
 
-    // private def inlineFuncExpr(ast: AST) = {}
+    private def inlineFuncCallExpr_WIP(morpheus: Morpheus, fCall: Opt[Expr],
+                                       fDefs: List[Opt[FunctionDef]]) : TranslationUnit = {
+        null
+    }
 
     private def inlineFuncCallExpr(morpheus: Morpheus, call: Opt[AST],
                                    fDefs: List[Opt[FunctionDef]]): TranslationUnit = {
