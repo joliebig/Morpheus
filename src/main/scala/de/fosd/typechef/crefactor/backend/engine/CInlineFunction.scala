@@ -98,7 +98,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
             val parent = parentOpt(id, morpheus.getASTEnv)
             parent.entry match {
                 case _: NestedFunctionDef => // not supported
-                case WhileStatement(PostfixExpr(`fCall`, _)) | DoStatement(PostfixExpr(`fCall`, _))
+                case WhileStatement(PostfixExpr(`id`, _)) | DoStatement(PostfixExpr(`id`, _))
                 => fCallExprs ::= parent.asInstanceOf[Opt[AST]]
                 case _: Statement => fCallStmts ::= parent.asInstanceOf[Opt[Statement]]
                 case _: FunctionDef => fDefs ::= parent.asInstanceOf[Opt[FunctionDef]]
