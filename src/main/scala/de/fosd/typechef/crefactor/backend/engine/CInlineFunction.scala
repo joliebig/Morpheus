@@ -273,12 +273,12 @@ object CInlineFunction extends CRefactor with IntraCFG {
                                fDefs: List[Opt[FunctionDef]]): TranslationUnit = {
 
         def inlineFCallInIfStmt(fCallCompStmt: CompoundStatement): CompoundStatement = {
-            val stmtsToInline = fDefs.map(fDef =>
+            val compundExprStmt = fDefs.map(fDef =>
                     (inlineFDefInExprStmt(fCallCompStmt, morpheus, fCall, fDef), fDef.feature.and(fCall.feature)))
 
             // Remove fCall and inline function definition
             replaceStmtWithStmtsInCompStmt(fCallCompStmt, fCall,
-                stmtsToInline.map(toInline => Opt(toInline._2, toInline._1)))
+                compundExprStmt.map(inlinedFDef => Opt(inlinedFDef._2, inlinedFDef._1)))
         }
 
         def inlineFCallInCompStmt(fCallCompStmt: CompoundStatement): CompoundStatement = {
@@ -445,17 +445,16 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
         val (renamedIdsStmts, renamedIdsParams) = renameShadowedIds(idsToRename, fDef, fCall, morpheus)
         val initializer = getDeclarationsFromCallParameters(fCall, renamedIdsParams, morpheus)
-        var stmts = mapFeaturesOnInlineStmts(renamedIdsStmts, fCall, morpheus)
-        val returnStmts = getReturnStmts(stmts)
+        val returnStmts = getReturnStmts(renamedIdsStmts)
 
         // replace (return expr; => expr;) or remove (return; => <removed>) return statements
-        stmts = returnStmts.foldLeft(stmts)((stmts, returnStmt) =>
+        val stmtsToInline = returnStmts.foldLeft(renamedIdsStmts)((stmts, returnStmt) =>
             returnStmt.entry.expr match {
                 case None => remove(stmts, returnStmt)
                 case Some(_) => replace(stmts, returnStmt,
                     Opt(returnStmt.feature, ExprStatement(returnStmt.entry.expr.get)))
             })
-        CompoundStatement(initializer ::: stmts)
+        CompoundStatement(initializer ::: mapFeaturesOnInlineStmts(stmtsToInline, fCall, morpheus))
     }
 
     /**
