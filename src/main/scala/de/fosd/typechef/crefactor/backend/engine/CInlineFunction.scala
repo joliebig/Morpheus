@@ -64,12 +64,11 @@ object CInlineFunction extends CRefactor with IntraCFG {
         try {
             var tunitRefactored =
                 fCalls.foldLeft(morpheus.getTranslationUnit)((curTunit, curFCall) =>
-                    inlineFuncCallStmt(curTunit, new Morpheus(curTunit, morpheus.getFM), curFCall, fDefs))
+                    inlineFuncCallStmt(new Morpheus(curTunit, morpheus.getFM), curFCall, fDefs))
 
             tunitRefactored =
                 fCallsExpr.foldLeft(tunitRefactored)(
-                    (curTunit, expr) => inlineFuncCallExpr(curTunit,
-                        new Morpheus(curTunit, morpheus.getFM), expr, fDefs))
+                    (curTunit, expr) => inlineFuncCallExpr(new Morpheus(curTunit, morpheus.getFM), expr, fDefs))
 
             // Remove old definition and declarations (note may cause linking error)
             if (!keepDeclaration) {
@@ -162,7 +161,9 @@ object CInlineFunction extends CRefactor with IntraCFG {
         })
     }
 
-    private def inlineFuncCallExpr(ast: AST, morpheus: Morpheus, call: Opt[AST],
+    // private def inlineFuncExpr(ast: AST) = {}
+
+    private def inlineFuncCallExpr(morpheus: Morpheus, call: Opt[AST],
                                    fDefs: List[Opt[FunctionDef]]): TranslationUnit = {
         val workingCallCompStmt = getCompStatement(call, morpheus.getASTEnv)
 
@@ -269,7 +270,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
         }
     }
 
-    private def inlineFuncCallStmt(tunit: TranslationUnit, morpheus: Morpheus, fCall: Opt[Statement],
+    private def inlineFuncCallStmt(morpheus: Morpheus, fCall: Opt[Statement],
                                fDefs: List[Opt[FunctionDef]]): TranslationUnit = {
 
         def inlineFCallInIfStmt(fCallCompStmt: CompoundStatement): CompoundStatement = {
