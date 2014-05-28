@@ -110,7 +110,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
                 case _: InitDeclaratorE => fDecls ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[AST]]
                 case _: Expr => fCallExprs ::= parent.asInstanceOf[Opt[AST]]
                 case _: NArySubExpr => fCallExprs ::= parent.asInstanceOf[Opt[AST]]
-                case x => throw new RefactorException("Invalid function found!" + x)
+                case x => throw new RefactorException("Invalid function found! \n" + x + "\n" + id.getPositionFrom)
             }
         })
 
