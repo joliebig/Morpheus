@@ -114,8 +114,6 @@ object CInlineFunction extends CRefactor with IntraCFG {
             }
         })
 
-        logger.info(fCallExprs)
-
         (fCallStmts, fDecls, fDefs, fCallExprs)
     }
 

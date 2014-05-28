@@ -146,5 +146,5 @@ trait CRefactor
 
 }
 
-case class RefactorException(error: String) extends Exception
+case class RefactorException(error: String) extends Exception(error)
 
