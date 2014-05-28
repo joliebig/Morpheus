@@ -309,25 +309,4 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
 
         StatsCan.addStat(morpheus.getFile, run, Type, res)
     }
-
-    // TODO @ajanker: What is the purpose of this function?
-    // this functions detects if the local interface knows about linking while the global
-    // interface does not know about it
-    // TODO @ajanker: This sounds like an error in the global interface generation, right?
-    // Or is there a specific reason, why a symbol (identifier) has local, but externally visible, binding
-    // and is not in the global linking interface?
-    def isOnlyLocallyLinked(id: Id, morpheus : Morpheus) = {
-        val exports = morpheus.getTypeSystem.getInferredInterface().exports
-        val imports = morpheus.getTypeSystem.getInferredInterface().imports
-
-        val local = exports.exists(_.name == id.name) ||
-            imports.exists(_.name == id.name)
-
-        val global = if (morpheus.getModuleInterface == null)
-                         false
-                     else
-                         morpheus.getModuleInterface.nameIsListed(id.name)
-
-        local && !global
-    }
 }
