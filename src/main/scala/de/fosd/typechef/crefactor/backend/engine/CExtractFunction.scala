@@ -282,7 +282,7 @@ object CExtractFunction extends CRefactor with IntraCFG {
                 res
             } catch {
                 case _: Throwable =>
-                    logger.warn("No entry found for: " + liveId)
+                    // logger.warn("No entry found for: " + liveId)
                     false
             }
         })
