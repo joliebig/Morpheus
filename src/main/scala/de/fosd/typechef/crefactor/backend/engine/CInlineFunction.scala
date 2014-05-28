@@ -19,7 +19,6 @@ import de.fosd.typechef.parser.c._
  */
 object CInlineFunction extends CRefactor with IntraCFG {
 
-    // TODO Integrate in inline
     def canInline(morpheus: Morpheus, fCall: Id): Boolean = {
         if (!isFunctionCall(morpheus, fCall))
             return false
@@ -27,11 +26,11 @@ object CInlineFunction extends CRefactor with IntraCFG {
         val (fCalls, _, fDefs, _) = getCallDeclDefCallExprs(fCall, morpheus)
 
         if (fDefs.isEmpty) {
-            logger.info(fCall + " is a imported function.")
+            // logger.info(fCall + " is a imported function.")
             false
         } else if (fDefs.exists(func => hasIncompatibleCFG(func.entry, morpheus)
             || isRecursive(func.entry)))  {
-            logger.info(fCall + " is not compatible.")
+            // logger.info(fCall + " is not compatible.")
             false
         } else if (fCalls.exists(fc => {
             fDefs.exists(fd => {
@@ -39,7 +38,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
                 val ids = filterAllASTElems[Id](fd)
                 ids.exists(hasIncompatibleVariableScoping(_, callCompStmt, morpheus))
             })})) {
-            logger.info(fCall + " has different scopes.")
+            // logger.info(fCall + " has different scopes.")
             false
         } else
             true
@@ -114,6 +113,8 @@ object CInlineFunction extends CRefactor with IntraCFG {
                 case x => throw new RefactorException("Invalid function found!" + x)
             }
         })
+
+        logger.info(fCallExprs)
 
         (fCallStmts, fDecls, fDefs, fCallExprs)
     }
