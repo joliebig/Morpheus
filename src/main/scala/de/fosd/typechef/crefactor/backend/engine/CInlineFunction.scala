@@ -26,10 +26,12 @@ object CInlineFunction extends CRefactor with IntraCFG {
         val (fCalls, _, fDefs, _) = getCallDeclDefCallExprs(fCall, morpheus)
 
         if (fDefs.isEmpty) {
+            // function definitons must be available
             // logger.info(fCall + " is a imported function.")
             false
         } else if (fDefs.exists(func => hasIncompatibleCFG(func.entry, morpheus)
             || isRecursive(func.entry)))  {
+            // function has  multiple return statements or is recursive
             // logger.info(fCall + " is not compatible.")
             false
         } else if (fCalls.exists(fc => {
@@ -38,6 +40,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
                 val ids = filterAllASTElems[Id](fd)
                 ids.exists(hasIncompatibleVariableScoping(_, callCompStmt, morpheus))
             })})) {
+            // inlined variables does not differ in scoping
             // logger.info(fCall + " has different scopes.")
             false
         } else
@@ -52,6 +55,8 @@ object CInlineFunction extends CRefactor with IntraCFG {
      * @return error string (left) or the refactored tunit (right)
      */
     def inline(morpheus: Morpheus, id: Id, keepDeclaration : Boolean): Either[String, TranslationUnit] = {
+        if (!canInline(morpheus, id)) throw new RefactorException("Can not be inlined.")
+
         val (fCalls, fDecls, fDefs, fCallsExpr) = getCallDeclDefCallExprs(id, morpheus)
 
         if (fDefs.isEmpty)
@@ -96,9 +101,12 @@ object CInlineFunction extends CRefactor with IntraCFG {
         morpheus.getReferences(fCall).map(_.entry).foreach(id => {
             val parent = parentOpt(id, morpheus.getASTEnv)
             parent.entry match {
-                // TODO NestedFunctionDef and FunctionPointer as exit condition
-                case n: NestedFunctionDef => logger.info("Hit nested function def: " + n + " in " + id.getPositionFrom)
-                case p: ParameterDeclaration => logger.info("Hit function pointer: " + p + " in " + id.getPositionFrom)
+                case n: NestedFunctionDef =>
+                    logger.info("Hit nested function def: " + n + " in " + id.getPositionFrom)
+                    return (List(), List(), List(), List())
+                case p: ParameterDeclaration =>
+                    logger.info("Hit function pointer: " + p + " in " + id.getPositionFrom)
+                    return (List(), List(), List(), List())
                 case WhileStatement(PostfixExpr(`id`, _), _) | DoStatement(PostfixExpr(`id`, _), _)
                 => fCallExprs ::= parent.asInstanceOf[Opt[AST]]
                 case _: Statement => fCallStmts ::= parent.asInstanceOf[Opt[Statement]]
