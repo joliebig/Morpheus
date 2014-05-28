@@ -92,11 +92,13 @@ object CInlineFunction extends CRefactor with IntraCFG {
     // function-call statements (fCallStmts), function declarations (fDecls), function definitions (fDefs),
     // and function-call expressions (fCallExprs; function calls somewhere inside a statement or expression).
     def getCallDeclDefCallExprs(fCall: Id, morpheus: Morpheus): (List[Opt[Statement]], List[Opt[AST]],
-        List[Opt[FunctionDef]], List[Opt[AST]]) = {
+        List[Opt[FunctionDef]], List[Opt[Expr]]) = {
         var fCallStmts = List[Opt[Statement]]()
         var fDecls = List[Opt[AST]]()
         var fDefs = List[Opt[FunctionDef]]()
-        var fCallExprs = List[Opt[AST]]()
+        var fCallExprs = List[Opt[Expr]]()
+
+        def checkExpr(expr: Option[Expr], id: Id) = expr.exists(filterAllASTElems[Id](_).contains(eq(id)))
 
         morpheus.getReferences(fCall).map(_.entry).foreach(id => {
             val parent = parentOpt(id, morpheus.getASTEnv)
@@ -107,8 +109,21 @@ object CInlineFunction extends CRefactor with IntraCFG {
                 case p: ParameterDeclaration =>
                     logger.info("Hit function pointer: " + p + " in " + id.getPositionFrom)
                     return (List(), List(), List(), List())
-                case WhileStatement(PostfixExpr(`id`, _), _) | DoStatement(PostfixExpr(`id`, _), _)
-                => fCallExprs ::= parent.asInstanceOf[Opt[AST]]
+                // we have to take special care about control statements but not return statements
+                case WhileStatement(expr, _) =>
+                    if (checkExpr(Some(expr), id)) fCallExprs ::= Opt(parent.feature, expr)
+                    else fCallStmts ::= parent.asInstanceOf[Opt[Statement]]
+                case DoStatement(expr, _) =>
+                    if (checkExpr(Some(expr), id)) fCallExprs ::= Opt(parent.feature, expr)
+                    else fCallStmts ::= parent.asInstanceOf[Opt[Statement]]
+                case f: ForStatement =>
+                    if (checkExpr(f.expr1, id))  fCallExprs ::= f.expr1.get
+                    else if (checkExpr(f.expr2, id))  fCallExprs ::= f.expr2.get
+                    else if (checkExpr(f.expr3, id))  fCallExprs ::= f.expr3.get
+                    else fCallStmts ::= parent.asInstanceOf[Opt[Statement]]
+                case SwitchStatement(expr, _) =>
+                    if (checkExpr(Some(expr), id)) fCallExprs ::= Opt(parent.feature, expr)
+                    else fCallStmts ::= parent.asInstanceOf[Opt[Statement]]
                 case _: Statement => fCallStmts ::= parent.asInstanceOf[Opt[Statement]]
                 case _: FunctionDef => fDefs ::= parent.asInstanceOf[Opt[FunctionDef]]
                 case InitDeclaratorI(_, _, None) => fDecls ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[AST]]
@@ -118,8 +133,8 @@ object CInlineFunction extends CRefactor with IntraCFG {
                         case _ => fCallStmts ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[DeclarationStatement]]
                     }
                 case _: InitDeclaratorE => fDecls ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[AST]]
-                case _: Expr => fCallExprs ::= parent.asInstanceOf[Opt[AST]]
-                case _: NArySubExpr => fCallExprs ::= parent.asInstanceOf[Opt[AST]]
+                case _: Expr => fCallExprs ::= parent.asInstanceOf[Opt[Expr]]
+                case _: NArySubExpr => fCallExprs ::= parent.asInstanceOf[Opt[Expr]]
                 case x => throw new RefactorException("Invalid function found! \n" + x + "\n" + id.getPositionFrom)
             }
         })
@@ -171,9 +186,36 @@ object CInlineFunction extends CRefactor with IntraCFG {
         })
     }
 
-    private def inlineFuncCallExpr_WIP(morpheus: Morpheus, fCall: Opt[Expr],
+    private def inlineFuncCallExpr(morpheus: Morpheus, fCall: Opt[Expr],
                                        fDefs: List[Opt[FunctionDef]]) : TranslationUnit = {
-        null
+        val compStmt = getCompStatement(fCall, morpheus.getASTEnv)
+
+        val inlineCompStmtExprs = fDefs.flatMap(fDef =>
+                Some(Opt(fDef.feature.and(fCall.feature), inlineFDefInExpr(compStmt, fDef, fCall, morpheus))))
+
+        val refactoredCompStmt =
+            replaceExprWithCompStmExpr(compStmt, fCall.entry, mapCompStmtsToCompStmtExprs(inlineCompStmtExprs))
+
+        replace(morpheus, compStmt, refactoredCompStmt)
+    }
+
+    // A compound statement expression only can hold one compund statement
+    // to add several compund statements under different features in one expression we generate one big expression
+    // and add the feature of the parent expression to its statements.
+    private def mapCompStmtsToCompStmtExprs(compStmtExprs: List[Opt[CompoundStatementExpr]]): CompoundStatementExpr =
+        CompoundStatementExpr(CompoundStatement(compStmtExprs.flatMap(compStmtExpr => {
+            compStmtExpr.entry.compoundStatement.innerStatements.map(
+                stmt => stmt.copy(feature = stmt.feature.and(compStmtExpr.feature)))
+        })))
+    /**
+    private def buildVariableCompoundStatement(stmts: List[(CompoundStatementExpr, FeatureExpr)]): CompoundStatementExpr = {
+        // move several compoundStatement into one and apply their feature.
+        val innerstmts = stmts.foldLeft(List[Opt[Statement]]())((innerstmts, stmtEntry) => stmtEntry._1 match {
+            case CompoundStatementExpr(CompoundStatement(inner)) =>
+                innerstmts ::: inner.map(stmt => stmt.copy(feature = stmt.feature.and(stmtEntry._2)))
+            case _ => innerstmts
+        })
+        CompoundStatementExpr(CompoundStatement(innerstmts))
     }
 
     private def inlineFuncCallExpr(morpheus: Morpheus, call: Opt[AST],
@@ -185,7 +227,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
                     val inlineExpr = inlineFDefInExpr(workingCallCompStmt, fDef, call, morpheus)
                     inlineExpr match {
                         case null => None
-                        case _ => Some(CompoundStatementExpr(inlineExpr), fDef.feature.and(call.feature))
+                        case _ => Some(Opt(fDef.feature.and(call.feature), inlineExpr))
                     }
             })
         }
@@ -219,7 +261,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
             call.entry match {
                 case e: Expr =>
                     replaceExprWithCompStmExpr(expr, e, buildVariableCompoundStatement(inlineExprStatements))
-                case x => throw new RefactorException("Function call is no expression:" + x)
+                case x => throw new RefactorException("Function call is no expression: " + x)
             }
 
         }
@@ -281,7 +323,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
                 replace(morpheus, getCompStatement(call, morpheus.getASTEnv), replaceStmt)
             case _ => throw new RefactorException("FunctionCall to inline is no statement.")
         }
-    }
+    }  */
 
     private def inlineFuncCallStmt(morpheus: Morpheus, fCall: Opt[Statement],
                                fDefs: List[Opt[FunctionDef]]): TranslationUnit = {
@@ -440,8 +482,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
     private def inlineFDefInExprStmt(compStmt: CompoundStatement, morpheus: Morpheus, fCall: Opt[AST],
                                      fDef: Opt[FunctionDef]): ExprStatement = {
-        val compoundStmtExpr: CompoundStatementExpr =
-            CompoundStatementExpr(inlineFDefInExpr(compStmt, fDef, fCall, morpheus))
+        val compoundStmtExpr = inlineFDefInExpr(compStmt, fDef, fCall, morpheus)
 
         fCall.entry match {
             case ExprStatement(PostfixExpr(_, FunctionCall(_))) => ExprStatement(compoundStmtExpr)
@@ -452,7 +493,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
 
     private def inlineFDefInExpr(compStmt: CompoundStatement, fDef: Opt[FunctionDef],
-                                 fCall: Opt[AST], morpheus: Morpheus): CompoundStatement = {
+                                 fCall: Opt[AST], morpheus: Morpheus): CompoundStatementExpr = {
         val idsToRename = getIdsToRename(fDef.entry, compStmt, morpheus)
 
         val (renamedIdsStmts, renamedIdsParams) = renameShadowedIds(idsToRename, fDef, fCall, morpheus)
@@ -460,13 +501,15 @@ object CInlineFunction extends CRefactor with IntraCFG {
         val returnStmts = getReturnStmts(renamedIdsStmts)
 
         // replace (return expr; => expr;) or remove (return; => <removed>) return statements
+        // the value of the last expression serves as the value of the entire construct.
         val stmtsToInline = returnStmts.foldLeft(renamedIdsStmts)((stmts, returnStmt) =>
             returnStmt.entry.expr match {
                 case None => remove(stmts, returnStmt)
                 case Some(_) => replace(stmts, returnStmt,
                     Opt(returnStmt.feature, ExprStatement(returnStmt.entry.expr.get)))
             })
-        CompoundStatement(initializer ::: mapFeaturesOnInlineStmts(stmtsToInline, fCall, morpheus))
+        CompoundStatementExpr(
+            CompoundStatement(initializer ::: mapFeaturesOnInlineStmts(stmtsToInline, fCall, morpheus)))
     }
 
     /**

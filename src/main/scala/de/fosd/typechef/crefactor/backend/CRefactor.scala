@@ -70,15 +70,6 @@ trait CRefactor
      */
     def isReservedLanguageKeyword(name: String) = LANGUAGE_KEYWORDS.contains(name)
 
-    def buildVariableCompoundStatement(stmts: List[(CompoundStatementExpr, FeatureExpr)]): CompoundStatementExpr = {
-        // move several compoundStatement into one and apply their feature.
-        val innerstmts = stmts.foldLeft(List[Opt[Statement]]())((innerstmts, stmtEntry) => stmtEntry._1 match {
-            case CompoundStatementExpr(CompoundStatement(inner)) =>
-                innerstmts ::: inner.map(stmt => stmt.copy(feature = stmt.feature.and(stmtEntry._2)))
-            case _ => innerstmts
-        })
-        CompoundStatementExpr(CompoundStatement(innerstmts))
-    }
 
     // Check whether a symbol is valid in the current file (module).
     def isValidInModule(name: String, element: AST, morpheus: Morpheus): Boolean = {
