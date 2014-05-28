@@ -27,9 +27,9 @@ trait Refactor extends Evaluation {
         val inlineIDs = inlineEngine.getValidIdsForEvaluation(morpheus)
         logger.info("+++ Prepared refactorings for file " + morpheus.getFile)
         logger.info("Renaming: " + renameIDs.size)
-        logger.info("Extract:" + extractStmts.size)
+        logger.info("Extract: " + extractStmts.size)
         logger.info("Inline: " + inlineIDs.size)
-        logger.info("Variability Forced" + FORCE_VARIABILITY)
+        logger.info("Variability Forced: " + FORCE_VARIABILITY)
         PreparedRefactorings(renameIDs, extractStmts, inlineIDs)
     }
 
