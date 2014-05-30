@@ -681,13 +681,16 @@ object CInlineFunction extends CRefactor with IntraCFG {
      * int b = j;
      *
      */
-    private def getDeclarationsFromCallParameters(fCallStmt: Opt[AST], fCallId : Id, parameters: List[Opt[DeclaratorExtension]],
-                                                  morpheus: Morpheus) : List[Opt[DeclarationStatement]] = {
-        findPriorASTElem[FunctionCall](fCallId, morpheus.getASTEnv) match {
-            case Some(fCall) => parameters.flatMap(generateDeclarationsFromCallParamExpr(_, fCall.params.exprs, morpheus))
+    private def getDeclarationsFromCallParameters(fCallStmt: Opt[AST], fCallId: Id, parameters: List[Opt[DeclaratorExtension]],
+                                                  morpheus: Morpheus): List[Opt[DeclarationStatement]] =
+        findPriorASTElem[PostfixExpr](fCallId, morpheus.getASTEnv) match {
+            case Some(fCall) =>
+                fCall.s match {
+                    case f: FunctionCall => parameters.flatMap(generateDeclarationsFromCallParamExpr(_, f.params.exprs, morpheus))
+                    case _ => throw new RefactorException("Invalid function call has been selected: " + fCallStmt + "\n" + fCallId)
+                }
             case None => throw new RefactorException("Invalid function call has been selected: " + fCallStmt + "\n" + fCallId)
         }
-    }
 
     /*
      * Helping function to map the function call parameter to the corresponding inline function parameter
