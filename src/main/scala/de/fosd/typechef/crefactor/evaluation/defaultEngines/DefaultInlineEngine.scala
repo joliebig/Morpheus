@@ -48,8 +48,11 @@ trait DefaultInlineEngine extends Refactoring with Evaluation {
 
     def refactor(morpheus: Morpheus, preparedRefactorings: PreparedRefactorings):
     (Boolean, TranslationUnit, List[List[FeatureExpr]], List[(String, TranslationUnit)]) = {
-        if (preparedRefactorings.inline.isEmpty)
+        if (preparedRefactorings.inline.isEmpty)  {
+            logger.info("No refactoring prepared.")
             return (false, null, List(), List())
+        }
+
 
         val preparedCallId = preparedRefactorings.inline.head
 
