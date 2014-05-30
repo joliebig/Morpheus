@@ -685,7 +685,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
                                                   morpheus: Morpheus) : List[Opt[DeclarationStatement]] = {
         findPriorASTElem[FunctionCall](fCallId, morpheus.getASTEnv) match {
             case Some(fCall) => parameters.flatMap(generateDeclarationsFromCallParamExpr(_, fCall.params.exprs, morpheus))
-            case None => throw new RefactorException("Invalid function call has been selected: " + fCallStmt)
+            case None => throw new RefactorException("Invalid function call has been selected: " + fCallStmt + "\n" + fCallId)
         }
     }
 
