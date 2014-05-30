@@ -31,10 +31,10 @@ trait DefaultInlineEngine extends Refactoring with Evaluation {
         // Prefer var func calls
         val variableFuncCalls = availableFuncCalls.filter(call => {
             val callsDeclDef = CInlineFunction.getCallDeclDefCallExprs(call, morpheus)
-            val varCalls = callsDeclDef._1.exists(isVariable(_, morpheus.getASTEnv))
+            val varCalls = callsDeclDef._1.exists(x => isVariable(x._2, morpheus.getASTEnv))
             val varDecls = callsDeclDef._2.exists(isVariable(_, morpheus.getASTEnv))
             val varDefs = callsDeclDef._3.exists(isVariable(_, morpheus.getASTEnv))
-            val varExpr = callsDeclDef._4.exists(isVariable(_, morpheus.getASTEnv))
+            val varExpr = callsDeclDef._4.exists(x => isVariable(x._2 , morpheus.getASTEnv))
 
             (varCalls || varDecls || varDefs || varExpr)
         })
@@ -78,11 +78,12 @@ trait DefaultInlineEngine extends Refactoring with Evaluation {
                 StatsCan.addStat(morpheus.getFile, RefactorTime, refTime.getTime)
                 val callDeclDef = CInlineFunction.getCallDeclDefCallExprs(callIdToInline, morpheus)
 
-                val callFeatures = callDeclDef._1.map(_.feature)
+                val callFeatures = callDeclDef._1.map(x => x._2.feature)
                 val declFeatures = callDeclDef._2.flatMap(filterAllFeatureExpr(_))
                 val defFeatures = callDeclDef._3.flatMap(filterAllFeatureExpr(_))
+                val exprFeatures = callDeclDef._4.map(x => x._2.feature)
 
-                val features = (callFeatures ::: declFeatures ::: defFeatures).distinct
+                val features = (callFeatures ::: declFeatures ::: defFeatures ::: exprFeatures).distinct
 
                 StatsCan.addStat(morpheus.getFile, Amount, callDeclDef._1.size)
                 StatsCan.addStat(morpheus.getFile, InlinedFunction, callIdToInline)
