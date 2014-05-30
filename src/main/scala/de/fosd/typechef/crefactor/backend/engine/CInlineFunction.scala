@@ -118,9 +118,9 @@ object CInlineFunction extends CRefactor with IntraCFG {
                     if (checkExpr(Some(expr), id)) fCallExprs ::= (id, Opt(parent.feature, expr))
                     else fCallStmts ::= (id, parent.asInstanceOf[Opt[Statement]])
                 case f: ForStatement =>
-                    if (checkExpr(f.expr1, id))  fCallExprs ::= (id, f.expr1.get)
-                    else if (checkExpr(f.expr2, id))  fCallExprs ::= (id, f.expr2.get)
-                    else if (checkExpr(f.expr3, id))  fCallExprs ::= (id, f.expr3.get)
+                    if (checkExpr(f.expr1, id))  fCallExprs ::= (id, Opt(parent.feature, f.expr1.get))
+                    else if (checkExpr(f.expr2, id))  fCallExprs ::= (id, Opt(parent.feature, f.expr2.get))
+                    else if (checkExpr(f.expr3, id))  fCallExprs ::= (id, Opt(parent.feature, f.expr3.get))
                     else fCallStmts ::= (id, parent.asInstanceOf[Opt[Statement]])
                 case SwitchStatement(expr, _) =>
                     if (checkExpr(Some(expr), id)) fCallExprs ::= (id, Opt(parent.feature, expr))
