@@ -2,7 +2,6 @@ package de.fosd.typechef.crefactor.backend.engine
 
 import java.util.Collections
 
-import org.kiama.rewriting.Rewriter._
 
 import de.fosd.typechef.conditional._
 import de.fosd.typechef.crefactor._
@@ -10,8 +9,6 @@ import de.fosd.typechef.crefactor.backend.{RefactorException, CRefactor}
 import de.fosd.typechef.crewrite.IntraCFG
 import de.fosd.typechef.featureexpr.FeatureExpr
 import de.fosd.typechef.parser.c._
-import java.util
-import scala.util
 
 
 /**
@@ -210,123 +207,6 @@ object CInlineFunction extends CRefactor with IntraCFG {
       compStmtExpr.entry.compoundStatement.innerStatements.map(
         stmt => stmt.copy(feature = stmt.feature.and(compStmtExpr.feature)))
     })))
-  /**
-  private def buildVariableCompoundStatement(stmts: List[(CompoundStatementExpr, FeatureExpr)]): CompoundStatementExpr = {
-        // move several compoundStatement into one and apply their feature.
-        val innerstmts = stmts.foldLeft(List[Opt[Statement]]())((innerstmts, stmtEntry) => stmtEntry._1 match {
-            case CompoundStatementExpr(CompoundStatement(inner)) =>
-                innerstmts ::: inner.map(stmt => stmt.copy(feature = stmt.feature.and(stmtEntry._2)))
-            case _ => innerstmts
-        })
-        CompoundStatementExpr(CompoundStatement(innerstmts))
-    }
-
-    private def inlineFuncCallExpr(morpheus: Morpheus, call: Opt[AST],
-                                   fDefs: List[Opt[FunctionDef]]): TranslationUnit = {
-        val workingCallCompStmt = getCompStatement(call, morpheus.getASTEnv)
-
-        def generateInlineExprStmts: List[(CompoundStatementExpr, FeatureExpr)] = {
-            fDefs.flatMap(fDef => {
-                    val inlineExpr = inlineFDefInExpr(workingCallCompStmt, fDef, call, morpheus)
-                    inlineExpr match {
-                        case null => None
-                        case _ => Some(Opt(fDef.feature.and(call.feature), inlineExpr))
-                    }
-            })
-        }
-
-        def inlineInCorrectConditionalStmt(current: Conditional[Expr], call: AST, expr: AST,
-                                           inlineChoice: CompoundStatementExpr): Conditional[Expr] = {
-
-            val rw = manytd( rule {
-                case o@One(entry) if entry.asInstanceOf[AnyRef].eq(expr) =>
-                    expr match {
-                        case NAryExpr(e, others) =>
-                            call match {
-                                case n@NArySubExpr(op, _) =>
-                                    val replacement = replaceNArySubExpr(others, n, n.copy(e = inlineChoice))
-                                    o.copy(value = NAryExpr(e, replacement))
-                                case x =>
-                                    logger.warn("missed " + x)
-                                    throw new RefactorException("No rule defined for:" + x)
-                            }
-                        case p: PostfixExpr => o.copy(value = inlineChoice)
-                        case x =>
-                            logger.warn("missed " + x)
-                            throw new RefactorException("No rule defined for:" + x)
-                    }
-            })
-
-            rw(current).getOrElse(current).asInstanceOf[Conditional[Expr]]
-        }
-
-        def inlineInExpr(expr: Expr, inlineExprStatements: List[(CompoundStatementExpr, FeatureExpr)]) = {
-            call.entry match {
-                case e: Expr =>
-                    replaceExprWithCompStmExpr(expr, e, buildVariableCompoundStatement(inlineExprStatements))
-                case x => throw new RefactorException("Function call is no expression: " + x)
-            }
-
-        }
-        // inline a function call which is part of a control statement like
-        // if(callToInline()) or while(callToInline())
-        findPriorASTElem[Statement](call.entry, morpheus.getASTEnv) match {
-            case Some(entry) =>
-                val inlineExprStatements = generateInlineExprStmts
-                val parent = parentOpt(entry, morpheus.getASTEnv).asInstanceOf[Opt[Statement]]
-                var replaceStmt: CompoundStatement = null
-                var callParent = parentAST(call.entry, morpheus.getASTEnv)
-                entry match {
-                    case i@IfStatement(c@condition, _, elifs, _) =>
-                        // determine if inline call expression is part of a "if(callToInline)" or in a
-                        // "else if (callToInline())" statement
-                        if (callParent.eq(i))
-                            callParent = call.entry
-
-                        val cond = inlineInCorrectConditionalStmt(condition, call.entry, callParent,
-                            buildVariableCompoundStatement(inlineExprStatements))
-                        if (!cond.eq(i.condition))
-                            replaceStmt = replaceStmtInCompoundStatement(workingCallCompStmt, parent,
-                                parent.copy(entry = i.copy(condition = cond)))
-                        else {
-                            val refactoredElifs = elifs.map(elif => {
-                                if (parentAST(call.entry, morpheus.getASTEnv).eq(elif.entry))
-                                    callParent = call.entry
-
-                                val condition = elif.entry.condition
-                                val cond = inlineInCorrectConditionalStmt(condition, call.entry, callParent,
-                                    buildVariableCompoundStatement(inlineExprStatements))
-                                if (!cond.eq(condition))
-                                    elif.copy(entry = elif.entry.copy(condition = cond))
-                                else
-                                    elif
-                            })
-                            replaceStmt = replaceStmtInCompoundStatement(workingCallCompStmt, parent,
-                                parent.copy(entry = i.copy(elifs = refactoredElifs)))
-                        }
-                    case w: WhileStatement =>
-                        replaceStmt = replaceStmtInCompoundStatement(workingCallCompStmt, parent,
-                            parent.copy(entry = w.copy(expr = inlineInExpr(w.expr, inlineExprStatements))))
-                    case s: SwitchStatement =>
-                        replaceStmt = replaceStmtInCompoundStatement(workingCallCompStmt, parent,
-                            parent.copy(entry = s.copy(expr = inlineInExpr(s.expr, inlineExprStatements))))
-                    case d: DoStatement =>
-                        replaceStmt = replaceStmtInCompoundStatement(workingCallCompStmt, parent,
-                            parent.copy(entry = d.copy(expr = inlineInExpr(d.expr, inlineExprStatements))))
-                    case e: ExprStatement =>
-                        replaceStmt = replaceStmtInCompoundStatement(workingCallCompStmt, parent,
-                            parent.copy(entry = e.copy(expr = inlineInExpr(e.expr, inlineExprStatements))))
-                    case c: CaseStatement =>
-                        replaceStmt = replaceStmtInCompoundStatement(workingCallCompStmt, parent,
-                            parent.copy(entry = c.copy(c = inlineInExpr(c.c, inlineExprStatements))))
-                    case x =>
-                        logger.error("Missed InlineStatementExpr" + x)
-                        throw new RefactorException("Refactoring failed - missed InlineStatementExpr")
-                }
-                replace(morpheus, getCompStatement(call, morpheus.getASTEnv), replaceStmt)
-            case _ => throw new RefactorException("FunctionCall to inline is no statement.")
-        }
-    }  */
 
   private def inlineFuncCallStmt(morpheus: Morpheus, fCall : Opt[Statement], fCallId : Id,
                                  fDefs: List[Opt[FunctionDef]]): TranslationUnit = {
@@ -791,3 +671,4 @@ object CInlineFunction extends CRefactor with IntraCFG {
       case PostfixExpr(`id`, FunctionCall(_)) => true
       case _ => false
     }
+}
