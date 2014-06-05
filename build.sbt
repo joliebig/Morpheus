@@ -24,7 +24,7 @@ java -ea -Xmx2048M -Xss256M -XX:PermSize=512M -XX:MaxPermSize=1024M  -classpath 
 """
   val mainStr = main getOrElse sys.error("No main class specified")
   val contents = template.format(cp.files.absString, mainStr)
-  val out = base / "../morpheus.sh"
+  val out = base / "morpheus.sh"
   IO.write(out, contents)
   out.setExecutable(true)
   out
