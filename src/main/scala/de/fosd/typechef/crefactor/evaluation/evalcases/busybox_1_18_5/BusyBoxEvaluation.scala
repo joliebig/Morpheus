@@ -62,10 +62,12 @@ trait BusyBoxEvaluation extends Evaluation {
                     write(result._2, morpheus.getFile)
                     result._4.foreach(linked => writePrettyPrintedTUnit(linked._2, linked._1))
                     logger.info("Features: " + result._3)
-                    BusyBoxVerification.generateEvaluationConfigurations(result._2, morpheus.getFM, morpheus.getFile, result._3)
+                    val configs = BusyBoxVerification.generateEvaluationConfigurations(
+                        result._2, morpheus.getFM, morpheus.getFile, result._3)
                     StatsCan.addStat(file, AffectedFeatures, result._3)
-                    BusyBoxVerification.configBasedVerification(file, fm, "_ref")
+                    BusyBoxVerification.configBasedVerification(file, configs)
                 } else writeError("Could not engine file.", path)
+
                 val writer = new FileWriter(path + ".stats")
                 StatsCan.write(writer)
                 writer.flush()
