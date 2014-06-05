@@ -15,20 +15,23 @@ trait Verification extends Evaluation {
     val cleanScript: String = "./clean.sh"
     val configFlags: String = "configFlags"
 
-    def configBasedVerification(evalFile: String, fm: FeatureModel, mode: String, affectedFeatures : List[FeatureExpr] = List()) = {
-        val resultDir = new File(evalFile.replaceAll(evalName, "result") + "/" + mode + "/")
-        if (!resultDir.exists) resultDir.mkdirs
+    def configBasedVerification(evalFile: String, configs : List[(String, List[SingleFeatureExpr])]) = {
+        val resultDir = new File(evalFile.replaceAll(evalName, "result") + "/")
+        if (!resultDir.exists)
+            resultDir.mkdirs
 
-        val buildResult = build
-        val testResult = test
+        val configPaths = new StringBuilder
 
-        writeResult(buildResult._2, resultDir.getCanonicalPath + "/mode" + ".build")
-        if (!buildResult._1) writeResult(buildResult._3, resultDir.getCanonicalPath + "/mode" + ".buildErr")
+        configs.foreach(config => {
+            writeKConfig(config._2, resultDir, config._1)
+            configPaths.append(resultDir.getCanonicalPath + File.separator + config._1 + "\n")
+        })
 
-        writeResult(testResult._2, resultDir.getCanonicalPath + "/mode" + ".test")
-        if (!testResult._1) writeResult(testResult._3, resultDir.getCanonicalPath + "/mode" + ".testError")
+        val fw = new java.io.FileWriter(new File(completePath + "/" + evalName + "/" + configFlags))
 
-        writeResult((testResult._1 && buildResult._1).toString, resultDir.getCanonicalPath + "/mode" + ".result")
+        fw.write(configPaths.toString)
+        fw.flush
+        fw.close
     }
 
     def featureBasedVerification(evalFile: String, fm: FeatureModel, affectedFeatures: List[FeatureExpr] = List()) = {
@@ -105,10 +108,6 @@ trait Verification extends Evaluation {
        features.nonEmpty
     }
 
-    def writeConfig(config: SimpleConfiguration, dir: File, name: String): Unit = writeConfig(config.getTrueSet, dir, name)
-
-    def writeConfig(config: Set[SingleFeatureExpr], dir: File, name: String): Unit = writeKConfig(config.toList, dir, name)
-
     def writeKConfig(config: List[SingleFeatureExpr], dir: File, name: String) {
         val out = new java.io.FileWriter(dir.getCanonicalPath + File.separatorChar + name)
         val disabledFeatures = allFeatures._1.diff(config)
@@ -129,8 +128,6 @@ trait Verification extends Evaluation {
 
     def generateEvaluationConfigurations(tunit: TranslationUnit, fm: FeatureModel, originalFilePath: String,
                                          affectedFeatures: List[List[FeatureExpr]]): List[(String, List[SingleFeatureExpr])] = {
-        val resultDir = getResultDir(originalFilePath)
-
         val existingConfigs = new File(existingConfigsDir)
         val tUnitFeatures = new TUnitFeatures(tunit)
 
@@ -140,10 +137,8 @@ trait Verification extends Evaluation {
             val codeCoverage =
                 ConfigurationHandling.codeCoverage(tunit, fm, tUnitFeatures, List(), preferDisabledFeatures = false)
 
-            val covConfigs = codeCoverage._1.zipWithIndex.map(coverageConf => {
-                val path = resultDir + File.separator + coverageConf._2 + "coverage.config"
-                (path, coverageConf._1.getTrueSet.toList)
-            })
+            val covConfigs = codeCoverage._1.zipWithIndex.map(coverageConf => 
+                (coverageConf._2 + "coverage.config", coverageConf._1.getTrueSet.toList))
 
             val pairWiseConfigs =
                 ConfigurationHandling.loadConfigurationsFromCSVFile(new File(pairWiseFeaturesFile),
@@ -151,20 +146,16 @@ trait Verification extends Evaluation {
 
             val parConfigs = pairWiseConfigs._1.zipWithIndex.map(pairConfig => {
                 val enabledFeatures = pairConfig._1.getTrueSet.filterNot(ft => filterFeatures.contains(ft.feature))
-                val path = resultDir + File.separator + pairConfig._2 + "pairwise.config"
-                (path, enabledFeatures.toList)
+                val confName = pairConfig._2 + "pairwise.config"
+                (confName, enabledFeatures.toList)
             })
 
             covConfigs ::: parConfigs
-        } else {
+        } else 
             generatedConfigs.flatMap(genConfigs => {
                 val name = genConfigs._1.getName
-                genConfigs._2.zipWithIndex.map(genConfig => {
-                    val path = resultDir + File.separator + genConfig._2 + name
-                    (path, genConfig._1.getTrueSet.toList)
-                })
+                genConfigs._2.zipWithIndex.map(genConfig => (genConfig._2 + name, genConfig._1.getTrueSet.toList))
             }).toList
-        }
     }
 
     def variabilityCoverage(existingConfigs: File, fm: FeatureModel, affectedFeatures: List[List[FeatureExpr]],
