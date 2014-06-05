@@ -64,13 +64,7 @@ trait BusyBoxEvaluation extends Evaluation {
                     logger.info("Features: " + result._3)
                     BusyBoxVerification.generateEvaluationConfigurations(result._2, morpheus.getFM, morpheus.getFile, result._3)
                     StatsCan.addStat(file, AffectedFeatures, result._3)
-                    val time = new StopClock
-                    // run refactored first
-                    BusyBoxVerification.singleVerify(file, fm, "_ref")
-                    runScript("./cleanAndReset.sh", sourcePath)
-                    BusyBoxVerification.singleVerify(file, fm, "_org")
-                    runScript("./cleanAndReset.sh", sourcePath)
-                    StatsCan.addStat(file, TestingTime, time.getTime)
+                    BusyBoxVerification.configBasedVerification(file, fm, "_ref")
                 } else writeError("Could not engine file.", path)
                 val writer = new FileWriter(path + ".stats")
                 StatsCan.write(writer)

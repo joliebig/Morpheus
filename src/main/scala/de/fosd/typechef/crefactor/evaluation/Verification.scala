@@ -15,7 +15,7 @@ trait Verification extends Evaluation {
     val cleanScript: String = "./clean.sh"
     val configFlags: String = "configFlags"
 
-    def singleVerify(evalFile: String, fm: FeatureModel, mode: String, affectedFeatures : List[FeatureExpr] = List()) = {
+    def configBasedVerification(evalFile: String, fm: FeatureModel, mode: String, affectedFeatures : List[FeatureExpr] = List()) = {
         val resultDir = new File(evalFile.replaceAll(evalName, "result") + "/" + mode + "/")
         if (!resultDir.exists) resultDir.mkdirs
 
@@ -31,7 +31,7 @@ trait Verification extends Evaluation {
         writeResult((testResult._1 && buildResult._1).toString, resultDir.getCanonicalPath + "/mode" + ".result")
     }
 
-    def completeVerify(evalFile: String, fm: FeatureModel, affectedFeatures: List[FeatureExpr] = List()) = {
+    def featureBasedVerification(evalFile: String, fm: FeatureModel, affectedFeatures: List[FeatureExpr] = List()) = {
         val resultDir = new File(evalFile.replaceAll(evalName, "result") + "/")
         if (!resultDir.exists)
             resultDir.mkdirs
@@ -128,7 +128,7 @@ trait Verification extends Evaluation {
     }
 
     def generateEvaluationConfigurations(tunit: TranslationUnit, fm: FeatureModel, originalFilePath: String,
-                                         affectedFeatures: List[List[FeatureExpr]]) {
+                                         affectedFeatures: List[List[FeatureExpr]]): List[(String, List[SingleFeatureExpr])] = {
         val resultDir = getResultDir(originalFilePath)
 
         val existingConfigs = new File(existingConfigsDir)
@@ -139,30 +139,31 @@ trait Verification extends Evaluation {
         if (generatedConfigs.size > maxConfigs - 1) {
             val codeCoverage =
                 ConfigurationHandling.codeCoverage(tunit, fm, tUnitFeatures, List(), preferDisabledFeatures = false)
-            codeCoverage._1.foldLeft(0)((counter, coverageConf) => {
-                writeConfig(coverageConf, resultDir, counter + "coverage.config")
-                counter + 1
+
+            val covConfigs = codeCoverage._1.zipWithIndex.map(coverageConf => {
+                val path = resultDir + File.separator + coverageConf._2 + "coverage.config"
+                (path, coverageConf._1.getTrueSet.toList)
             })
 
             val pairWiseConfigs =
-                ConfigurationHandling.loadConfigurationsFromCSVFile(new File(pairWiseFeaturesFile), new File(featureModel_DIMACS), tUnitFeatures, fm, "CONFIG_")
+                ConfigurationHandling.loadConfigurationsFromCSVFile(new File(pairWiseFeaturesFile),
+                    new File(featureModel_DIMACS), tUnitFeatures, fm, "CONFIG_")
 
-            var pairCounter = 0
-
-            pairWiseConfigs._1.foreach(pairConfig => {
-                val enabledFeatures = pairConfig.getTrueSet.filterNot(ft => filterFeatures.contains(ft.feature))
-                writeConfig(enabledFeatures, resultDir, pairCounter + "pairwise.config")
-                pairCounter += 1
+            val parConfigs = pairWiseConfigs._1.zipWithIndex.map(pairConfig => {
+                val enabledFeatures = pairConfig._1.getTrueSet.filterNot(ft => filterFeatures.contains(ft.feature))
+                val path = resultDir + File.separator + pairConfig._2 + "pairwise.config"
+                (path, enabledFeatures.toList)
             })
+
+            covConfigs ::: parConfigs
         } else {
-            generatedConfigs.foreach(genConfigs => {
-                var configNumber = 0
+            generatedConfigs.flatMap(genConfigs => {
                 val name = genConfigs._1.getName
-                genConfigs._2.foreach(genConfig => {
-                    writeConfig(genConfig, resultDir, configNumber + name)
-                    configNumber += 1
+                genConfigs._2.zipWithIndex.map(genConfig => {
+                    val path = resultDir + File.separator + genConfig._2 + name
+                    (path, genConfig._1.getTrueSet.toList)
                 })
-            })
+            }).toList
         }
     }
 
