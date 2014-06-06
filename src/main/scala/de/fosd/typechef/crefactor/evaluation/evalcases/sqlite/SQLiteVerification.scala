@@ -4,8 +4,4 @@ import de.fosd.typechef.crefactor.evaluation.Verification
 import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
 
 object SQLiteVerification extends SQLiteEvaluation with Verification {
-
-    override def configBasedVerification(evalFile: String, fm: FeatureModel, mode: String, affectedFeatures: List[FeatureExpr] = List()) = {
-        // not supported
-    }
 }
