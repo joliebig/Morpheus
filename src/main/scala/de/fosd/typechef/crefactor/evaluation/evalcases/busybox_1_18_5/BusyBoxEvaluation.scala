@@ -64,6 +64,7 @@ trait BusyBoxEvaluation extends Evaluation {
                     logger.info("Features: " + result._3)
                     val configs = BusyBoxVerification.generateEvaluationConfigurations(
                         result._2, morpheus.getFM, morpheus.getFile, result._3)
+                    StatsCan.addStat(file, Variants, configs.size)
                     StatsCan.addStat(file, AffectedFeatures, result._3)
                     BusyBoxVerification.configBasedVerification(file, configs)
                 } else {
