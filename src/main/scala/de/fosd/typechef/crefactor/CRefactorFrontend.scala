@@ -4,16 +4,15 @@ import de.fosd.typechef.crefactor.evaluation.Stats._
 
 import de.fosd.typechef.parser.c._
 import de.fosd.typechef.featureexpr.FeatureModel
-import de.fosd.typechef.options.{RefactorType, FrontendOptions, OptionException, FrontendOptionsWithConfigFiles}
-import de.fosd.typechef.{VALexer, lexer}
+import de.fosd.typechef.options._
+import de.fosd.typechef.lexer
 import java.io._
 import de.fosd.typechef.parser.TokenReader
 import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.typesystem.linker.InterfaceWriter
-import de.fosd.typechef.crefactor.evaluation.{PreparedRefactorings, Evaluation, Refactor, StatsCan}
+import de.fosd.typechef.crefactor.evaluation.{Evaluation, Refactor, StatsCan}
 import de.fosd.typechef.crefactor.evaluation.setup.{CModuleInterfaceGenerator, Building, BuildCondition}
 import java.util.zip.{GZIPOutputStream, GZIPInputStream}
-import de.fosd.typechef.parser.c.CTypeContext
 import de.fosd.typechef.typesystem.{CDeclUse, CTypeCache, CTypeSystemFrontend}
 import de.fosd.typechef.crefactor.frontend.Editor
 import javax.swing.SwingUtilities
@@ -22,15 +21,18 @@ import de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.BusyBoxRef
 import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.OpenSSLRefactorEvaluation
 import de.fosd.typechef.crefactor.backend.CModuleInterface
 import de.fosd.typechef.featureexpr.bdd.FeatureExprHelper
+import de.fosd.typechef.parser.c.CTypeContext
+import de.fosd.typechef.parser.c.TranslationUnit
+import de.fosd.typechef.crefactor.evaluation.PreparedRefactorings
 
 object CRefactorFrontend extends App with InterfaceWriter with BuildCondition with Logging with EnforceTreeHelper {
 
     private var command: Array[String] = Array()
 
-    private var runOpt: FrontendOptions = new FrontendOptions()
+    private var runOpt: MorpheusOptions = new MorpheusOptions()
 
     override def main(args: Array[String]): Unit = {
-        runOpt = new FrontendOptionsWithConfigFiles()
+        runOpt = new MorpheusOptions()
 
         try {
             runOpt.parseOptions(args)
@@ -40,7 +42,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
 
         if (runOpt.writeProjectInterface) writeProjectModuleInterface(runOpt)
 
-        else if (runOpt.parse) parseOrLoadTUnitandProcess(args, true)
+        else if (runOpt.parse) parseOrLoadTUnitandProcess(args, saveArg = true)
 
 
         logger.info("# unique Sat calls: " + FeatureExprHelper.uniqueSatCalls)
@@ -75,7 +77,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
             else toLoad
         }
         logger.info("Loading file: " + file)
-        val opt = new FrontendOptions()
+        val opt = new MorpheusOptions()
         opt.parseOptions(file +: command.clone())
 
         val fm = getFM(opt)
@@ -92,14 +94,14 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
     }
 
 
-    private def getTunit(opt: FrontendOptions, fm: FeatureModel): TranslationUnit = {
+    private def getTunit(opt: MorpheusOptions, fm: FeatureModel): TranslationUnit = {
         val tunit =
             if (runOpt.reuseAST && new File(opt.getSerializedTUnitFilename).exists())
                 loadSerializedTUnit(opt.getSerializedTUnitFilename)
             else parseTUnit(fm, opt)
         prepareAST[TranslationUnit](tunit)
     }
-    private def writeProjectModuleInterface(options: FrontendOptions) = {
+    private def writeProjectModuleInterface(options: MorpheusOptions) = {
         val linker: CModuleInterfaceGenerator = {
             if (options.getRefStudy.equalsIgnoreCase("busybox"))
                 de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.linking.BusyBoxModuleInterfaceGenerator
@@ -113,7 +115,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         linker.main(Array())
     }
 
-    private def processFile(tunit: TranslationUnit, fm: FeatureModel, opt: FrontendOptions) = {
+    private def processFile(tunit: TranslationUnit, fm: FeatureModel, opt: MorpheusOptions) = {
         val linkInf = {
             if (opt.refLink) new CModuleInterface(opt.getLinkingInterfaceFile)
             else null
@@ -164,7 +166,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         if (opt.writeDebugInterface)
             ts.debugInterface(interface, new File(opt.getDebugInterfaceFilename))
     }
-    private def parseTUnit(fm: FeatureModel, opt: FrontendOptions): TranslationUnit = {
+    private def parseTUnit(fm: FeatureModel, opt: MorpheusOptions): TranslationUnit = {
         val parsingTime = new StopClock
         val parserMain = new ParserMain(new CParser(fm))
         val tUnit = parserMain.parserMain(lex(opt), opt, fm)
@@ -173,7 +175,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
 
         tUnit
     }
-    private def testBuildingAndTesting(tunit: TranslationUnit, fm: FeatureModel, opt: FrontendOptions) {
+    private def testBuildingAndTesting(tunit: TranslationUnit, fm: FeatureModel, opt: MorpheusOptions) {
         val builder: Building = {
             if (opt.getRefStudy.equalsIgnoreCase("busybox")) de.fosd.typechef.crefactor.evaluation.evalcases.busybox_1_18_5.setup.building.Builder
             else if (opt.getRefStudy.equalsIgnoreCase("openssl")) de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.setup.Builder
@@ -184,7 +186,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         val canBuild = builder.canBuild(tunit, fm, opt.getFile)
         logger.info("Can build " + new File(opt.getFile).getName + " : " + canBuild)
     }
-    private def prepareRefactor(opt: FrontendOptions, tunit: TranslationUnit,
+    private def prepareRefactor(opt: MorpheusOptions, tunit: TranslationUnit,
                                  fm: FeatureModel, linkInf: CModuleInterface)  {
         val caseStudy: Refactor = getRefactorStudy(opt)
         val prepared = caseStudy.prepareForEvaluation(tunit, fm, opt.getFile, linkInf)
@@ -192,7 +194,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
     }
 
 
-    private def evaluateRefactor(opt: FrontendOptions, tunit: TranslationUnit,
+    private def evaluateRefactor(opt: MorpheusOptions, tunit: TranslationUnit,
                              fm: FeatureModel, linkInf: CModuleInterface) {
         val caseStudy: Refactor = getRefactorStudy(opt)
 
@@ -205,12 +207,12 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
             case RefactorType.NONE => println("No engine type defined")
         }
     }
-    private def lex(opt: FrontendOptions): TokenReader[CToken, CTypeContext] = {
+    private def lex(opt: MorpheusOptions): TokenReader[CToken, CTypeContext] = {
         val tokens = new lexer.LexerFrontend().run(opt, opt.parse)
         val in = CLexerAdapter.prepareTokens(tokens)
         in
     }
-    private def getRefactorStudy(opt: FrontendOptions): Evaluation with Refactor =
+    private def getRefactorStudy(opt: MorpheusOptions): Evaluation with Refactor =
         if (opt.getRefStudy.equalsIgnoreCase("busybox")) BusyBoxRefactorEvaluation
         else if (opt.getRefStudy.equalsIgnoreCase("openssl")) OpenSSLRefactorEvaluation
         else if (opt.getRefStudy.equalsIgnoreCase("sqlite")) SQLiteRefactorEvaluation
