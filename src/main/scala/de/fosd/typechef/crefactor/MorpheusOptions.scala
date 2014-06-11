@@ -104,6 +104,6 @@ class MorpheusOptions extends FrontendOptions {
 
     def getLinkingInterfaceFile: String = linkingInterfaceFile
     def getRefStudy: String = refStudy
-    def getPreparedRefactoringsFileName = super.outputStem + ".pr"
+    def getPreparedRefactoringsFileName = super.getOutputStem + ".pr"
     def getRefactorType: RefactorType = refEvalType
 }
