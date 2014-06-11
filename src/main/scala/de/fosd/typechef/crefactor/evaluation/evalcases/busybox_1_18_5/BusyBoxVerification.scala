@@ -4,11 +4,11 @@ import java.io.{FilenameFilter, File}
 
 import de.fosd.typechef.crefactor.evaluation.{StatsCan, Verification}
 import de.fosd.typechef.crefactor.evaluation.Stats._
-import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
+import de.fosd.typechef.featureexpr.{SingleFeatureExpr, FeatureExpr, FeatureModel}
 
 object BusyBoxVerification extends BusyBoxEvaluation with Verification {
 
-    override def singleVerify(evalFile: String, fm: FeatureModel, mode: String, affectedFeatures : List[FeatureExpr] = List()): Unit = {
+    /* override def configBasedVerification(evalFile: String, fm: FeatureModel, mode: String, affectedFeatures : List[FeatureExpr] = List()): Unit = {
         val resultDir = new File(evalFile.replaceAll(evalName, "result"))
         val configs = resultDir.listFiles(new FilenameFilter {
             def accept(input: File, file: String): Boolean = file.endsWith(".config")
@@ -54,7 +54,7 @@ object BusyBoxVerification extends BusyBoxEvaluation with Verification {
             }
         })
         logger.info(evalFile + " passed build and testing as " + mode + ": " + result.exists(x => x))
-    }
+    } */
 
     def runTest: String = {
         val result = runScript("./runtest", sourcePath + "testsuite/")

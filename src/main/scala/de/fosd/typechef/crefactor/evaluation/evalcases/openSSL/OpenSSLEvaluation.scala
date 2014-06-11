@@ -68,7 +68,7 @@ trait OpenSSLEvaluation extends Evaluation with ASTNavigation with ConditionalNa
                     StatsCan.addStat(file, AffectedFeatures, result._3)
                     val affectedFeatureExpr = result._3.foldRight(List[FeatureExpr]()) {(l, c) => l ::: c}.distinct
                     logger.info("Starting verification.")
-                    OpenSSLVerification.completeVerify(morpheus.getFile, morpheus.getFM, affectedFeatureExpr)
+                    OpenSSLVerification.featureBasedVerification(morpheus.getFile, morpheus.getFM, affectedFeatureExpr)
                 } else writeError("Could not engine file.", path)
                 val writer = new FileWriter(path + getFileName(file) + ".stats")
                 StatsCan.write(writer)
