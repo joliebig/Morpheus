@@ -32,7 +32,9 @@ object CRenameIdentifier extends CRefactor {
             Left(Configuration.getInstance().getConfig("default.error.invalidName"))
         else if (!rid.forall { // TODO: could be limited to external declarations
           r =>
-            val ropt = Opt(morpheus.getASTEnv.featureExpr(parentOpt(r, morpheus.getASTEnv)), nid)
+              println(r)
+              println(r.hashCode)
+            val ropt = Opt(morpheus.getASTEnv.featureExpr(r), nid)
             isValidInProgram(ropt, morpheus)
         })
           Left(Configuration.getInstance().getConfig("default.error.invalidName"))
