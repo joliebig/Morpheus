@@ -87,7 +87,7 @@ trait CRefactor
         val env = morpheus.getEnv(scope).asInstanceOf[Env]
         val ctx = morpheus.getASTEnv.featureExpr(element)
 
-        (hasConflictingType(env.varEnv(name), ctx, morpheus)
+        ! (hasConflictingType(env.varEnv(name), ctx, morpheus)
             || hasConflictingStructOrUnion(name, env)
             || hasConflictingType(env.typedefEnv(name), ctx, morpheus))
     }

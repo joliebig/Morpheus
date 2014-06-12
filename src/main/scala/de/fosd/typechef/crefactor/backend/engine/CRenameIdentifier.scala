@@ -33,7 +33,7 @@ object CRenameIdentifier extends CRefactor {
             Left(Configuration.getInstance().getConfig("default.error.invalidName"))
         else if (isValidInProgram(Opt(parentOpt(id, morpheus.getASTEnv).feature, nid), morpheus))
             Left(Configuration.getInstance().getConfig("default.error.invalidName"))
-        else if (rid.exists(isValidInModule(nid, _, morpheus)))
+        else if (!rid.forall(isValidInModule(nid, _, morpheus)))
             Left(Configuration.getInstance().getConfig("engine.rename.failed.shadowing"))
         // isWritable - with workaround for openssl casestudy with incomplete paths
         else if (!rid.par.forall(isWritable(_, morpheus)))
