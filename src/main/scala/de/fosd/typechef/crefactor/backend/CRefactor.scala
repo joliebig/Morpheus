@@ -36,7 +36,8 @@ trait CRefactor
     def isSystemLinkedName(name: String) = SystemLinker.allLibs.par.contains(name)
 
     def isValidInProgram(name: Opt[String], morpheus: Morpheus): Boolean =
-        (morpheus.getModuleInterface != null) && morpheus.getModuleInterface.isListed(name, morpheus.getFM)
+      ! (morpheus.getModuleInterface != null &&
+        morpheus.getModuleInterface.isListed(name, morpheus.getFM))
 
     def generateValidNewName(id: Id, stmt: Opt[AST], morpheus: Morpheus, appendix: Int = 1): String = {
         val newName = id.name + "_" + appendix
