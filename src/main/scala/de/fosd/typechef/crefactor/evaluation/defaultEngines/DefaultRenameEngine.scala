@@ -179,7 +179,13 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
                 StatsCan.addStat(morpheus.getFile, run, Amount, associatedIds.size)
                 logger.info("Run " + run + ": Renaming time : " + renamingTime)
                 logger.info("Run " + run + ": Refactoring at file " + morpheus.getFile + " successful.")
-                (true, ast, features, refLinkedFiles, prepared.copy(renaming = prepared.renaming.diff(associatedIds)))
+                val newRenaming = prepared.renaming.filterNot(pId =>
+                    associatedIds.exists(aId =>
+                        prepared.getCorrespondingId(pId, morpheus) match {
+                            case Some(cId) => cId.eq(aId.entry)
+                            case _ => false
+                        }))
+                (true, ast, features, refLinkedFiles, prepared.copy(renaming = newRenaming))
             }
             case Left(s) =>
                 logger.error("Run " + run + ": Refactoring failed at file " + morpheus.getFile + " with " + s + ".")
