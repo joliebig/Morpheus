@@ -225,7 +225,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
     private def serializePreparedRefactorings(prepared : PreparedRefactorings, filename: String) =
         serializeFile(prepared, filename)
 
-    private def loadSerializedTUnit(filename: String): TranslationUnit =
+    def loadSerializedTUnit(filename: String): TranslationUnit =
         loadSerializedGZipFile[TranslationUnit](filename)
 
     private def loadPreparedRefactorings(filename: String) : PreparedRefactorings =

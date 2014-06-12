@@ -146,8 +146,8 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
                             linkedRenamedFiles.get(fNameNoPrefix) match {
                                 case Some(m) => (m, fPos)
                                 case _ =>
-                                    val (tu, fm) = CRefactorFrontend.getTUnit(fNameNoPrefix)
-                                    (new Morpheus(tu, fm, fNameNoPrefix), fPos)
+                                    val tu= CRefactorFrontend.loadSerializedTUnit(fNameNoPrefix.replace(".c", ".tunit"))
+                                    (new Morpheus(tu, morpheus.getFM, fNameNoPrefix), fPos)
                             }
                     }
 
