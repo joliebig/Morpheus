@@ -169,7 +169,7 @@ object CExtractFunction extends CRefactor with IntraCFG {
             val newFDefForward = genFDefForward(parentFunction, morpheus, specifiers, declarator)
             val newFDefForwardOpt = genFDefExternal(parentFunction, newFDefForward, morpheus)
 
-            if (isValidInProgram(Opt(newFDefOpt.feature, fName), morpheus))
+            if (!isValidInProgram(Opt(newFDefOpt.feature, fName), morpheus))
                 return Left(Configuration.getInstance().getConfig("default.error.invalidName"))
 
             // generate function fCall
