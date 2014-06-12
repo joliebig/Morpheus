@@ -636,6 +636,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
   (List[Opt[Statement]], List[Opt[DeclaratorExtension]], java.util.IdentityHashMap[Id, FeatureExpr]) = {
 
     // generate a new id featureEnv as astEnv.featureExpr fails to determine the feature for renamed Ids
+    // TODO Extend comment and add to occurences
     val paramFeatureEnv = new java.util.IdentityHashMap[Id, FeatureExpr]()
 
     def rename[T <: AST](o : List[Opt[T]], id : Id) = {
