@@ -146,6 +146,8 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
                             linkedRenamedFiles.get(fNameNoPrefix) match {
                                 case Some(m) => (m, fPos)
                                 case _ =>
+                                    // TODO Check with duplicate short option exception
+                                    // @joliebig: Is safe to reuse the already loaded feature model?
                                     logger.info("Loading: " + fNameNoPrefix.replace(".c", ".tunit"))
                                     val tu= CRefactorFrontend.loadSerializedTUnit(fNameNoPrefix.replace(".c", ".tunit"))
                                     (new Morpheus(tu, morpheus.getFM, fNameNoPrefix), fPos)
