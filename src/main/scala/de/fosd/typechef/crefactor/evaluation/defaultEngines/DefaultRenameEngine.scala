@@ -180,11 +180,10 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
                 logger.info("Run " + run + ": Renaming time : " + renamingTime)
                 logger.info("Run " + run + ": Refactoring at file " + morpheus.getFile + " successful.")
                 val newRenaming = prepared.renaming.filterNot(pId =>
-                    associatedIds.exists(aId =>
                         prepared.getCorrespondingId(pId, morpheus) match {
-                            case Some(cId) => cId.eq(aId.entry)
+                            case Some(cId) => associatedIds.exists(aId => aId.entry.eq(cId))
                             case _ => false
-                        }))
+                        })
                 (true, ast, features, refLinkedFiles, prepared.copy(renaming = newRenaming))
             }
             case Left(s) =>
