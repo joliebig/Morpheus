@@ -3,9 +3,9 @@ package de.fosd.typechef.crefactor
 import gnu.getopt.{LongOpt, Getopt}
 import java.util
 import de.fosd.typechef.options.Options.OptionGroup
-import de.fosd.typechef.options.{RefactorType, Options, FrontendOptions}
+import de.fosd.typechef.options.{FrontendOptionsWithConfigFiles, RefactorType, Options, FrontendOptions}
 
-class MorpheusOptions extends FrontendOptions {
+class MorpheusOptions extends FrontendOptionsWithConfigFiles {
     private final val F_REFEVAL: Char = Options.genOptionId
     private final val F_REFLINk: Char = Options.genOptionId
     private final val F_CANBUILD: Char = Options.genOptionId
