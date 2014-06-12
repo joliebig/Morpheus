@@ -5,7 +5,6 @@ import de.fosd.typechef.parser.c.{TranslationUnit, Id}
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.crefactor.evaluation_utils.Configuration
 import de.fosd.typechef.conditional.Opt
-import de.fosd.typechef.crefactor.evaluation.Evaluation
 
 /**
  * Implements the technique of correctly renaming an identifier.

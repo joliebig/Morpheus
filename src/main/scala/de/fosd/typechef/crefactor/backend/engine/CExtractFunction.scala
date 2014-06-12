@@ -2,58 +2,20 @@ package de.fosd.typechef.crefactor.backend.engine
 
 import java.util.Collections
 
-import de.fosd.typechef.crefactor.backend.{RefactorException, CRefactor}
-import de.fosd.typechef.parser.c._
-import de.fosd.typechef.crefactor.frontend.util.CodeSelection
-import de.fosd.typechef.crefactor.Morpheus
-import de.fosd.typechef.crefactor.evaluation_utils.Configuration
-import de.fosd.typechef.typesystem._
-import de.fosd.typechef.conditional.{ConditionalLib, Choice, One, Opt}
-import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
-import de.fosd.typechef.crefactor.evaluation.util.StopClock
-import de.fosd.typechef.crefactor.evaluation.StatsCan
-import de.fosd.typechef.crefactor.evaluation.Stats._
-import de.fosd.typechef.crewrite.IntraCFG
 import org.kiama.rewriting.Rewriter._
-import de.fosd.typechef.parser.c.EnumSpecifier
-import scala.Some
-import de.fosd.typechef.parser.c.TypeDefTypeSpecifier
-import de.fosd.typechef.parser.c.Initializer
-import de.fosd.typechef.parser.c.VoidSpecifier
-import de.fosd.typechef.conditional.One
-import de.fosd.typechef.parser.c.DeclParameterDeclList
-import de.fosd.typechef.parser.c.Pointer
-import de.fosd.typechef.parser.c.Id
-import de.fosd.typechef.crefactor.backend.RefactorException
-import de.fosd.typechef.parser.c.ExprList
-import de.fosd.typechef.parser.c.ContinueStatement
-import de.fosd.typechef.parser.c.CompoundStatement
-import de.fosd.typechef.conditional.Opt
-import de.fosd.typechef.parser.c.CaseStatement
-import de.fosd.typechef.parser.c.PostfixExpr
-import de.fosd.typechef.parser.c.ReturnStatement
-import de.fosd.typechef.parser.c.AtomicNamedDeclarator
-import de.fosd.typechef.parser.c.StructOrUnionSpecifier
-import de.fosd.typechef.parser.c.PointerCreationExpr
-import de.fosd.typechef.conditional.Choice
-import de.fosd.typechef.parser.c.TranslationUnit
-import de.fosd.typechef.typesystem.CUnknown
-import de.fosd.typechef.typesystem.CFunction
-import de.fosd.typechef.parser.c.FunctionCall
-import de.fosd.typechef.parser.c.DeclArrayAccess
-import de.fosd.typechef.parser.c.InitDeclaratorI
-import de.fosd.typechef.parser.c.Declaration
-import de.fosd.typechef.parser.c.LabelStatement
-import de.fosd.typechef.parser.c.ExprStatement
-import de.fosd.typechef.parser.c.GotoStatement
-import de.fosd.typechef.parser.c.FunctionDef
-import de.fosd.typechef.parser.c.NestedFunctionDef
-import de.fosd.typechef.parser.c.BreakStatement
-import de.fosd.typechef.parser.c.ParameterDeclarationD
-import de.fosd.typechef.parser.c.RegisterSpecifier
-import de.fosd.typechef.parser.c.ConstSpecifier
-import de.fosd.typechef.crefactor.backend.codeselection.ASTSelection
 
+import de.fosd.typechef.conditional._
+import de.fosd.typechef.crewrite.IntraCFG
+import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
+import de.fosd.typechef.parser.c._
+import de.fosd.typechef.typesystem._
+
+import de.fosd.typechef.crefactor.backend.{RefactorException, CRefactor}
+import de.fosd.typechef.crefactor.evaluation_utils.Configuration
+import de.fosd.typechef.crefactor.Morpheus
+import de.fosd.typechef.crefactor.evaluation.util.StopClock
+import de.fosd.typechef.crefactor.evaluation.Stats._
+import de.fosd.typechef.crefactor.evaluation.StatsCan
 
 /**
  * Implements extract-function refactoring.
