@@ -30,9 +30,13 @@ object CRenameIdentifier extends CRefactor {
         // TODO Compare with canRefactor
         if (!isValidName(nid))
             Left(Configuration.getInstance().getConfig("default.error.invalidName"))
-        else if (isValidInProgram(Opt(parentOpt(id, morpheus.getASTEnv).feature, nid), morpheus))
-            Left(Configuration.getInstance().getConfig("default.error.invalidName"))
-        else if (rid.exists(isValidInModule(nid, _, morpheus)))
+        else if (!rid.forall { // TODO: could be limited to external declarations
+          r =>
+            val ropt = Opt(morpheus.getASTEnv.featureExpr(parentOpt(r, morpheus.getASTEnv)), nid)
+            isValidInProgram(ropt, morpheus)
+        })
+          Left(Configuration.getInstance().getConfig("default.error.invalidName"))
+        else if (!rid.forall(isValidInModule(nid, _, morpheus)))
             Left(Configuration.getInstance().getConfig("engine.rename.failed.shadowing"))
         // isWritable - with workaround for openssl casestudy with incomplete paths
         else if (!rid.par.forall(isWritable(_, morpheus)))
