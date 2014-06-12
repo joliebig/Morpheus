@@ -79,7 +79,7 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         logger.info("Loading file: " + file)
         val opt = new MorpheusOptions()
         command.foreach(println(_))
-        opt.parseOptions(file +: command.clone())
+        opt.parseOptions(file +: command)
 
         val fm = getFM(opt)
         opt.setFullFeatureModel(fm) //otherwise the lexer does not get the updated feature model with file presence conditions
