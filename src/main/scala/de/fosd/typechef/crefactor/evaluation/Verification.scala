@@ -168,28 +168,19 @@ trait Verification extends Evaluation {
             else {
                 val enabledFeatures = getEnabledFeaturesFromConfigFile(fm, config)
                 val confFeatures = new ConfigFeatures(allFeatures._1)
-                val genConfigs =
-                    affectedFeatures.distinct.foldLeft(List[SimpleConfiguration]())((genConfigs, singleAffectedFeatures) => {
-                        if (genCounter > maxConfigs) genConfigs
-                        else {
-                            val generated =
-                                genAllConfigVariantsForFeatures(
-                                    confFeatures, enabledFeatures, singleAffectedFeatures, fm, genCounter)
-
-                            val filteredGenerated =
-                                generated.flatMap(genConfig => {
-                                    if (!generatedSimpleConfigurations.contains(genConfig)) {
-                                        generatedSimpleConfigurations.add(genConfig)
-                                        Some(genConfig)
-                                    }
-                                    else None
-                                })
-
-                            genCounter += filteredGenerated.size
-                            genConfigs ::: filteredGenerated
+                val singleAffectedFeatures = affectedFeatures.flatten.distinct
+                val generatedConfigs =
+                    genAllConfigVariantsForFeatures(confFeatures, enabledFeatures, singleAffectedFeatures, fm, genCounter)
+                val filteredGenerated =
+                    generatedConfigs.flatMap(genConfig => {
+                        if (!generatedSimpleConfigurations.contains(genConfig)) {
+                            generatedSimpleConfigurations.add(genConfig)
+                            Some(genConfig)
                         }
+                        else None
                     })
-                Some(config, genConfigs)
+                genCounter += filteredGenerated.size
+                Some(config, filteredGenerated)
             }
         })
     }
