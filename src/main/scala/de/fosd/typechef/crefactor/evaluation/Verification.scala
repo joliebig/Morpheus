@@ -169,7 +169,7 @@ trait Verification extends Evaluation {
                 val enabledFeatures = getEnabledFeaturesFromConfigFile(fm, config)
                 val confFeatures = new ConfigFeatures(allFeatures._1)
                 val genConfigs =
-                    affectedFeatures.foldLeft(List[SimpleConfiguration]())((genConfigs, singleAffectedFeatures) => {
+                    affectedFeatures.distinct.foldLeft(List[SimpleConfiguration]())((genConfigs, singleAffectedFeatures) => {
                         if (genCounter > maxConfigs) genConfigs
                         else {
                             val generated =
