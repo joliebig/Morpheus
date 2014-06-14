@@ -29,8 +29,8 @@ object CInlineFunction extends CRefactor with IntraCFG {
       // logger.info(fCall + " is a imported function.")
       false
     } else if (fDefs.exists(func => hasIncompatibleCFG(func.entry, morpheus)
-      || isRecursive(func.entry)))  {
-      // function has  multiple return statements or is recursive
+      || isRecursive(func.entry) || hasVArgsParameters(func.entry)))  {
+      // function has  multiple return statements or is recursive or has an variable amount of arguments
       // logger.info(fCall + " is not compatible.")
       false
     } else if (fCalls.exists(fc => {
@@ -141,6 +141,16 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
     (fCallStmts, fDecls, fDefs, fCallExprs)
   }
+
+  /*
+   * We do not support the inline of function with variable amount of arguments like:
+   * void foo(const char *bar, ...)
+   */
+  private def hasVArgsParameters(fDef: FunctionDef) : Boolean =
+      fDef.oldStyleParameters.exists(_.entry match {
+          case v: VarArgs => true
+          case _ => false
+      })
 
   /*
    * We do not support the integration of functions with multiple return statements because integrating their
@@ -432,6 +442,8 @@ object CInlineFunction extends CRefactor with IntraCFG {
       throw new RefactorException("Can not inline - method is recursive.")
     if (hasIncompatibleCFG(fDef.entry, morpheus))
       throw new RefactorException("Can not inline - method has bad return statements")
+    if (hasVArgsParameters(fDef.entry))
+        throw new RefactorException("Can not inline - method has variable arguments")
 
     true
   }
