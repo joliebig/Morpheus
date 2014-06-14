@@ -614,6 +614,9 @@ object CInlineFunction extends CRefactor with IntraCFG {
       val paramDeclFeature =
         paramDecl.entry match {
           case p: ParameterDeclarationD =>
+            // For renamed parameters we are unable to determine its feature expression by using the astEnv,
+            // therefore when the renaming takes place we generated a new renamed id to feature map and fallback
+            // to this map in case a renamed parameter occurs.
             if (idFeatureEnv.containsKey(p.decl.getId)) idFeatureEnv.get(p.decl.getId)
             else morpheus.getASTEnv.featureExpr(paramDecl)
           case unknown =>
@@ -665,8 +668,9 @@ object CInlineFunction extends CRefactor with IntraCFG {
                                 morpheus: Morpheus):
   (List[Opt[Statement]], List[Opt[DeclaratorExtension]], java.util.IdentityHashMap[Id, FeatureExpr]) = {
 
-    // generate a new id featureEnv as astEnv.featureExpr fails to determine the feature for renamed Ids
-    // TODO Extend comment and add to occurences
+    // We need to know the feature condition of each id used as parameter in the function we want to inline.
+    // In case we rename such an parameter, astEnv.featureExpr would fail to determine the feature of the parameter id.
+    // Therefor we store the feature expression of the original parameter for the renamed one in a id -> feature map.
     val paramFeatureEnv = new java.util.IdentityHashMap[Id, FeatureExpr]()
 
     def rename[T <: AST](o : List[Opt[T]], id : Id) = {
