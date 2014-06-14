@@ -41,7 +41,7 @@ trait CRefactor
 
     def generateValidNewName(id: Id, stmt: Opt[AST], morpheus: Morpheus, appendix: Int = 1): String = {
         val newName = id.name + "_" + appendix
-        if (isValidInModule(newName, stmt.entry, morpheus)) generateValidNewName(id, stmt, morpheus, appendix + 1)
+        if (!isValidInModule(newName, stmt.entry, morpheus)) generateValidNewName(id, stmt, morpheus, appendix + 1)
         else newName
     }
 
