@@ -161,10 +161,10 @@ object CInlineFunction extends CRefactor with IntraCFG {
    *
    * Example:
    * int foo() { ... return x; }                              // is compatible
-   * int foo() { if (...) { return x+1;} else { return x+2; } // is not compatible
+   * int foo() { if (...) { return x+1;} else { return x+2; } // is compatible
+   * int foo() { if (...) {return x;} ... return x; }         // is incompatible
    */
   private def hasIncompatibleCFG(fDef: FunctionDef, morpheus: Morpheus): Boolean = {
-
     // this function determines for a given AST node the corresponding statement
     // in the compound statement that is directly attached to the function definition
     def getStatementForAstNode(i: AST): Option[Statement] = {
@@ -178,15 +178,13 @@ object CInlineFunction extends CRefactor with IntraCFG {
       }
     }
 
-    val fPreds = pred(fDef, morpheus.getASTEnv).filterNot(x => x.feature isSatisfiable morpheus.getFM)
-    val fReturnStmts = fPreds.map(_.entry).filter { case _: ReturnStatement => true; case _ => false }
+    val fPreds = pred(fDef, morpheus.getASTEnv).filter(_.feature isSatisfiable morpheus.getFM)
+    val fReturnStmts = fPreds.map(_.entry).filter { case _: ReturnStatement => true; case _ => false}
 
-    if (fReturnStmts.size > 0) {
-      val fStmt = getStatementForAstNode(fReturnStmts.head)
-      fReturnStmts.tail.forall(isPartOf(_, fStmt))
-    } else {
-      false
-    }
+    fReturnStmts.exists(fReturnStmt => {
+        val fStmt = getStatementForAstNode(fReturnStmt)
+        !fReturnStmts.diff(List(fReturnStmt)).forall(isPartOf(_, fStmt))
+    })
   }
 
   private def isRecursive(funcDef: FunctionDef): Boolean = {
