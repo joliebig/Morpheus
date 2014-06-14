@@ -7,7 +7,7 @@ import de.fosd.typechef.conditional._
 import de.fosd.typechef.crefactor._
 import de.fosd.typechef.crefactor.backend.{RefactorException, CRefactor}
 import de.fosd.typechef.crewrite.IntraCFG
-import de.fosd.typechef.featureexpr.FeatureExpr
+import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 import de.fosd.typechef.parser.c._
 
 
@@ -153,6 +153,23 @@ object CInlineFunction extends CRefactor with IntraCFG {
       })
 
   /*
+   * Retrieves if a label such as case, goto, etc is right before the function call.
+   * This check is required as iso-c99 does not allow for labels to appear immediately before a declaration.
+   */
+  private def hasLabelBeforeFCall(fCall: Id, morpheus : Morpheus) : Boolean = {
+      val parentOptStmt = parentOpt(fCall, morpheus.getASTEnv)
+      if (parentOptStmt == null)
+          false
+      else
+          prevAST(parentOpt(fCall, morpheus.getASTEnv), morpheus.getASTEnv) match {
+              case _ : CaseStatement => true
+              case _ : GotoStatement => true
+              case _ : LabelStatement => true
+              case _ => false
+          }
+  }
+
+  /*
    * We do not support the integration of functions with multiple return statements because integrating their
    * control flow on the call site is complex.
    *
@@ -167,8 +184,6 @@ object CInlineFunction extends CRefactor with IntraCFG {
   private def hasIncompatibleCFG(fDef: FunctionDef, morpheus: Morpheus): Boolean = {
     // this function determines for a given AST node the corresponding statement
     // in the compound statement that is directly attached to the function definition
-
-    return false
     def getStatementForAstNode(i: AST): Option[Statement] = {
       findPriorASTElem[FunctionDef](i, morpheus.getASTEnv) match {
         case None => None
@@ -366,6 +381,10 @@ object CInlineFunction extends CRefactor with IntraCFG {
     val returnStmts = getReturnStmts(statements)
 
     // insert in tunit
+    // Note: ISO-C99 does not allow a label to appear immediately before a declaration. For this case we add as
+    // workaround a empty statement (";").
+    if (hasLabelBeforeFCall(fCallId, morpheus)) workingStatement =
+        insertListBefore(workingStatement, fCall, List(Opt(FeatureExprFactory.True, EmptyStatement)))
     workingStatement = insertListBefore(workingStatement, fCall, initializer)
     workingStatement = insertListBefore(workingStatement, fCall, statements)
 
@@ -475,7 +494,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
           case Some(s@StructOrUnionSpecifier(_,Some(id),_,_,_)) =>
               id.eq(ref) && {
                 findPriorASTElem[ParameterDeclaration](s, morpheus.getASTEnv) match {
-                    case _: Some => true
+                    case Some(_) => true
                     case _ => false
                 }
               }
