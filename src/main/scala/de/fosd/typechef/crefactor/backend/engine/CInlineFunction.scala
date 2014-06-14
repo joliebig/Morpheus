@@ -383,9 +383,8 @@ object CInlineFunction extends CRefactor with IntraCFG {
     // insert in tunit
     // Note: ISO-C99 does not allow a label to appear immediately before a declaration. For this case we add as
     // workaround a empty statement (";").
-    // TODO @joliebig in CTypeSystem.scala:262 java.lang.ClassCastException: de.fosd.typechef.parser.c.EmptyStatement$ cannot be cast to de.fosd.typechef.parser.c.Statement
-      if (hasLabelBeforeFCall(fCallId, morpheus)) workingStatement =
-        insertListBefore(workingStatement, fCall, List(Opt(FeatureExprFactory.True, EmptyStatement)))
+    if (hasLabelBeforeFCall(fCallId, morpheus)) workingStatement =
+       insertListBefore(workingStatement, fCall, List(Opt(FeatureExprFactory.True, EmptyStatement())))
     workingStatement = insertListBefore(workingStatement, fCall, initializer)
     workingStatement = insertListBefore(workingStatement, fCall, statements)
 
