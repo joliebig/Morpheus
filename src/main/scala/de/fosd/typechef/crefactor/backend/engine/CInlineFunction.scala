@@ -167,6 +167,8 @@ object CInlineFunction extends CRefactor with IntraCFG {
   private def hasIncompatibleCFG(fDef: FunctionDef, morpheus: Morpheus): Boolean = {
     // this function determines for a given AST node the corresponding statement
     // in the compound statement that is directly attached to the function definition
+
+    return false
     def getStatementForAstNode(i: AST): Option[Statement] = {
       findPriorASTElem[FunctionDef](i, morpheus.getASTEnv) match {
         case None => None
@@ -469,10 +471,23 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
   private def isPartOfStruct(refs: List[Opt[Id]], morpheus: Morpheus): Boolean = {
     refs.map(_.entry).exists(ref => {
-      findPriorASTElem[StructDeclarator](ref, morpheus.getASTEnv) match {
+      val specifier = findPriorASTElem[StructOrUnionSpecifier](ref, morpheus.getASTEnv) match {
+          case Some(s@StructOrUnionSpecifier(_,Some(id),_,_,_)) =>
+              id.eq(ref) && {
+                findPriorASTElem[ParameterDeclaration](s, morpheus.getASTEnv) match {
+                    case _: Some => true
+                    case _ => false
+                }
+              }
+          case _ => false
+      }
+
+      val decl = findPriorASTElem[StructDeclarator](ref, morpheus.getASTEnv) match {
         case Some(_) => true
         case _ => false
       }
+
+        specifier || decl
     })
   }
 
