@@ -636,15 +636,10 @@ object CInlineFunction extends CRefactor with IntraCFG {
                       }
                   })
 
-
-                 println(declPointers)
-                 println(declExt)
-
-                  val initDecl = AtomicNamedDeclarator(declPointers, p.decl.getId, declExt)
                   Some(Opt(declFeature,
                       DeclarationStatement(
                           Declaration(specifier, List(Opt(declFeature,
-                              InitDeclaratorI(initDecl, List(),
+                              InitDeclaratorI(AtomicNamedDeclarator(declPointers, p.decl.getId, declExt), List(),
                                   Some(Initializer(None, currentCallParam.entry)))))))))
               case missed =>
                   throw new RefactorException("No rule defined for initializing parameter:" + missed)
