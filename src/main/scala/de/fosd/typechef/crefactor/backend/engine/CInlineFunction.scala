@@ -615,20 +615,43 @@ object CInlineFunction extends CRefactor with IntraCFG {
       else {
         // call parameter and function parameter have matched - remove call parameter from working list
         callParams = callParams.tail
-        paramDecl.entry match {
-          case p: ParameterDeclarationD =>
-            val specifier = p.specifiers.map(spec => spec.copy(feature = declFeature.and(spec.feature)))
-            Some(Opt(declFeature,
-              DeclarationStatement(
-                Declaration(specifier, List(Opt(declFeature,
-                  InitDeclaratorI(p.decl, List(),
-                    Some(Initializer(None, currentCallParam.entry)))))))))
-          case missed =>
-            throw new RefactorException("No rule defined for initializing parameter:" + missed)
-        }
+          paramDecl.entry match {
+              case p: ParameterDeclarationD =>
+                  val specifier = p.specifiers.map(spec => spec.copy(feature = declFeature.and(spec.feature)))
+
+                  // Remove decl array access as arrays are not assignable.
+                  // To preserve to code correctness we add an additional pointer.
+                  // Invalid:
+                  //  char foo[50] = "Hello, world!";
+                  //  char bar[50] = foo;
+                  // Valid:
+                  //  char foo[50] = "Hello, world!";
+                  //  char *bar = foo;
+                  val (declExt, declPointers) = p.decl.extensions.foldLeft(
+                      (List[Opt[DeclaratorExtension]](), p.decl.pointers))((result, extension) => {
+                      extension.entry match {
+                          case d: DeclArrayAccess =>
+                              (result._1, result._2 :+ Opt(extension.feature, Pointer(List())))
+                          case _ => (result._1 :+ extension, result._2)
+                      }
+                  })
+
+
+                 println(declPointers)
+                 println(declExt)
+
+                  val initDecl = AtomicNamedDeclarator(declPointers, p.decl.getId, declExt)
+                  Some(Opt(declFeature,
+                      DeclarationStatement(
+                          Declaration(specifier, List(Opt(declFeature,
+                              InitDeclaratorI(initDecl, List(),
+                                  Some(Initializer(None, currentCallParam.entry)))))))))
+              case missed =>
+                  throw new RefactorException("No rule defined for initializing parameter:" + missed)
+          }
       }
     }
-    declStmts
+      declStmts
   }
 
   private def renameShadowedIds(idsToRename: List[Id], fDef: Opt[FunctionDef], fCall: Opt[AST],
