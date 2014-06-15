@@ -268,6 +268,8 @@ object CInlineFunction extends CRefactor with IntraCFG {
       case _ => null
     }
 
+
+
   private def assignReturnValue(callCompStmt: CompoundStatement, fCall: Opt[Statement],
                                 returnStmts: List[Opt[ReturnStatement]], morpheus: Morpheus): CompoundStatement = {
     var wStmt = callCompStmt
@@ -370,8 +372,8 @@ object CInlineFunction extends CRefactor with IntraCFG {
   private def inlineFDefInCompStmt(compStmt: CompoundStatement, morpheus: Morpheus, fCall: Opt[Statement],
                                    fCallId : Id, fDef: Opt[FunctionDef]): CompoundStatement = {
     var workingStatement = compStmt
-    val idsToRename = getIdsToRename(fDef.entry, workingStatement, morpheus)
-    val (renamedIdsStmts, renamedIdsParams, idFeatureEnv) = renameShadowedIds(idsToRename, fDef, fCall, morpheus)
+    val idsToRename = getIdsToRename(fDef.entry, fCallId, workingStatement, morpheus)
+    val (renamedIdsStmts, renamedIdsParams, idFeatureEnv) = renameShadowedIds(idsToRename, fDef, fCallId, fCall, morpheus)
     val initializer = getDeclarationsFromCallParameters(fCall, fCallId, renamedIdsParams, idFeatureEnv, morpheus)
 
     // apply feature environment
@@ -406,9 +408,9 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
   private def inlineFDefInExpr(compStmt: CompoundStatement, fDef: Opt[FunctionDef],
                                fCall: Opt[AST], fCallId : Id, morpheus: Morpheus): CompoundStatementExpr = {
-    val idsToRename = getIdsToRename(fDef.entry, compStmt, morpheus)
+    val idsToRename = getIdsToRename(fDef.entry, fCallId, compStmt, morpheus)
 
-    val (renamedIdsStmts, renamedIdsParams, idFeatureEnv) = renameShadowedIds(idsToRename, fDef, fCall, morpheus)
+    val (renamedIdsStmts, renamedIdsParams, idFeatureEnv) = renameShadowedIds(idsToRename, fDef, fCallId, fCall, morpheus)
     val initializer = getDeclarationsFromCallParameters(fCall, fCallId, renamedIdsParams, idFeatureEnv, morpheus)
     val returnStmts = getReturnStmts(renamedIdsStmts)
 
@@ -467,9 +469,10 @@ object CInlineFunction extends CRefactor with IntraCFG {
     true
   }
 
-  private def getIdsToRename(fDEf: FunctionDef, compStmt: CompoundStatement, morpheus: Morpheus) = {
+  private def getIdsToRename(fDEf: FunctionDef, fCallId : Id, compStmt: CompoundStatement, morpheus: Morpheus) = {
     val idsToInline = filterAllASTElems[Id](fDEf)
-    idsToInline.filter(isDeclaredInFunctionCallScope(_, compStmt, morpheus))
+    val env = morpheus.getEnv(fCallId)
+    idsToInline.filter(isDeclaredInFunctionCallScope(_, fCallId, compStmt, morpheus))
   }
 
   private def isFDefOrFDecl(id: Id, morpheus: Morpheus): Boolean = {
@@ -526,29 +529,28 @@ object CInlineFunction extends CRefactor with IntraCFG {
   /**
    * Checks if an id is only declared at the place of the inlining function scope.
    */
-  private def isDeclaredInFunctionCallScope(id: Id, callCompStmt: CompoundStatement, morpheus: Morpheus): Boolean = {
-    val nameWithFeature = Opt(morpheus.getASTEnv.featureExpr(id), id.name)
+  private def isDeclaredInFunctionCallScope(inlineId: Id, fCallId : Id, callCompStmt: CompoundStatement, morpheus: Morpheus): Boolean = {
+    val nameWithFeature = Opt(morpheus.getASTEnv.featureExpr(inlineId), inlineId.name)
 
     // lookup if name is visible in current scope
-    if (!isVisibleNameInFunctionScope(nameWithFeature, callCompStmt, morpheus))
-      return false
+    if (!isVisibleNameInFunctionScope(nameWithFeature, fCallId, callCompStmt, morpheus))
+        return false
 
     // check if any reference of the inline id links into the calling scope - if so no renaming is required
-    val idReferences = morpheus.getReferences(id)
+    val idReferences = morpheus.getReferences(inlineId)
     val idsInCompStmt = Collections.newSetFromMap[Id](new java.util.IdentityHashMap())
     filterAllASTElems[Id](callCompStmt) foreach idsInCompStmt.add
 
     if (idReferences.exists(idsInCompStmt.contains))
-      return false
+        return false
 
     // in both places the has the same global visibility -> no need to rename
-    val fDefCompStmt = getCompStatement(parentOpt(id, morpheus.getASTEnv).asInstanceOf[Opt[AST]], morpheus.getASTEnv)
-    if((fDefCompStmt != null) && isVisibleGlobalNameInFunctionScope(nameWithFeature, callCompStmt, morpheus)
-      && isVisibleGlobalNameInFunctionScope(nameWithFeature, fDefCompStmt, morpheus))
+    val fDefCompStmt = getCompStatement(parentOpt(inlineId, morpheus.getASTEnv).asInstanceOf[Opt[AST]], morpheus.getASTEnv)
+    if((fDefCompStmt != null) && isVisibleGlobalNameInFunctionScope(nameWithFeature, fCallId, fDefCompStmt, morpheus))
       return false
 
     // id is function -> no rename
-    if (isFDefOrFDecl(id, morpheus))
+    if (isFDefOrFDecl(inlineId, morpheus))
       return false
 
     // id is part of struct -> no rename
@@ -565,24 +567,36 @@ object CInlineFunction extends CRefactor with IntraCFG {
   /**
    * Checks if a symbol is visible at the place of the inlining function scope.
    */
-  private def isVisibleGlobalNameInFunctionScope(name: Opt[String], callCompStmt: CompoundStatement, morpheus: Morpheus) =
-    isPartOfScope(name, callCompStmt, morpheus, 0)
+  private def isVisibleGlobalNameInFunctionScope(name: Opt[String], fCallId : Id, callCompStmt: CompoundStatement, morpheus: Morpheus) =
+    isPartOfScope(name, fCallId, callCompStmt, morpheus, 0)
 
   /**
    * Checks if a symbol is visible at the place of the inlining function scope.
    */
-  private def isVisibleNameInFunctionScope(symbol: Opt[String], callCompStmt: CompoundStatement, morpheus: Morpheus) =
-    !isPartOfScope(symbol, callCompStmt, morpheus, -1)
+  private def isVisibleNameInFunctionScope(symbol: Opt[String], fCallId : Id, callCompStmt: CompoundStatement, morpheus: Morpheus) =
+    !isPartOfScope(symbol, fCallId, callCompStmt, morpheus, -1, true)
 
   /**
    * Checks if a symbol is part of a specific scope.
    */
-  private def isPartOfScope(symbol: Opt[String], compStmt: CompoundStatement, morpheus: Morpheus, scope: Int): Boolean = {
-    val env = morpheus.getEnv(compStmt.innerStatements.last.entry)
-    val nameScope = env.varEnv.lookupScope(symbol.entry)
+  private def isPartOfScope(symbol: Opt[String], fCallId : Id, compStmt: CompoundStatement, morpheus: Morpheus,
+                            scope: Int, forall : Boolean = false): Boolean = {
+    val csEnv = morpheus.getEnv(compStmt.innerStatements.last.entry)
+    val csNameScope = csEnv.varEnv.lookupScope(symbol.entry)
 
-    ConditionalLib.items(nameScope).exists(cond =>
-      (cond._2 == scope) && symbol.feature.and(cond._1).isSatisfiable(morpheus.getFM))
+    val callEnv = morpheus.getEnv(fCallId)
+    val callNameScope = callEnv.varEnv.lookupScope(symbol.entry)
+
+    if (forall)
+        !ConditionalLib.items(csNameScope).forall(cond =>
+            (cond._2 == scope) && symbol.feature.and(cond._1).isSatisfiable(morpheus.getFM)) ||
+                ConditionalLib.items(callNameScope).forall(cond =>
+                    (cond._2 == scope) && symbol.feature.and(cond._1).isSatisfiable(morpheus.getFM))
+    else
+        ConditionalLib.items(csNameScope).exists(cond =>
+            (cond._2 == scope) && symbol.feature.and(cond._1).isSatisfiable(morpheus.getFM)) ||
+                ConditionalLib.items(callNameScope).exists(cond =>
+                    (cond._2 == scope) && symbol.feature.and(cond._1).isSatisfiable(morpheus.getFM))
   }
 
   /**
@@ -696,9 +710,20 @@ object CInlineFunction extends CRefactor with IntraCFG {
       declStmts
   }
 
-  private def renameShadowedIds(idsToRename: List[Id], fDef: Opt[FunctionDef], fCall: Opt[AST],
+  private def renameShadowedIds(idsToRename: List[Id], fDef: Opt[FunctionDef], fCallId: Id, fCall: Opt[AST],
                                 morpheus: Morpheus):
   (List[Opt[Statement]], List[Opt[DeclaratorExtension]], java.util.IdentityHashMap[Id, FeatureExpr]) = {
+
+    def generateValidNewName(id: Id, stmt: Opt[AST], morpheus: Morpheus, appendix: Int = 1): String = {
+          val newName = id.name + "_" + appendix
+          if (!isValidInModule(newName, stmt.entry, morpheus)
+              || isVisibleNameInFunctionScope(
+                                    Opt(stmt.feature, newName), fCallId, getCompStatement(fCall, morpheus.getASTEnv) ,morpheus)
+              || isVisibleGlobalNameInFunctionScope(
+                                    Opt(stmt.feature, newName), fCallId, getCompStatement(fCall, morpheus.getASTEnv) ,morpheus))
+              generateValidNewName(id, stmt, morpheus, appendix + 1)
+          else newName
+      }
 
     // We need to know the feature condition of each id used as parameter in the function we want to inline.
     // In case we rename such an parameter, astEnv.featureExpr would fail to determine the feature of the parameter id.

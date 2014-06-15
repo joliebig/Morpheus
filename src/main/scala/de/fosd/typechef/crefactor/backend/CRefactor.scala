@@ -39,12 +39,6 @@ trait CRefactor
       ! (morpheus.getModuleInterface != null &&
         morpheus.getModuleInterface.isListed(name, morpheus.getFM))
 
-    def generateValidNewName(id: Id, stmt: Opt[AST], morpheus: Morpheus, appendix: Int = 1): String = {
-        val newName = id.name + "_" + appendix
-        if (!isValidInModule(newName, stmt.entry, morpheus)) generateValidNewName(id, stmt, morpheus, appendix + 1)
-        else newName
-    }
-
     /**
      * Checks if the id valid for renaming
      */
