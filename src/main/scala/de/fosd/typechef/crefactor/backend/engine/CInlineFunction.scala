@@ -588,8 +588,8 @@ object CInlineFunction extends CRefactor with IntraCFG {
     val callNameScope = callEnv.varEnv.lookupScope(symbol.entry)
 
     if (forall)
-        !ConditionalLib.items(csNameScope).forall(cond =>
-            (cond._2 == scope) && symbol.feature.and(cond._1).isSatisfiable(morpheus.getFM)) ||
+        ConditionalLib.items(csNameScope).forall(cond =>
+            (cond._2 == scope) && symbol.feature.and(cond._1).isSatisfiable(morpheus.getFM)) &&
                 ConditionalLib.items(callNameScope).forall(cond =>
                     (cond._2 == scope) && symbol.feature.and(cond._1).isSatisfiable(morpheus.getFM))
     else
