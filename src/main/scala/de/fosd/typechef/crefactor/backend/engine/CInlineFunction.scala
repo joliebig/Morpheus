@@ -139,7 +139,9 @@ object CInlineFunction extends CRefactor with IntraCFG {
       }
     })
 
-    (fCallStmts, fDecls, fDefs, fCallExprs)
+    // Sort fCall according their a appearence in the code to retrieve a clean picture for renamed variables and
+    // to avoid complicate redeclaration checks for several functions calls in the same function
+    (fCallStmts.sortWith((x,y) => comparePosition(x._1, y._1)), fDecls, fDefs, fCallExprs)
   }
 
   /*
@@ -720,8 +722,10 @@ object CInlineFunction extends CRefactor with IntraCFG {
               || isVisibleNameInFunctionScope(
                                     Opt(stmt.feature, newName), fCallId, getCompStatement(fCall, morpheus.getASTEnv) ,morpheus)
               || isVisibleGlobalNameInFunctionScope(
-                                    Opt(stmt.feature, newName), fCallId, getCompStatement(fCall, morpheus.getASTEnv) ,morpheus))
+                                    Opt(stmt.feature, newName), fCallId, getCompStatement(fCall, morpheus.getASTEnv) ,morpheus)
+              || isOccupiedByIdentifier(newName, getCompStatement(fCall, morpheus.getASTEnv)))
               generateValidNewName(id, stmt, morpheus, appendix + 1)
+
           else newName
       }
 
@@ -763,4 +767,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
       case PostfixExpr(`id`, FunctionCall(_)) => true
       case _ => false
     }
+
+  private def isOccupiedByIdentifier(name : String, compStmt: CompoundStatement) =
+      filterAllASTElems[Id](compStmt).exists(_.name == name)
 }

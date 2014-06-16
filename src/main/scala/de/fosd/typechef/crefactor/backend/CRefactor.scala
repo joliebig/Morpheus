@@ -87,6 +87,8 @@ trait CRefactor
             || hasConflictingType(env.typedefEnv(name), ctx, morpheus))
     }
 
+    def comparePosition(e1: AST, e2: AST) = e1.getPositionFrom < e2.getPositionFrom
+
     // determine if a conflicting type is available in configuration ctx
     private def hasConflictingType(env: Conditional[CType], ctx: FeatureExpr, morpheus: Morpheus): Boolean = {
         ! ConditionalLib.items(env).forall {
