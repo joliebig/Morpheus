@@ -78,7 +78,6 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         }
         logger.info("Loading file: " + file)
         val opt = new MorpheusOptions()
-        command.foreach(println(_))
         opt.parseOptions(file +: command)
 
         val fm = getFM(opt)
