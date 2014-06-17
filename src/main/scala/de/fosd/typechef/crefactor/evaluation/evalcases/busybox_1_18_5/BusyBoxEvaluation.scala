@@ -20,16 +20,16 @@ trait BusyBoxEvaluation extends Evaluation {
     val completePath = new File(caseStudyPath).getCanonicalPath
     val filesToEval: String = completePath + "/busybox_files"
     val evalFiles = getEvaluationFiles
-    val blackListFiles: List[String] = Source.fromFile(getClass.getResource("/busybox_blacklist").getFile).getLines().toList
+    val blackListFiles: List[String] = Source.fromFile(completePath + "/busybox_blacklist").getLines().toList
     val blackListIds: List[String] = List()
     val sourcePath = completePath + "/" + evalName + "/"
     val testPath = completePath + "/" + evalName + "/"
     val result = "/result/"
 
     val filterFeatures = List("def(CONFIG_SELINUX)", "CONFIG_SELINUX", "def(CONFIG_TCPSVD)", "CONFIG_TCPSVD", "def(CONFIG_UDPSVD)", "CONFIG_UDPSVD", "def(CONFIG_MKFS_EXT2)", "CONFIG_MKFS_EXT2")
-    val allFeaturesFile = getClass.getResource("/BusyBoxAllFeatures.config").getFile
+    val allFeaturesFile = completePath + "/busyboxAllFeatures.config"
     val allFeatures = getAllFeaturesFromConfigFile(null, new File(allFeaturesFile))
-    val pairWiseFeaturesFile = getClass.getResource("/busyBox_pairwise.configs").getFile
+    val pairWiseFeaturesFile = completePath + "/busybox_pairwise.configs"
     val existingConfigsDir: String = completePath + "/existing_configs/"
 
     val featureModel: String = completePath + "/featureModel"
