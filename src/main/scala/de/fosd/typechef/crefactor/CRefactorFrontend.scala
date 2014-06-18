@@ -52,11 +52,11 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
 
     def parseOrLoadTUnitandProcess(args: Array[String], saveArg: Boolean = false) = {
         // Current re-run hack - storing the initial arguments for parsing further files then the initial with the same arguments
-        if (saveArg) command = args.foldLeft(List[String]())((args, arg) => {
-            if (arg.equalsIgnoreCase(runOpt.getFile)) args
-            else if (arg.equalsIgnoreCase("--refEval") || arg.equalsIgnoreCase("rename") || arg.equalsIgnoreCase("extract") || arg.equalsIgnoreCase("inline")) args
-            else args :+ arg
-        }).toArray
+        if (saveArg) command = args.filter { arg =>
+            if (arg.equalsIgnoreCase(runOpt.getFile)) false
+            else if (arg.equalsIgnoreCase("--refEval") || arg.equalsIgnoreCase("rename") || arg.equalsIgnoreCase("extract") || arg.equalsIgnoreCase("inline")) false
+            else true
+        }
 
         val fm = getFM(runOpt)
         runOpt.setFullFeatureModel(fm)
