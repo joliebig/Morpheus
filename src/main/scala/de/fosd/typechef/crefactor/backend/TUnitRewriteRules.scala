@@ -137,7 +137,8 @@ trait TUnitRewriteRules extends ASTNavigation with ConditionalNavigation {
 
     def replaceExprWithCompStmExpr[T <: Product](t: T, e: Expr, n: CompoundStatementExpr): T = {
         val r = manybu(rule {
-            case i: NArySubExpr => if (isPartOf(i, e)) n else i
+            case i: Expr => if (i eq e) n else i
+            case x => x // causes none.get exception otherwise
         })
         r(t).get.asInstanceOf[T]
     }
