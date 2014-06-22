@@ -135,7 +135,6 @@ object CInlineFunction extends CRefactor with IntraCFG {
         case _: InitDeclaratorE => fDecls ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[AST]]
         case _: Expr =>
             fCallExprs ::= (id, parent.asInstanceOf[Opt[Expr]])
-            logger.info("adding")
         case _: NArySubExpr => fCallExprs ::= (id, parent.asInstanceOf[Opt[Expr]])
         case x => throw new RefactorException("Invalid function found! \n" + x + "\n" + id.getPositionFrom)
       }
@@ -206,14 +205,6 @@ object CInlineFunction extends CRefactor with IntraCFG {
           }
       }
 
-    // TODO Nice solution for this case:
-    // while(1) {
-    //      if (i < 1)
-    //          return n;
-    //      n = foo();
-    //      i = bar();
-    // }
-
       val fPreds = pred(fDef, morpheus.getASTEnv).filter(_.feature isSatisfiable morpheus.getFM)
       val fReturnStmts = fPreds.map(_.entry).filter { case _: ReturnStatement => true; case _ => false}
 
@@ -222,11 +213,16 @@ object CInlineFunction extends CRefactor with IntraCFG {
           val fStmt = getStatementForAstNode(fReturnStmt)
           val differentExitLocation  = !fReturnStmts.diff(List(fReturnStmt)).forall(isPartOf(_, fStmt))
 
-          val fCStmt = getCCStatementForAstNode(fReturnStmt)
-          val stmtAfterExit = fCStmt match {
-              case None => false
-              case Some(c) => !isPartOf(fReturnStmt, c.innerStatements.last.entry)
-          }
+          val rPreds = pred(fReturnStmt, morpheus.getASTEnv).filter(_.feature isSatisfiable morpheus.getFM)
+
+          val stmtAfterExit = rPreds.exists(rPred => {
+              val rPCStmt = getCCStatementForAstNode(rPred.entry)
+              rPCStmt match {
+                  case None => false
+                  case Some(c) => !isPartOf(fReturnStmt, c.innerStatements.last.entry)
+              }
+
+          })
 
           differentExitLocation || stmtAfterExit
       })
