@@ -189,17 +189,24 @@ object CInlineFunction extends CRefactor with IntraCFG {
     // this function determines for a given AST node the corresponding statement
     // in the compound statement that is directly attached to the function definition
     def getStatementForAstNode(i: AST): Option[Statement] = {
-      findPriorASTElem[FunctionDef](i, morpheus.getASTEnv) match {
-        case None => None
-        case Some(f) =>
-          f.stmt.innerStatements.foreach {
-            cStmt => if (isPartOf(i, cStmt)) return Some(cStmt.entry)
-          }
-          None
-      }
+        findPriorASTElem[FunctionDef](i, morpheus.getASTEnv) match {
+            case None => None
+            case Some(f) =>
+                f.stmt.innerStatements.foreach {
+                    cStmt => if (isPartOf(i, cStmt)) return Some(cStmt.entry)
+                }
+                None
+        }
     }
 
-    // TODO Is currently broken for this case:
+      def getCCStatementForAstNode(i: AST): Option[CompoundStatement] = {
+          findPriorASTElem[CompoundStatement](i, morpheus.getASTEnv) match {
+              case None => None
+              case Some(c) => Some(c)
+          }
+      }
+
+    // TODO Nice solution for this case:
     // while(1) {
     //      if (i < 1)
     //          return n;
@@ -207,15 +214,22 @@ object CInlineFunction extends CRefactor with IntraCFG {
     //      i = bar();
     // }
 
-    val fPreds = pred(fDef, morpheus.getASTEnv).filter(_.feature isSatisfiable morpheus.getFM)
-    val fReturnStmts = fPreds.map(_.entry).filter { case _: ReturnStatement => true; case _ => false}
+      val fPreds = pred(fDef, morpheus.getASTEnv).filter(_.feature isSatisfiable morpheus.getFM)
+      val fReturnStmts = fPreds.map(_.entry).filter { case _: ReturnStatement => true; case _ => false}
 
-    val result = fReturnStmts.exists(fReturnStmt => {
-        val fStmt = getStatementForAstNode(fReturnStmt)
-        !fReturnStmts.diff(List(fReturnStmt)).forall(isPartOf(_, fStmt))
-    })
 
-    result
+      fReturnStmts.exists(fReturnStmt => {
+          val fStmt = getStatementForAstNode(fReturnStmt)
+          val differentExitLocation  = !fReturnStmts.diff(List(fReturnStmt)).forall(isPartOf(_, fStmt))
+
+          val fCStmt = getCCStatementForAstNode(fReturnStmt)
+          val stmtAfterExit = fCStmt match {
+              case None => false
+              case Some(c) => !isPartOf(fReturnStmt, c.innerStatements.last.entry)
+          }
+
+          differentExitLocation || stmtAfterExit
+      })
   }
 
   private def isRecursive(funcDef: FunctionDef): Boolean = {
