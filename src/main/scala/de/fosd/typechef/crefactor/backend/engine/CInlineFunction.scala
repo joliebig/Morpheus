@@ -133,7 +133,9 @@ object CInlineFunction extends CRefactor with IntraCFG {
             case _ => fCallStmts ::= (id, parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[DeclarationStatement]])
           }
         case _: InitDeclaratorE => fDecls ::= parentOpt(parent, morpheus.getASTEnv).asInstanceOf[Opt[AST]]
-        case _: Expr => fCallExprs ::= (id, parent.asInstanceOf[Opt[Expr]])
+        case _: Expr =>
+            fCallExprs ::= (id, parent.asInstanceOf[Opt[Expr]])
+            logger.info("adding")
         case _: NArySubExpr => fCallExprs ::= (id, parent.asInstanceOf[Opt[Expr]])
         case x => throw new RefactorException("Invalid function found! \n" + x + "\n" + id.getPositionFrom)
       }
@@ -197,13 +199,23 @@ object CInlineFunction extends CRefactor with IntraCFG {
       }
     }
 
+    // TODO Is currently broken for this case:
+    // while(1) {
+    //      if (i < 1)
+    //          return n;
+    //      n = foo();
+    //      i = bar();
+    // }
+
     val fPreds = pred(fDef, morpheus.getASTEnv).filter(_.feature isSatisfiable morpheus.getFM)
     val fReturnStmts = fPreds.map(_.entry).filter { case _: ReturnStatement => true; case _ => false}
 
-    fReturnStmts.exists(fReturnStmt => {
+    val result = fReturnStmts.exists(fReturnStmt => {
         val fStmt = getStatementForAstNode(fReturnStmt)
         !fReturnStmts.diff(List(fReturnStmt)).forall(isPartOf(_, fStmt))
     })
+
+    result
   }
 
   private def isRecursive(funcDef: FunctionDef): Boolean = {
