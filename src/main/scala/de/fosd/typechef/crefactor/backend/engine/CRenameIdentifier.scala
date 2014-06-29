@@ -11,7 +11,6 @@ import de.fosd.typechef.conditional.Opt
  */
 object CRenameIdentifier extends CRefactor {
 
-    // TODO Move in rename
     def canRefactor(id: Id, morpheus: Morpheus,
                     validIdForRenameInCaseStudy: (Id, Morpheus) => Boolean = (i, m) => true) : Boolean = {
         val rid = morpheus.getReferences(id).map(_.entry)
@@ -22,12 +21,11 @@ object CRenameIdentifier extends CRefactor {
             false
         else
             true
+        true
     }
 
     def rename(id: Id, nid: String, morpheus: Morpheus): Either[String, TranslationUnit] = {
         val rid = morpheus.getReferences(id).map(_.entry)
-
-        // TODO Compare with canRefactor
         if (!isValidName(nid))
             Left(Configuration.getInstance().getConfig("default.error.invalidName"))
         else if (!rid.forall { // TODO: could be limited to external declarations

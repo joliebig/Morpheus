@@ -29,6 +29,8 @@ trait Verification extends Evaluation {
 
         val fw = new java.io.FileWriter(new File(completePath + "/" + evalName + "/" + configFlags))
 
+        StatsCan.addStat(evalFile, Stats.Variants, configs.size)
+
         fw.write(configPaths.toString)
         fw.flush
         fw.close

@@ -31,13 +31,15 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
     override def getValidIdsForEvaluation(morpheus : Morpheus) : List[Id] = {
         val moduleInterface = morpheus.getModuleInterface
 
-        val allIds = morpheus.getAllUses.filter(CRenameIdentifier.canRefactor(_, morpheus, isValidIdForRename))
+        val allUses = morpheus.getAllUses.par.filter(_.getFile.exists(_ == morpheus.getFile))
+        val availableIds = allUses.toList.filter(CRenameIdentifier.canRefactor(_, morpheus, isValidIdForRename))
 
         val linkedIds = if (FORCE_LINKING && moduleInterface != null)
-            allIds.par.filter(id => moduleInterface.isListed(Opt(parentOpt(id, morpheus.getASTEnv).feature, id.name), morpheus.getFM))
-                        else allIds
+            availableIds.par.filter(id =>
+                moduleInterface.isListed(Opt(parentOpt(id, morpheus.getASTEnv).feature, id.name), morpheus.getFM))
+                        else availableIds
 
-        val ids = if (linkedIds.isEmpty) allIds else linkedIds
+        val ids = if (linkedIds.isEmpty) availableIds else linkedIds
         logger.info(morpheus.getFile + ": IDs found: " + ids.size)
 
         val variableIds = ids.par.filter(id => isVariable(id, morpheus.getASTEnv))
