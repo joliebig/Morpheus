@@ -98,7 +98,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
     var fDefs = List[Opt[FunctionDef]]()
     var fCallExprs = List[(Id, Opt[Expr])]()
 
-    def checkExpr(expr: Option[Expr], id: Id) = expr.exists(filterAllASTElems[Id](_).contains(eq(id)))
+    def checkExpr(expr: Option[Expr], id: Id) = expr.exists(filterAllASTElems[Id](_).exists(_.eq(id)))
 
     morpheus.getReferences(fCall).map(_.entry).foreach(id => {
       val parent = parentOpt(id, morpheus.getASTEnv)
