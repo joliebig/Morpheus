@@ -7,6 +7,7 @@ import de.fosd.typechef.conditional._
 import de.fosd.typechef.crefactor._
 import de.fosd.typechef.crefactor.backend.{RefactorException, CRefactor}
 import de.fosd.typechef.crewrite.IntraCFG
+import de.fosd.typechef.featureexpr.bdd.True
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 import de.fosd.typechef.parser.c._
 
@@ -172,61 +173,73 @@ object CInlineFunction extends CRefactor with IntraCFG {
           }
   }
 
-  /*
-   * We do not support the integration of functions with multiple return statements because integrating their
-   * control flow on the call site is complex.
-   *
-   * We check the function definition (fDef) for return expressions that belong to different return statements.
-   * If fDef has varying return statements, it is incompatible, otherwise fDef is compatible.
-   *
-   * Example:
-   * int foo() { ... return x; }                              // is compatible
-   * int foo() { if (...) { return x+1;} else { return x+2; } // is compatible
-   * int foo() { if (...) {return x;} ... return x; }         // is incompatible
-   */
-  private def hasIncompatibleCFG(fDef: FunctionDef, morpheus: Morpheus): Boolean = {
-    // this function determines for a given AST node the corresponding statement
-    // in the compound statement that is directly attached to the function definition
-    def getStatementForAstNode(i: AST): Option[Statement] = {
-        findPriorASTElem[FunctionDef](i, morpheus.getASTEnv) match {
-            case None => None
-            case Some(f) =>
-                f.stmt.innerStatements.foreach {
-                    cStmt => if (isPartOf(i, cStmt)) return Some(cStmt.entry)
-                }
-                None
+
+
+    /*
+       * We do not support the integration of functions with multiple return statements because integrating their
+       * control flow on the call site is complex.
+       *
+       * We check the function definition (fDef) for return expressions that belong to different return statements.
+       * If fDef has varying return statements, it is incompatible, otherwise fDef is compatible.
+       *
+       * Example:
+       * int foo() { ... return x; }                              // is compatible
+       * int foo() { if (...) { return x+1;} else { return x+2; } // is compatible
+       * int foo() { if (...) {return x;} ... return x; }         // is incompatible
+       */
+    private def hasIncompatibleCFG(fDef: FunctionDef, morpheus: Morpheus): Boolean = {
+        // this function determines for a given AST node the corresponding statement
+        // in the compound statement that is directly attached to the function definition
+        def getStatementForAstNode(i: AST): Option[Statement] = {
+            findPriorASTElem[FunctionDef](i, morpheus.getASTEnv) match {
+                case None => None
+                case Some(f) =>
+                    f.stmt.innerStatements.foreach {
+                        cStmt => if (isPartOf(i, cStmt)) return Some(cStmt.entry)
+                    }
+                    None
+            }
         }
+
+        def getCCStatementForAstNode(i: AST): Option[CompoundStatement] = {
+            findPriorASTElem[CompoundStatement](i, morpheus.getASTEnv) match {
+                case None => None
+                case Some(c) => Some(c)
+            }
+        }
+
+        /**
+         * Retrieves if the input statement is always part of the last statement of a compound statement.
+         */
+        def isPartOfLastStatementOfCompundStatement(fReturnStmt: CFGStmt, c: CompoundStatement): Boolean =
+            isPartOf(fReturnStmt, c.innerStatements.last.entry) &&
+                (getCCStatementForAstNode(parentAST(c, morpheus.getASTEnv)) match {
+                    case Some(nc) => isPartOfLastStatementOfCompundStatement(fReturnStmt, nc)
+                    case None => true
+                })
+
+        val fPreds = pred(fDef, morpheus.getASTEnv).filter(_.feature isSatisfiable morpheus.getFM)
+        val fReturnStmts = fPreds.map(_.entry).filter { case _: ReturnStatement => true; case _ => false}
+
+
+        fReturnStmts.exists(fReturnStmt => {
+            val fStmt = getStatementForAstNode(fReturnStmt)
+            val differentExitLocation = !fReturnStmts.diff(List(fReturnStmt)).forall(isPartOf(_, fStmt))
+
+            val rPreds = pred(fReturnStmt, morpheus.getASTEnv).filter(_.feature isSatisfiable morpheus.getFM)
+
+            val stmtAfterExit = rPreds.exists(rPred => {
+                val rPCStmt = getCCStatementForAstNode(rPred.entry)
+                rPCStmt match {
+                    case None => false
+                    case Some(c) => !isPartOfLastStatementOfCompundStatement(fReturnStmt, c)
+                }
+
+            })
+
+            differentExitLocation || stmtAfterExit
+        })
     }
-
-      def getCCStatementForAstNode(i: AST): Option[CompoundStatement] = {
-          findPriorASTElem[CompoundStatement](i, morpheus.getASTEnv) match {
-              case None => None
-              case Some(c) => Some(c)
-          }
-      }
-
-      val fPreds = pred(fDef, morpheus.getASTEnv).filter(_.feature isSatisfiable morpheus.getFM)
-      val fReturnStmts = fPreds.map(_.entry).filter { case _: ReturnStatement => true; case _ => false}
-
-
-      fReturnStmts.exists(fReturnStmt => {
-          val fStmt = getStatementForAstNode(fReturnStmt)
-          val differentExitLocation  = !fReturnStmts.diff(List(fReturnStmt)).forall(isPartOf(_, fStmt))
-
-          val rPreds = pred(fReturnStmt, morpheus.getASTEnv).filter(_.feature isSatisfiable morpheus.getFM)
-
-          val stmtAfterExit = rPreds.exists(rPred => {
-              val rPCStmt = getCCStatementForAstNode(rPred.entry)
-              rPCStmt match {
-                  case None => false
-                  case Some(c) => !isPartOf(fReturnStmt, c.innerStatements.last.entry)
-              }
-
-          })
-
-          differentExitLocation || stmtAfterExit
-      })
-  }
 
   private def isRecursive(funcDef: FunctionDef): Boolean = {
     filterASTElems[PostfixExpr](funcDef).exists({
