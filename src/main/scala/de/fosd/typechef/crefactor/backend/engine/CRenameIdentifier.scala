@@ -21,7 +21,6 @@ object CRenameIdentifier extends CRefactor {
             false
         else
             true
-        true
     }
 
     def rename(id: Id, nid: String, morpheus: Morpheus): Either[String, TranslationUnit] = {
