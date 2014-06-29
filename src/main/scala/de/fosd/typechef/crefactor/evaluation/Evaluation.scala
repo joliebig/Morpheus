@@ -402,7 +402,7 @@ trait Evaluation extends Logging with BuildCondition with ASTNavigation with Con
 
     def hasSameFileName(id : Id, morpheus : Morpheus) : Boolean = {
         val entry = id.getFile.get.replaceFirst("file ", "")
-        (entry.equalsIgnoreCase(morpheus.getFile) || getFileName(entry).equalsIgnoreCase(getFileName(morpheus.getFile)))
+        entry.equalsIgnoreCase(morpheus.getFile) || getFileName(entry).equalsIgnoreCase(getFileName(morpheus.getFile))
     }
 
 
