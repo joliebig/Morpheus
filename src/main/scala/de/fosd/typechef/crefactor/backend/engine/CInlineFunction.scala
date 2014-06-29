@@ -311,9 +311,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
           case i@InitDeclaratorI(_, _, Some(Initializer(label, expr))) =>
             initDecls ::= Opt(feature, i.copy(i = Some(Initializer(label,
               returnStmt.entry.expr.get))))
-          case x =>
-            logger.warn("missed " + x)
-            throw new RefactorException("No rule defined for:" + x)
+          case x => throw new RefactorException("No rule defined for:" + x)
         }
       })
       val declSpecs = decl.declSpecs.map(
@@ -347,9 +345,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
             else wStatement = replaceOnceTD(wStatement, stmt,
               Opt(feature, ExprStatement(AssignExpr(t, o, entry))))
           else wStatement = remove(wStatement, stmt)
-        case x =>
-          logger.error("No assign rule for: " + x)
-          throw new RefactorException("No rule defined for:" + x)
+        case x => throw new RefactorException("No assign rule for:" + x)
       }
       wStatement
     }
@@ -378,7 +374,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
       case ExprStatement(e) => e match {
         case _: PostfixExpr => wStmt = includeReturnStatement(returnStmts, wStmt, fCall, false)
         case _: AssignExpr => wStmt = includeReturnStatement(returnStmts, wStmt, fCall, true)
-        case x => logger.warn("missed" + x)
+        case x => throw new RefactorException("Assign pattern not reached" + x)
       }
       // function to inline has been called as declaration, e.g int foo = functionToInline();
       case declStmt@DeclarationStatement(decl) =>
@@ -386,9 +382,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
       // function to inline has been called like return functionToInline()
       case ReturnStatement(expr) =>
       // no initializing or special handling required;
-      case x =>
-        logger.warn("Pattern not reached " + x)
-        throw new RefactorException("Could not inline - some rules are not complete.")
+      case x => throw new RefactorException("Pattern not reached " + x)
     }
     wStmt
   }
