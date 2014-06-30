@@ -111,6 +111,9 @@ object CInlineFunction extends CRefactor with IntraCFG {
                 case p: ParameterDeclaration =>
                     logger.info("Hit function pointer: " + p + " in " + id.getPositionFrom)
                     return (List(), List(), List(), List())
+                case i: Initializer =>
+                    logger.info("Hit function pointer initializer: " + i + " in " + id.getPositionFrom)
+                    return (List(), List(), List(), List())
                 // we have to take special care about control statements but not return statements
                 case WhileStatement(expr, _) =>
                     if (checkExpr(Some(expr), id)) fCallExprs ::=(id, Opt(parent.feature, expr))
