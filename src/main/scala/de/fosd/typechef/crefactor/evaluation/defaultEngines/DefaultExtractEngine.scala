@@ -67,7 +67,6 @@ trait DefaultExtractEngine extends Refactoring with Evaluation {
             return (false, null, List(), List())
         }
 
-        // TODO ASK Joerg about amount of stmts
         val preparedStmts = preparedRefactorings.extract.head
 
         val statements = preparedRefactorings.getCorrespondingStmts(preparedStmts, morpheus) match {
@@ -81,13 +80,10 @@ trait DefaultExtractEngine extends Refactoring with Evaluation {
             return (false, null, List(), List())
         }
 
-        val features = filterAllOptElems(statements).map(morpheus.getASTEnv.featureExpr(_)).distinct
         val refactorTime = new StopClock
         val refactored = CExtractFunction.extract(morpheus, statements, NAME)
         refactored match {
             case Right(a) => {
-                val features = filterAllFeatureExpr(a._2)
-                logger.info("Features: " + features)
                 val features = filterAllFeatureExpr(a._2).distinct
                 logger.info("Found features: " + features)
                 StatsCan.addStat(morpheus.getFile, RefactorTime, refactorTime.getTime)
