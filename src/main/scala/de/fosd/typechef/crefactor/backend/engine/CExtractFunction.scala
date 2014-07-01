@@ -44,7 +44,8 @@ object CExtractFunction extends CRefactor with IntraCFG {
         else true
     }
 
-    def extract(morpheus: Morpheus, selectedElements: List[AST], funcName: String): Either[String, TranslationUnit] = {
+    def extract(morpheus: Morpheus, selectedElements: List[AST], funcName: String):
+    Either[String, (TranslationUnit, Opt[FunctionDef])] = {
 
         if (!isValidName(funcName))
             return Left(Configuration.getInstance().getConfig("default.error.invalidName"))
@@ -77,7 +78,7 @@ object CExtractFunction extends CRefactor with IntraCFG {
     }
 
     private def extractStatements(morpheus: Morpheus, selection: List[AST], fName: String):
-    Either[String, TranslationUnit] = {
+    Either[String, (TranslationUnit, Opt[FunctionDef])] = {
         try {
             val parentFunction = getFunction(selection, morpheus)
             val parentFunctionOpt: Opt[FunctionDef] = parentOpt(parentFunction,
@@ -149,7 +150,7 @@ object CExtractFunction extends CRefactor with IntraCFG {
                 parentFunctionOpt, newFDefForwardOpt, newFDefOpt)
 
             val refAST = replaceCompoundStmt(tunitWithFDef, compStmt, compStmt.copy(innerStatements = ccStmtWithRemovedStmts))
-            Right(refAST)
+            Right(refAST, newFDefOpt)
         } catch {
             case r: RefactorException => Left(r.error)
             case x: Throwable =>

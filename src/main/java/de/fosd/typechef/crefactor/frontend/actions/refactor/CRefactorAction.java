@@ -1,6 +1,7 @@
 package de.fosd.typechef.crefactor.frontend.actions.refactor;
 
 
+import de.fosd.typechef.conditional.Opt;
 import de.fosd.typechef.crefactor.Morpheus;
 import de.fosd.typechef.crefactor.backend.engine.CExtractFunction;
 import de.fosd.typechef.crefactor.backend.engine.CInlineFunction;
@@ -9,10 +10,12 @@ import de.fosd.typechef.crefactor.evaluation_utils.Configuration;
 import de.fosd.typechef.crefactor.frontend.util.CInlineDialog;
 import de.fosd.typechef.crefactor.frontend.util.CNameDialog;
 import de.fosd.typechef.parser.c.AST;
+import de.fosd.typechef.parser.c.FunctionDef;
 import de.fosd.typechef.parser.c.Id;
 import de.fosd.typechef.parser.c.TranslationUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import scala.Tuple2;
 import scala.collection.immutable.List;
 import scala.util.Either;
 
@@ -46,7 +49,7 @@ public class CRefactorAction {
                 try {
                     final ThreadMXBean tb = ManagementFactory.getThreadMXBean();
                     final long startTime = tb.getCurrentThreadCpuTime();
-                    final Either<String, TranslationUnit> refactored =
+                    final Either<String, Tuple2<TranslationUnit, Opt<FunctionDef>>> refactored =
                             CExtractFunction.extract(morpheus, selection, box.getInput());
                     if (refactored.isLeft()) {
                         JOptionPane.showMessageDialog(null,
@@ -55,7 +58,7 @@ public class CRefactorAction {
                                 Configuration.getInstance().getConfig("default.error"),
                                 JOptionPane.ERROR_MESSAGE);
                     } else {
-                        morpheus.update(refactored.right().get());
+                        morpheus.update(refactored.right().get()._1());
                     }
                     logger.info("Duration for transforming: "
                             + (tb.getCurrentThreadCpuTime() - startTime) / 1000000 + "ms");
