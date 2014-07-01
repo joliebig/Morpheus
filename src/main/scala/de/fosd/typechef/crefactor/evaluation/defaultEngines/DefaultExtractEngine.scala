@@ -86,8 +86,6 @@ trait DefaultExtractEngine extends Refactoring with Evaluation {
         val refactored = CExtractFunction.extract(morpheus, statements, NAME)
         refactored match {
             case Right(a) => {
-                val features = filterAllFeatureExpr(a._2)
-                logger.info("Features: " + features)
                 val features = filterAllFeatureExpr(a._2).distinct
                 logger.info("Found features: " + features)
                 StatsCan.addStat(morpheus.getFile, RefactorTime, refactorTime.getTime)
