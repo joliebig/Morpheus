@@ -110,7 +110,7 @@ object CExtractFunction extends CRefactor with IntraCFG {
             if (!toDeclare.isEmpty)
                 return Left("Invalid selection, a declared variable in the selection gets used outside.")
 
-            val params = retrieveParameters(extRefIds, morpheus)
+            val params = retrieveParameters(removeVisibleLiveParameters(extRefIds, morpheus), morpheus)
             val paramsIds = params.map(_._3)
 
             StatsCan.addStat(morpheus.getFile, Liveness,      startTime.getTime)
@@ -615,6 +615,32 @@ object CExtractFunction extends CRefactor with IntraCFG {
         uses.foreach(id => declarationIds.add(id._1))
         declarationIds.toArray(Array[Id]()).toList.sortWith {(i1, i2) => i1.name < i2.name}
     }
+
+    /**
+     * Removes all visible parameters from the liveness list.
+     * A visible parameter is a variable determined to be declared outside of the selected statements,
+     * but gets declared inside a struct or union. These declarations are visible inside the extracted statements
+     * as we need to pass the parent struct or union as parameter to preserve type safety.
+     *
+     * eg:
+     *
+     * struct person {
+     *     int age;
+     * }
+     *
+     * By extracting the following lines
+     *  p->age = 10;
+     *
+     * we would detect p and age as live variables. But only p can be introduced as parameter of the extracted function,
+     * as age is already visible by this parameter.
+     */
+    private def removeVisibleLiveParameters(liveParamIds: List[Id], morpheus: Morpheus): List[Id] =
+        liveParamIds.filter(id => {
+            findPriorASTElem[StructOrUnionSpecifier](id, morpheus.getASTEnv) match {
+                case Some(s: StructOrUnionSpecifier) => !s.enumerators.exists(enum => isPartOf(id, enum))
+                case None => true
+            }
+        })
 
     private def genCompoundStatement(statements: List[Opt[Statement]], externalRef: List[Id],
                                      parameters: List[Id], morpheus: Morpheus): CompoundStatement = {
