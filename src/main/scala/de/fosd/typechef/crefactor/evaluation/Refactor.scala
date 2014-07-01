@@ -61,14 +61,16 @@ case class PreparedRefactorings(renaming : List[Id], extract : List[List[Stateme
     def getCorrespondingStmts(stmts : List[Statement], morpheus : Morpheus) : Option[List[Statement]] = {
 
         def findPriorStatement(a : Product, statement : Statement) : Option[Statement] = {
-            findPriorASTElem[Statement](a, morpheus.getASTEnv) match {
-                case Some(corStmt) =>
-                    if (corStmt.equals(statement)) Some(corStmt)
-                    else findPriorStatement(corStmt, statement)
+            a match {
+                case Some(i@Id(_)) =>  findPriorASTElem[Statement](i, morpheus.getASTEnv) match {
+                    case Some(corStmt) =>
+                        if (corStmt.equals(statement)) Some(corStmt)
+                        else findPriorStatement(corStmt, statement)
+                    case None => None
+                }
                 case None => None
             }
         }
-
         val correspondingStmts = stmts.map(stmt => {
             val stmtIds = filterASTElems[Id](stmt)
             if (stmtIds.isEmpty) {
