@@ -52,12 +52,12 @@ object CExtractFunction extends CRefactor with IntraCFG {
         // Reference check is performed as soon as we know the featureExpr the new function is going to have!
 
         val oldFDef = findPriorASTElem[FunctionDef](selectedElements.head, morpheus.getASTEnv)
-        if (isValidInProgram(Opt(morpheus.getASTEnv.featureExpr(oldFDef.get), funcName), morpheus))
+        if (!isValidInProgram(Opt(morpheus.getASTEnv.featureExpr(oldFDef.get), funcName), morpheus))
             return Left(Configuration.getInstance().getConfig(
                 "default.error.isInConflictWithSymbolInModuleInterface"))
 
         // we check binding and visibility using the last element in the translation unit
-        if (isValidInModule(funcName, morpheus.getTranslationUnit.defs.last.entry, morpheus))
+        if (!isValidInModule(funcName, morpheus.getTranslationUnit.defs.last.entry, morpheus))
             return Left(Configuration.getInstance().getConfig("default.error.isInConflictWithSymbolInModule"))
 
         // we can only handle statements. report error otherwise.
