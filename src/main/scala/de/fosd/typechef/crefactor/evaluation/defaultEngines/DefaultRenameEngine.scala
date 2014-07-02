@@ -279,7 +279,7 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
             logger.info("One or more file is blacklisted or is not a member of the valid files list and cannot be build.")
             return null
         }
-
+        logger.info("Affected files: " + affectedFiles)
         affectedFiles
     }
 
