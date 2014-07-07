@@ -43,12 +43,16 @@ trait CRefactor
      * Checks if the id valid for renaming
      */
     def isValidIdForRename(id: Id, morpheus : Morpheus,
-                           validIdForRenameInCaseStudy: (Id, Morpheus) => Boolean = (i, m) => true): Boolean =
-        !(id.name == "main") && validIdForRenameInCaseStudy(id, morpheus) && !isSystemLinkedName(id.name) && {
+                           validIdForRenameInCaseStudy: (Id, Morpheus) => Boolean = (i, m) => true): Boolean = {
+        val blackListed =
             if (morpheus.getModuleInterface != null)
                 !morpheus.getModuleInterface.isBlackListed(id.name)
             else true
-        } && !hasConflictingLinking(id, morpheus) && id.hasPosition && !hasConflictingLinking(id, morpheus)
+
+        !(id.name == "main") && validIdForRenameInCaseStudy(id, morpheus) && !isSystemLinkedName(id.name) &&
+            blackListed && id.hasPosition && !hasConflictingLinking(id, morpheus)
+    }
+
 
     def isWritable(id: Id, morpheus : Morpheus) : Boolean = {
         val path =
@@ -102,7 +106,6 @@ trait CRefactor
 
     /**
      * Checks if the local linking information are also globally visible
-     // TODO: bug in interface gen
      */
     private def hasConflictingLinking(id: Id, morpheus : Morpheus) = {
         val exports = morpheus.getTypeSystem.getInferredInterface().exports
@@ -111,12 +114,23 @@ trait CRefactor
         val local = exports.exists(_.name == id.name) ||
             imports.exists(_.name == id.name)
 
-        val global = if (morpheus.getModuleInterface == null)
-            false
-        else
-            morpheus.getModuleInterface.nameIsListed(id.name)
+        val global =
+            if (morpheus.getModuleInterface == null)
+                false
+            else
+                morpheus.getModuleInterface.nameIsListed(id.name)
 
-        local && !global
+        /** Checks if an identifier is declared with the specifier 'extern' but not listed in the linking interface */
+        val externSpecifier = morpheus.getReferences(id).par.exists(ref =>
+            findPriorASTElem[Declaration](ref.entry, morpheus.getASTEnv) match {
+                case Some(d) => d.declSpecs.exists(_.entry match {
+                    case _ : ExternSpecifier => true
+                    case _ => false
+                })
+                case None => false
+            })
+
+        (local && !global) || (externSpecifier && !global)
     }
 
     private def hasSameFileName(id : Id, morpheus : Morpheus) : Boolean = {
