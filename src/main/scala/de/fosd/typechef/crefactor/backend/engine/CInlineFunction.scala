@@ -164,16 +164,30 @@ object CInlineFunction extends CRefactor with IntraCFG {
      * This check is required as iso-c99 does not allow for labels to appear immediately before a declaration.
      */
     private def hasLabelBeforeFCall(fCall: Id, morpheus: Morpheus): Boolean = {
+
+        def previousSatisfiableStatement(parent : Opt[_], feature : FeatureExpr) : AST =
+            prevAST(parent, morpheus.getASTEnv) match {
+                case null => null
+                case prev => parentOpt(prev, morpheus.getASTEnv) match {
+                    case null => null
+                    case o =>
+                        if (o.feature.and(feature).isSatisfiable(morpheus.getFM)) prev
+                        else previousSatisfiableStatement(o, feature)
+                }
+            }
+
+
         val parentOptStmt = parentOpt(fCall, morpheus.getASTEnv)
         if (parentOptStmt == null)
             false
         else
-            prevAST(parentOpt(fCall, morpheus.getASTEnv), morpheus.getASTEnv) match {
+            previousSatisfiableStatement(parentOptStmt, parentOptStmt.feature) match {
                 case _: CaseStatement => true
                 case _: GotoStatement => true
                 case _: LabelStatement => true
                 case _ => false
             }
+
     }
 
 
