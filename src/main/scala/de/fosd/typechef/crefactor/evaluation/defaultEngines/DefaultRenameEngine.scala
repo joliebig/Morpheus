@@ -256,14 +256,18 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
     private def getRefactoringObjectsForGloballyLinkedIdentifiers(morpheus: Morpheus, id: Id): List[(String, Position)] = {
         val cmif = morpheus.getModuleInterface
         val linked = cmif.getPositions(id.name)
+        val linkedFiles = util.Collections.newSetFromMap[String](new util.IdentityHashMap)
 
         // get files with linking different from the current file, we already operate on
         val affectedFiles = linked.flatMap {
             pos => {
-                if (getFileName(pos.getFile).equalsIgnoreCase(getFileName(morpheus.getFile)))
+                if (getFileName(pos.getFile).equalsIgnoreCase(getFileName(morpheus.getFile))
+                    || linkedFiles.contains(pos.getFile))
                     None
-                else
+                else  {
+                    linkedFiles.add(pos.getFile)
                     Some((pos.getFile, pos))
+                }
             }
         }
 
