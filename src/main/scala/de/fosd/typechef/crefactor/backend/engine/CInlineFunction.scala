@@ -7,7 +7,6 @@ import de.fosd.typechef.conditional._
 import de.fosd.typechef.crefactor._
 import de.fosd.typechef.crefactor.backend.{RefactorException, CRefactor}
 import de.fosd.typechef.crewrite.IntraCFG
-import de.fosd.typechef.featureexpr.bdd.True
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
 import de.fosd.typechef.parser.c._
 
@@ -565,6 +564,15 @@ object CInlineFunction extends CRefactor with IntraCFG {
     private def isDeclaredInFunctionCallScope(inlineId: Id, fCallId: Id, callCompStmt: CompoundStatement, morpheus: Morpheus): Boolean = {
         val nameWithFeature = Opt(morpheus.getASTEnv.featureExpr(inlineId), inlineId.name)
 
+        // id is part of a jump statement? if so, check if the same jump location already exists
+        if (findPriorASTElem[Statement](inlineId, morpheus.getASTEnv) match {
+            case Some(LabelStatement(_,_)) | Some(GotoStatement(_)) =>
+                nameIsPartOfJump(inlineId.name, callCompStmt, morpheus)
+            case _ => false
+        })
+            return true
+
+
         // lookup if name is visible in current scope
         if (!isVisibleNameInFunctionScope(nameWithFeature, fCallId, callCompStmt, morpheus))
             return false
@@ -596,6 +604,15 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
         true
     }
+
+    private def nameIsPartOfJump(jump: String, compStmt: CompoundStatement, morpheus: Morpheus): Boolean =
+        filterAllASTElems[Id](compStmt, morpheus.getASTEnv).par.exists(cId => {
+            findPriorASTElem[Statement](cId, morpheus.getASTEnv) match {
+                case Some(LabelStatement(Id(name), _)) => name == jump
+                case Some(GotoStatement(target)) => filterAllASTElems[Id](target).exists(_.name == jump)
+                case _ => false
+            }
+        })
 
     /**
      * Checks if a symbol is visible at the place of the inlining function scope.
@@ -755,7 +772,8 @@ object CInlineFunction extends CRefactor with IntraCFG {
                 Opt(stmt.feature, newName), fCallId, getCompStatement(fCall, morpheus.getASTEnv), morpheus)
                 || isVisibleGlobalNameInFunctionScope(
                 Opt(stmt.feature, newName), fCallId, getCompStatement(fCall, morpheus.getASTEnv), morpheus)
-                || isOccupiedByIdentifier(newName, getCompStatement(fCall, morpheus.getASTEnv)))
+                || isOccupiedByIdentifier(newName, getCompStatement(fCall, morpheus.getASTEnv))
+                || nameIsPartOfJump(newName, fDef.entry.stmt, morpheus))
                 generateValidNewName(id, stmt, morpheus, appendix + 1)
 
             else newName
