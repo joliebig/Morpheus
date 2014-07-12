@@ -19,7 +19,8 @@ import de.fosd.typechef.parser.c._
 object CInlineFunction extends CRefactor with IntraCFG {
 
     def canInline(morpheus: Morpheus, fCall: Id): Boolean = {
-        if (!isFunctionCall(morpheus, fCall))
+
+        /*if (!isFunctionCall(morpheus, fCall))
             return false
 
         val (fCalls, _, fDefs, _) = getCallDeclDefCallExprs(fCall, morpheus)
@@ -43,7 +44,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
             // inlined variables does not differ in scoping
             // logger.info(fCall + " has different scopes.")
             false
-        } else
+        } else */
             true
     }
 
@@ -164,30 +165,15 @@ object CInlineFunction extends CRefactor with IntraCFG {
      * This check is required as iso-c99 does not allow for labels to appear immediately before a declaration.
      */
     private def hasLabelBeforeFCall(fCall: Id, morpheus: Morpheus): Boolean = {
-
-        def previousSatisfiableStatement(parent : Opt[_], feature : FeatureExpr) : AST =
-            prevAST(parent, morpheus.getASTEnv) match {
-                case null => null
-                case prev => parentOpt(prev, morpheus.getASTEnv) match {
-                    case null => null
-                    case o =>
-                        if (o.feature.and(feature).isSatisfiable(morpheus.getFM)) prev
-                        else previousSatisfiableStatement(o, feature)
-                }
-            }
-
-
         val parentOptStmt = parentOpt(fCall, morpheus.getASTEnv)
-        if (parentOptStmt == null)
-            false
-        else
-            previousSatisfiableStatement(parentOptStmt, parentOptStmt.feature) match {
-                case _: CaseStatement => true
-                case _: GotoStatement => true
-                case _: LabelStatement => true
-                case _ => false
-            }
-
+        pred(parentOptStmt, morpheus.getASTEnv).exists(prev => {
+                prev.entry match {
+                    case _: CaseStatement | _: GotoStatement | _: LabelStatement =>
+                        prev.feature.and(parentOptStmt.feature).isSatisfiable(morpheus.getFM)
+                        // only perform satisifiabilty check if precedessor is some kind of a label statement
+                    case _ => false
+                }
+        })
     }
 
 
@@ -248,7 +234,8 @@ object CInlineFunction extends CRefactor with IntraCFG {
                 val rPCStmt = getCCStatementForAstNode(rPred.entry)
                 rPCStmt match {
                     case None => false
-                    case Some(c) => !isPartOfLastStatementOfCompundStatement(fReturnStmt, c)
+                    case Some(c) =>
+                        !isPartOfLastStatementOfCompundStatement(fReturnStmt, c)
                 }
 
             })
