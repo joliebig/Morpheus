@@ -20,7 +20,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
     def canInline(morpheus: Morpheus, fCall: Id): Boolean = {
 
-        /*if (!isFunctionCall(morpheus, fCall))
+        if (!isFunctionCall(morpheus, fCall))
             return false
 
         val (fCalls, _, fDefs, _) = getCallDeclDefCallExprs(fCall, morpheus)
@@ -44,7 +44,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
             // inlined variables does not differ in scoping
             // logger.info(fCall + " has different scopes.")
             false
-        } else */
+        } else
             true
     }
 
