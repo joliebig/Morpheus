@@ -504,7 +504,6 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
     private def getIdsToRename(fDEf: FunctionDef, fCallId: Id, compStmt: CompoundStatement, morpheus: Morpheus) = {
         val idsToInline = filterAllASTElems[Id](fDEf)
-        val env = morpheus.getEnv(fCallId)
         idsToInline.filter(isDeclaredInFunctionCallScope(_, fCallId, compStmt, morpheus))
     }
 
@@ -787,7 +786,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
         def rename[T <: AST](o: List[Opt[T]], id: Id) = {
             val renamedId = id.copy(name = generateValidNewName(id, fCall, morpheus))
-            paramFeatureEnv.put(renamedId, morpheus.getASTEnv.featureExpr(id))
+            paramFeatureEnv.put(renamedId, morpheus.getASTEnv.featureExpr(parentAST(id, morpheus.getASTEnv)))
             replace(o, id, renamedId)
         }
 
