@@ -1,9 +1,10 @@
 package de.fosd.typechef.crefactor
 
+import de.fosd.typechef.conditional.{One, Opt}
 import de.fosd.typechef.crefactor.evaluation.Stats._
 
 import de.fosd.typechef.parser.c._
-import de.fosd.typechef.featureexpr.FeatureModel
+import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr, FeatureModel}
 import de.fosd.typechef.options._
 import de.fosd.typechef.lexer
 import java.io._
@@ -24,6 +25,7 @@ import de.fosd.typechef.featureexpr.bdd.FeatureExprHelper
 import de.fosd.typechef.parser.c.CTypeContext
 import de.fosd.typechef.parser.c.TranslationUnit
 import de.fosd.typechef.crefactor.evaluation.PreparedRefactorings
+import org.kiama.rewriting.Rewriter._
 
 object CRefactorFrontend extends App with InterfaceWriter with BuildCondition with Logging with EnforceTreeHelper {
 
@@ -99,8 +101,9 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
             if (runOpt.reuseAST && new File(opt.getSerializedTUnitFilename).exists())
                 loadSerializedTUnit(opt.getSerializedTUnitFilename)
             else parseTUnit(fm, opt)
-        prepareAST[TranslationUnit](tunit)
+        convertSingleStmtsToCompoundStmts(prepareAST[TranslationUnit](tunit))
     }
+
     private def writeProjectModuleInterface(options: MorpheusOptions) = {
         val linker: CModuleInterfaceGenerator = {
             if (options.getRefStudy.equalsIgnoreCase("busybox"))
@@ -273,5 +276,32 @@ object CRefactorFrontend extends App with InterfaceWriter with BuildCondition wi
         println("Invocation error: " + message)
         println("use parameter --help for more information.")
         System.exit(-1)
+    }
+
+     /*
+      * Old removed function from EnforceTreeHelper to ensure single line statements are packed into a surrounding
+      * compoundstatement.
+      * TOOD @joliebig move back in enforce tree helper?
+      */
+    private def convertSingleStmtsToCompoundStmts[T <: Product](t: T, currentContext: FeatureExpr = FeatureExprFactory.True): T = {
+        val r = alltd(rule {
+            case l: List[Opt[_]] =>
+                l.flatMap(x => x match {
+                    case o@Opt(ft: FeatureExpr, entry) =>
+                        if (ft.mex(currentContext).isTautology()) List()
+                        else if (ft.implies(currentContext).isTautology()) List(convertSingleStmtsToCompoundStmts(o, ft))
+                        else List(convertSingleStmtsToCompoundStmts(Opt(ft.and(currentContext), entry), ft.and(currentContext)))
+                })
+            case o@One(st: Statement) =>
+                st match {
+                    case cs: CompoundStatement => One(convertSingleStmtsToCompoundStmts(st, currentContext))
+                    case k =>
+                        One(CompoundStatement(List(Opt(FeatureExprFactory.True, convertSingleStmtsToCompoundStmts(k, currentContext)))))
+                }
+        })
+        r(t) match {
+            case None => t
+            case k => k.get.asInstanceOf[T]
+        }
     }
 }
