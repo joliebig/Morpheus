@@ -42,11 +42,11 @@ trait DefaultExtractEngine extends Refactoring with Evaluation {
 
         logger.info(morpheus.getFile + " Statements found to extract: " + allCombinations.size)
 
-        val variableCombinations = allCombinations.par.filter {
+        val variableCombinations = allCombinations.filter {
             sel => sel.exists {
                 stmt => isVariable(stmt, morpheus.getASTEnv)
             }
-        }.toList
+        }
 
         logger.info(morpheus.getFile + " Variable statements found to extract: " + allCombinations.size)
 
