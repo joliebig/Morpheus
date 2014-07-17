@@ -141,7 +141,9 @@ object CInlineFunction extends CRefactor with IntraCFG {
                 case _: Expr =>
                     fCallExprs ::=(id, parent.asInstanceOf[Opt[Expr]])
                 case _: NArySubExpr => fCallExprs ::=(id, parent.asInstanceOf[Opt[Expr]])
-                case x => throw new RefactorException("Invalid function found! \n" + x + "\n" + id.getPositionFrom)
+                case x =>
+                    logger.error("Invalid function found! \n" + x + "\n" + id.getPositionFrom)
+                    return (List(), List(), List(), List())
             }
         })
 
