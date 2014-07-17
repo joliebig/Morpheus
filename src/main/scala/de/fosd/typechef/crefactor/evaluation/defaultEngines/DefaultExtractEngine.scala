@@ -29,11 +29,14 @@ trait DefaultExtractEngine extends Refactoring with Evaluation {
 
         def getAvailableExtractStatements(compStmt: CompoundStatement): List[List[Statement]] = {
             val length = compStmt.innerStatements.length - 1
+            logger.info("Statements in current compound statement: " + length)
             if (compStmt.innerStatements.isEmpty) List()
             else (0 to length).flatMap(getAvailableInnerStatements(compStmt.innerStatements, _, length)).toList
         }
 
         val compStmts = filterAllASTElems[CompoundStatement](morpheus.getTranslationUnit)
+
+        logger.info("Number of compound statements: " + compStmts.size)
 
         val allCombinations = compStmts.flatMap(getAvailableExtractStatements).filterNot(_.isEmpty)
 
