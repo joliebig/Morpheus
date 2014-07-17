@@ -39,7 +39,7 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
                 moduleInterface.isListed(Opt(parentOpt(id, morpheus.getASTEnv).feature, id.name), morpheus.getFM))
                         else availableIds
 
-        val ids = if (linkedIds.isEmpty) availableIds else linkedIds
+        val ids = if (linkedIds.isEmpty) availableIds else linkedIds.toList
         logger.info(morpheus.getFile + ": IDs found: " + ids.size)
 
         val variableIds = ids.filter(id => isVariable(id, morpheus.getASTEnv))
