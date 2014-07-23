@@ -704,9 +704,9 @@ object CInlineFunction extends CRefactor with IntraCFG {
                 throw new RefactorException("No rule defined for converting parameter to initializer:" + missed)
         }
 
-        def convertParameterToDeclaration(paramDecl: Opt[ParameterDeclaration]): Option[Opt[DeclarationStatement]] = {
+        def convertParameterToDeclaration(paramDecl: Opt[ParameterDeclaration]): List[Opt[DeclarationStatement]] = {
             if (callParams.isEmpty)
-                if (paramDecl.entry.specifiers.exists({ case x: Opt[VoidSpecifier] => true})) return None
+                if (paramDecl.entry.specifiers.exists({ case x: Opt[VoidSpecifier] => true})) return List()
                 else throw new RefactorException("Failed to correctly map call parameters with function parameters.")
 
             val currentCallParam = callParams.head
@@ -722,10 +722,10 @@ object CInlineFunction extends CRefactor with IntraCFG {
                         throw new RefactorException("Unknown mapping for parameter: " + unknown)
                 }
 
-            val declFeature = morpheus.getASTEnv.featureExpr(currentCallParam).and(paramDeclFeature)
+            val currentCallParamFeature = morpheus.getASTEnv.featureExpr(currentCallParam.entry)
+            val declFeature = currentCallParamFeature.and(paramDeclFeature)
 
-            if (!declFeature.isSatisfiable(morpheus.getFM))
-                None
+            if (!declFeature.isSatisfiable(morpheus.getFM)) List()
             else {
                 // call parameter and function parameter have matched - remove call parameter from working list
                 callParams = callParams.tail
@@ -750,16 +750,39 @@ object CInlineFunction extends CRefactor with IntraCFG {
                             }
                         })
 
-                        Some(Opt(declFeature,
+                        val declStmt = List(Opt(declFeature,
                             DeclarationStatement(
                                 Declaration(specifier, List(Opt(declFeature,
                                     InitDeclaratorI(AtomicNamedDeclarator(declPointers, p.decl.getId, declExt), List(),
                                         Some(Initializer(None, currentCallParam.entry)))))))))
+
+                        val nextCallParamIsAlternative : Boolean =
+                            if (callParams.nonEmpty) {
+                                val nextCallParam = callParams.head
+                                val nextCallParamFeature = morpheus.getASTEnv.featureExpr(nextCallParam.entry)
+
+                                val nextDeclFeature = nextCallParamFeature.and(paramDeclFeature)
+
+                                if (nextDeclFeature.isSatisfiable(morpheus.getFM))
+                                    !nextCallParamFeature.and(currentCallParamFeature).isSatisfiable(morpheus.getFM)
+                                else false
+                            }
+                            else false
+
+                        if (nextCallParamIsAlternative) declStmt ::: convertParameterToDeclaration(paramDecl)
+                        else declStmt
                     case missed =>
                         throw new RefactorException("No rule defined for initializing parameter:" + missed)
                 }
             }
         }
+
+        declStmts.foreach(entry =>
+            {
+                println(entry.feature)
+                println(PrettyPrinter.print(entry.entry))
+            })
+
         declStmts
     }
 
