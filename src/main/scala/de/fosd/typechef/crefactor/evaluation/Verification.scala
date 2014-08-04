@@ -46,7 +46,9 @@ trait Verification extends Evaluation {
         // get features
         val featureCombinations = getFeatureCombinations(confFeatures, affectedFeatures)
 
-        val fw = new java.io.FileWriter(new File(completePath + "/" + evalName + "/" + configFlags))
+        val cfPath = evalFile.substring(0, evalFile.indexOf("/" + evalName + "/")) + "/" + evalName + "/" + configFlags
+        val fw = new java.io.FileWriter(new File(cfPath))
+        logger.info("+++ Writing config flags to: " + cfPath)
         // addDefconfig
         fw.write(" \n")
 
@@ -98,7 +100,10 @@ trait Verification extends Evaluation {
 
     def writeConfigFlags(configuration : SimpleConfiguration, writer : Writer, noFiltering : Boolean = false) : Boolean = {
        val features = configuration.getTrueSet.flatMap(x => {
-           if (noFiltering || filterFeatures.contains(x.feature)) Some(x.feature)
+           if (noFiltering || filterFeatures.contains(x.feature)) {
+               println(x.feature)
+               Some(x.feature)
+           }
            else None
         }).mkString("-D", " -D", "")
 
