@@ -4,7 +4,7 @@ version := "1.0"
 
 organization := "de.fosd.typechef"
 
-scalaVersion := "2.10.2"
+scalaVersion := "2.10.4"
 
 libraryDependencies += "de.fosd.typechef" % "frontend_2.10" % "0.3.6"
 
@@ -13,6 +13,8 @@ libraryDependencies += "de.fosd.typechef" % "sampling_2.10" % "0.3.6"
 libraryDependencies += "org.apache.logging.log4j" % "log4j-api" % "2.0-beta4"
 
 libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % "2.0-beta4"
+
+resolvers += "SonaType" at "http://oss.sonatype.org/content/repositories/snapshots/"
 
 mainClass in Runtime := Some("de.fosd.typechef.crefactor.CRefactorFrontend")
 
