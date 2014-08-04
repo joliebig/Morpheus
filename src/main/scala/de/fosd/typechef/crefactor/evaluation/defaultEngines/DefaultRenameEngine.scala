@@ -66,8 +66,9 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
         var runMorpheus = morpheus
         var affectedFeatures = List[List[FeatureExpr]]()
         var preparedRefactorings = preparedRefs
+        var error = false
 
-        for (run <- 1 to REFACTOR_AMOUNT) {
+        for (run <- 1 to REFACTOR_AMOUNT; if !error) {
             val (refResult, refTUnit, refAffectedFeaturs, refAffectedFiles, refPrepared) =
                 refactorRun(run, runMorpheus, preparedRefactorings)
 
@@ -87,7 +88,8 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
                 writeRunResult(run, runMorpheus, refAffectedFiles)
                 logger.info("Run " + run + " affected features: " + refAffectedFeaturs)
             } else {
-                logger.info("Run " + run + " failed.")
+                logger.error("Run " + run + " failed.")
+                error = true
             }
         }
 
