@@ -60,8 +60,6 @@ trait OpenSSLEvaluation extends Evaluation with ASTNavigation with ConditionalNa
         else {
             try {
                 val morpheus = new Morpheus(tunit, fm, linkInterface, file)
-                // reset test environment
-                runScript("./clean.sh", sourcePath)
                 val result = r.refactor(morpheus, preparedRefactorings)
                 if (result._1) {
                     write(result._2, morpheus.getFile.replace(".pi", ".c"))
