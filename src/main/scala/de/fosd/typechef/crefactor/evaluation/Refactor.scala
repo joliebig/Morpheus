@@ -22,8 +22,8 @@ trait Refactor extends Evaluation {
     def prepareForEvaluation(tunit: TranslationUnit, fm: FeatureModel,
                              file: String, linkInterface: CModuleInterface = null) : PreparedRefactorings = {
         val morpheus = new Morpheus(tunit, fm, linkInterface, file)
-        val renameIDs = renameEngine.getValidIdsForEvaluation(morpheus)
-        val extractStmts = List()
+        val renameIDs = List()
+        val extractStmts = extractEngine.getValidStatementsForEvaluation(morpheus)
         val inlineIDs = List()
         logger.info("+++ Prepared refactorings for file " + morpheus.getFile)
         logger.info("Renaming: " + renameIDs.size)
