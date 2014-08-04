@@ -38,6 +38,8 @@ trait Verification extends Evaluation {
 
     def featureBasedVerification(evalFile: String, fm: FeatureModel, affectedFeatures: List[FeatureExpr] = List()) = {
         val resultDir = new File(evalFile.replaceAll(evalName, "result") + "/")
+        val cfPath = evalFile.substring(0, evalFile.indexOf("/" + evalName + "/")) + "/" + evalName + "/" + configFlags
+
         if (!resultDir.exists)
             resultDir.mkdirs
 
@@ -46,10 +48,9 @@ trait Verification extends Evaluation {
         // get features
         val featureCombinations = getFeatureCombinations(confFeatures, affectedFeatures)
 
-        val cfPath = evalFile.substring(0, evalFile.indexOf("/" + evalName + "/")) + "/" + evalName + "/" + configFlags
         val fw = new java.io.FileWriter(new File(cfPath))
-        logger.info("+++ Writing config flags to: " + cfPath)
-        // addDefconfig
+
+        // add default config
         fw.write(" \n")
 
         val noFiltering =
@@ -100,19 +101,16 @@ trait Verification extends Evaluation {
 
     def writeConfigFlags(configuration : SimpleConfiguration, writer : Writer, noFiltering : Boolean = false) : Boolean = {
        val features = configuration.getTrueSet.flatMap(x => {
-           if (noFiltering || filterFeatures.contains(x.feature)) {
-               println(x.feature)
-               Some(x.feature)
-           }
+           if (noFiltering || filterFeatures.contains(x.feature)) Some(x.feature)
            else None
-        }).mkString("-D", " -D", "")
+       })
 
        if (features.nonEmpty) {
-           writer.write(features)
+           writer.write(features.mkString("-D", " -D", ""))
            writer.write("\n")
        }
 
-       features.nonEmpty
+        features.nonEmpty
     }
 
     def writeKConfig(config: List[SingleFeatureExpr], dir: File, name: String) {
