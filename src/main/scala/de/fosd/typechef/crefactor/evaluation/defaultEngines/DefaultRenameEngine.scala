@@ -243,7 +243,7 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
         found
     }
 
-    private def isNameAndPositionMatch(aId: Id, oId: Id) =
+    private def isNameAndPositionMatch(aId: Id, oId: Id) : Boolean =
         isNameAndPositionMatch(aId.getPositionFrom, aId.name, oId) ||
             isNameAndPositionMatch(aId.getPositionTo, aId.name, oId)
 
