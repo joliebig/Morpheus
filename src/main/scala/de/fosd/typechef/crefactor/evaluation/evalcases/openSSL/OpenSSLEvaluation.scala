@@ -63,6 +63,7 @@ trait OpenSSLEvaluation extends Evaluation with ASTNavigation with ConditionalNa
                 val result = r.refactor(morpheus, preparedRefactorings)
                 if (result._1) {
                     write(result._2, morpheus.getFile.replace(".pi", ".c"))
+                    result._4.foreach(linked => writePrettyPrintedTUnit(linked._2, linked._1))
                     StatsCan.addStat(file, AffectedFeatures, result._3)
                     val affectedFeatureExpr = result._3.foldRight(List[FeatureExpr]()) {(l, c) => l ::: c}.distinct
                     logger.info("Starting verification.")
