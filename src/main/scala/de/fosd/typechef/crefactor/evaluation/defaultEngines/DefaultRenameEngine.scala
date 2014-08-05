@@ -66,8 +66,9 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
         var runMorpheus = morpheus
         var affectedFeatures = List[List[FeatureExpr]]()
         var preparedRefactorings = preparedRefs
+        var error = false
 
-        for (run <- 1 to REFACTOR_AMOUNT) {
+        for (run <- 1 to REFACTOR_AMOUNT; if !error) {
             val (refResult, refTUnit, refAffectedFeaturs, refAffectedFiles, refPrepared) =
                 refactorRun(run, runMorpheus, preparedRefactorings)
 
@@ -87,7 +88,8 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
                 writeRunResult(run, runMorpheus, refAffectedFiles)
                 logger.info("Run " + run + " affected features: " + refAffectedFeaturs)
             } else {
-                logger.info("Run " + run + " failed.")
+                logger.error("Run " + run + " failed.")
+                error = true
             }
         }
 
@@ -186,11 +188,8 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
                 logger.info("Run " + run + ": Ids : " + associatedIds.size)
                 logger.info("Run " + run + ": Renaming time : " + renamingTime)
                 logger.info("Run " + run + ": Refactoring at file " + morpheus.getFile + " successful.")
-                val newRenaming = prepared.renaming.par.filterNot(pId =>
-                        prepared.getCorrespondingId(pId, morpheus) match {
-                            case Some(cId) => associatedIds.exists(aId => aId.entry.eq(cId))
-                            case _ => false
-                        })
+                val newRenaming = prepared.renaming.par.filterNot(pId => associatedIds.exists(
+                    aId => isNameAndPositionMatch(aId.entry, pId)))
                 (true, ast, features, refLinkedFiles, prepared.copy(renaming = newRenaming.toList))
             }
             case Left(s) =>
@@ -238,17 +237,24 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
                     " at: " + aId.getPositionFrom + ", " + aId.getPositionTo)
 
             // as positions in TypeChef are a little bit buggy, we extend the search range.
-            ((position.getLine.equals(aId.getPositionFrom.getLine) ||
-                position.getLine.equals(aId.getPositionTo.getLine) ||
-                position.getLine.equals(aId.getPositionFrom.getLine - 1) ||
-                position.getLine.equals(aId.getPositionTo.getLine - 1) ||
-                position.getLine.equals(aId.getPositionFrom.getLine + 1) ||
-                position.getLine.equals(aId.getPositionTo.getLine + 1))
-                && aId.name.equalsIgnoreCase(name))
+            isNameAndPositionMatch(position, name, aId)
         })
         logger.info("Found the following linkedIds: " + found)
         found
     }
+
+    private def isNameAndPositionMatch(aId: Id, oId: Id) : Boolean =
+        isNameAndPositionMatch(aId.getPositionFrom, aId.name, oId) ||
+            isNameAndPositionMatch(aId.getPositionTo, aId.name, oId)
+
+    private def isNameAndPositionMatch(position: Position, name: String, oId: Id): Boolean =
+        oId.name.equalsIgnoreCase(name) &&
+            (position.getLine.equals(oId.getPositionFrom.getLine) ||
+                position.getLine.equals(oId.getPositionTo.getLine) ||
+                position.getLine.equals(oId.getPositionFrom.getLine - 1) ||
+                position.getLine.equals(oId.getPositionTo.getLine - 1) ||
+                position.getLine.equals(oId.getPositionFrom.getLine + 1) ||
+                position.getLine.equals(oId.getPositionTo.getLine + 1))
 
     // get for each globally linked identifier the file and code position
     // (row and column) and create morpheus refactoring objects of them
