@@ -58,7 +58,7 @@ trait SQLiteEvaluation extends Evaluation with ASTNavigation with ConditionalNav
                 val result = r.refactor(morpheus, preparedRefactorings)
                 if (result._1) {
                     write(result._2, morpheus.getFile)
-                    StatsCan.addStat(file, AffectedFeatures, result._2)
+                    StatsCan.addStat(file, AffectedFeatures, result._3)
                     val affectedFeatureExpr = result._3.foldRight(List[FeatureExpr]()) {(l, c) => l ::: c}.distinct
                     logger.info("Starting verification.")
                     SQLiteVerification.featureBasedVerification(morpheus.getFile, morpheus.getFM, affectedFeatureExpr)
