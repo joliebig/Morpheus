@@ -777,12 +777,6 @@ object CInlineFunction extends CRefactor with IntraCFG {
             }
         }
 
-        declStmts.foreach(entry =>
-            {
-                println(entry.feature)
-                println(PrettyPrinter.print(entry.entry))
-            })
-
         declStmts
     }
 
