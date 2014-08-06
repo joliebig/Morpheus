@@ -2,7 +2,7 @@ package de.fosd.typechef.crefactor.evaluation.evalcases.sqlite
 
 import java.io.{FileWriter, File}
 
-import de.fosd.typechef.parser.c.{ConditionalNavigation, ASTNavigation, TranslationUnit}
+import de.fosd.typechef.parser.c.{Id, ConditionalNavigation, ASTNavigation, TranslationUnit}
 import de.fosd.typechef.crefactor.backend.CModuleInterface
 import de.fosd.typechef.crefactor.evaluation.evalcases.sqlite.refactor.{Inline, Extract, Rename}
 import de.fosd.typechef.crefactor.evaluation.{PreparedRefactorings, StatsCan, Refactoring, Evaluation}
@@ -75,4 +75,6 @@ trait SQLiteEvaluation extends Evaluation with ASTNavigation with ConditionalNav
             }
         }
     }
+
+    override def isValidIdForRename(id : Id, morpheus : Morpheus) : Boolean = !id.name.contains("sqlite3")
 }
