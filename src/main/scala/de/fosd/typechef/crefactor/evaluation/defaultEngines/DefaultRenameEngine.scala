@@ -117,6 +117,7 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
         if (id == null)
             return (false, null, List(), List(), null)
 
+        logger.info("Run " + run + ": Trying to rename: " + id.name)
         StatsCan.addStat(morpheus.getFile, run, RenamedId, id.name)
 
         val refactorChain =
