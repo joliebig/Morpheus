@@ -73,7 +73,7 @@ trait DefaultExtractEngine extends Refactoring with Evaluation {
             return (false, null, List(), List())
         }
 
-        val preparedStmts = preparedRefactorings.extract.head
+        val preparedStmts = Random.shuffle(preparedRefactorings.extract).head
 
         val statements = preparedRefactorings.getCorrespondingStmts(preparedStmts, morpheus) match {
             case Some(stmts) => stmts
