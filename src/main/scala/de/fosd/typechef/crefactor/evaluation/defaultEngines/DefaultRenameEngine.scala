@@ -1,6 +1,8 @@
 package de.fosd.typechef.crefactor.evaluation.defaultEngines
 
 import java.util
+import de.fosd.typechef.crefactor.backend.engine.CInlineFunction._
+
 import scala.collection.mutable
 import scala.util.Random
 
@@ -12,7 +14,7 @@ import de.fosd.typechef.crefactor.evaluation.util.StopClock
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.error.Position
 import de.fosd.typechef.featureexpr.FeatureExpr
-import de.fosd.typechef.parser.c.{Statement, Id, TranslationUnit}
+import de.fosd.typechef.parser.c.{CompoundStatement, Statement, Id, TranslationUnit}
 import de.fosd.typechef.typesystem._
 
 trait DefaultRenameEngine extends Refactoring with Evaluation {
@@ -323,8 +325,12 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
 
         ids.foreach(id => {
             try {
+                val scope = findPriorASTElem[CompoundStatement](id.entry, morpheus.getASTEnv) match {
+                    case Some(x) => x.innerStatements.last.entry
+                    case _ => morpheus.getTranslationUnit.defs.last.entry
+                }
                 // only lookup variables
-                traverseIdTypes(morpheus.getEnv(id.entry).varEnv.lookup(id.entry.name), id.entry)
+                traverseIdTypes(morpheus.getEnv(scope).varEnv.lookup(id.entry.name), id.entry)
             } catch {
                 case _: Throwable => res += "TypeDef" -> (res("TypeDef") + 1)
             }

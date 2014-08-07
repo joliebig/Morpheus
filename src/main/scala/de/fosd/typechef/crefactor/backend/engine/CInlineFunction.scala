@@ -5,6 +5,7 @@ import java.util.Collections
 
 import de.fosd.typechef.conditional._
 import de.fosd.typechef.crefactor._
+import de.fosd.typechef.crefactor.backend.engine.CExtractFunction._
 import de.fosd.typechef.crefactor.backend.{RefactorException, CRefactor}
 import de.fosd.typechef.crewrite.IntraCFG
 import de.fosd.typechef.featureexpr.{FeatureExprFactory, FeatureExpr}
@@ -511,7 +512,11 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
     private def isFDefOrFDecl(id: Id, morpheus: Morpheus): Boolean = {
         try {
-            if (morpheus.getEnv(id).varEnv.lookupType(id.name).forall(_.isFunction))
+            val scope = findPriorASTElem[CompoundStatement](id, morpheus.getASTEnv) match {
+                case Some(x) => x.innerStatements.last.entry
+                case _ => morpheus.getTranslationUnit.defs.last.entry
+            }
+            if (morpheus.getEnv(scope).varEnv.lookupType(id.name).forall(_.isFunction))
                 return true
         } catch {
             case e: Exception =>
