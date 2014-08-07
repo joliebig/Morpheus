@@ -512,11 +512,7 @@ object CInlineFunction extends CRefactor with IntraCFG {
 
     private def isFDefOrFDecl(id: Id, morpheus: Morpheus): Boolean = {
         try {
-            val scope = findPriorASTElem[CompoundStatement](id, morpheus.getASTEnv) match {
-                case Some(x) => x.innerStatements.last.entry
-                case _ => morpheus.getTranslationUnit.defs.last.entry
-            }
-            if (morpheus.getEnv(scope).varEnv.lookupType(id.name).forall(_.isFunction))
+            if (morpheus.getScopeEnv(id).varEnv.lookupType(id.name).forall(_.isFunction))
                 return true
         } catch {
             case e: Exception =>

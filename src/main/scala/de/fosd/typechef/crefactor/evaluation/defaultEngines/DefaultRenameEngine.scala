@@ -325,12 +325,8 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
 
         ids.foreach(id => {
             try {
-                val scope = findPriorASTElem[CompoundStatement](id.entry, morpheus.getASTEnv) match {
-                    case Some(x) => x.innerStatements.last.entry
-                    case _ => morpheus.getTranslationUnit.defs.last.entry
-                }
                 // only lookup variables
-                traverseIdTypes(morpheus.getEnv(scope).varEnv.lookup(id.entry.name), id.entry)
+                traverseIdTypes(morpheus.getScopeEnv(id.entry).varEnv.lookup(id.entry.name), id.entry)
             } catch {
                 case _: Throwable => res += "TypeDef" -> (res("TypeDef") + 1)
             }
