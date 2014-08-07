@@ -236,7 +236,11 @@ object CExtractFunction extends CRefactor with IntraCFG {
     private def hasInvisibleEnumerations(selection: CExtractSelection, morpheus: Morpheus): Boolean = {
         val invisibleEnums = selection.liveIds.exists(liveId => {
             try {
-                val enums = ConditionalLib.leaves(morpheus.getEnv(liveId).varEnv.lookup(liveId.name))
+                val scope = findPriorASTElem[CompoundStatement](liveId, morpheus.getASTEnv) match {
+                    case Some(x) => x.innerStatements.last.entry
+                    case _ => morpheus.getTranslationUnit.defs.last.entry
+                }
+                val enums = ConditionalLib.leaves(morpheus.getEnv(scope).varEnv.lookup(liveId.name))
                 val res = enums.exists {case (_, KEnumVar, 1, _) => true; case _ => false}
 
                 if (res)
