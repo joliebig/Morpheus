@@ -35,10 +35,13 @@ trait DefaultExtractEngine extends Refactoring with Evaluation {
         }
 
         val compStmts = filterAllASTElems[CompoundStatement](morpheus.getTranslationUnit)
+        val randStmts = Random.shuffle(compStmts).dropRight(compStmts.size / 5)
 
         logger.info("Number of compound statements: " + compStmts.size)
+        logger.info("Number of analysing statements: " + randStmts.size)
 
-        val allCombinations = compStmts.flatMap(getAvailableExtractStatements).filterNot(_.isEmpty)
+
+        val allCombinations = randStmts.flatMap(getAvailableExtractStatements).filterNot(_.isEmpty)
 
         logger.info(morpheus.getFile + " Statements found to extract: " + allCombinations.size)
 
