@@ -236,7 +236,11 @@ object CExtractFunction extends CRefactor with IntraCFG {
     private def hasInvisibleEnumerations(selection: CExtractSelection, morpheus: Morpheus): Boolean = {
         val invisibleEnums = selection.liveIds.exists(liveId => {
             try {
-                val enums = ConditionalLib.leaves(morpheus.getEnv(liveId).varEnv.lookup(liveId.name))
+                val scope = findPriorASTElem[CompoundStatement](liveId, morpheus.getASTEnv) match {
+                    case Some(x) => x.innerStatements.last.entry
+                    case _ => morpheus.getTranslationUnit.defs.last.entry
+                }
+                val enums = ConditionalLib.leaves(morpheus.getEnv(scope).varEnv.lookup(liveId.name))
                 val res = enums.exists {case (_, KEnumVar, 1, _) => true; case _ => false}
 
                 if (res)
@@ -500,7 +504,11 @@ object CExtractFunction extends CRefactor with IntraCFG {
         liveParamIds.foreach(liveId =>
             try {
                 // only lookup variables
-                morpheus.getEnv(liveId).varEnv.lookup(liveId.name) match {
+                val scope = findPriorASTElem[CompoundStatement](liveId, morpheus.getASTEnv) match {
+                    case Some(x) => x.innerStatements.last.entry
+                    case _ => morpheus.getTranslationUnit.defs.last.entry
+                }
+                morpheus.getEnv(scope).varEnv.lookup(liveId.name) match {
                     case o@One(_) => addOne(o, liveId)
                     case c@Choice(_, _, _) =>
                         // retrieve if choice is only a fake choice, caused by the parser code duplication
