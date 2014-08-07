@@ -35,7 +35,7 @@ trait DefaultExtractEngine extends Refactoring with Evaluation {
         }
 
         val compStmts = filterAllASTElems[CompoundStatement](morpheus.getTranslationUnit)
-        val randStmts = Random.shuffle(compStmts).dropRight(compStmts.size / 5)
+        val randStmts = Random.shuffle(compStmts).slice(0, compStmts.size/5)
 
         logger.info("Number of compound statements: " + compStmts.size)
         logger.info("Number of analysing statements: " + randStmts.size)
