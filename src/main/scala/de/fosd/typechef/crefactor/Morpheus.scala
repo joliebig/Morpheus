@@ -18,7 +18,7 @@ import de.fosd.typechef.crefactor.backend.CModuleInterface
  * across files), the feature model, and the ast environment.
  */
 class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModuleInterface, file: String)
-    extends Observable with Logging {
+    extends Observable with Logging with ASTNavigation {
 
     def this(tunit: TranslationUnit, fm: FeatureModel) = this(tunit, fm, null, null)
     def this(tunit: TranslationUnit, fm: FeatureModel, file: String) = this(tunit, fm, null, file)
@@ -105,6 +105,12 @@ class Morpheus(tunit: TranslationUnit, fm: FeatureModel, moduleInterface: CModul
     }
 
     def getEnv(ast: AST) = getTypeSystem.lookupEnv(ast)
+
+    def getScopeEnv(id : Id) =
+        getEnv(findPriorASTElem[CompoundStatement](id, getASTEnv) match {
+            case Some(x) => x.innerStatements.last.entry
+            case _ => getTranslationUnit.defs.last.entry
+    })
 
     def getTranslationUnit = tunitCached
 
