@@ -18,7 +18,7 @@ trait SQLiteEvaluation extends Evaluation with ASTNavigation with ConditionalNav
     val filesToEval: String = completePath + "/sqlite_files"
     val evalFiles = getEvaluationFiles
     val blackListFiles: List[String] = List()
-    val blackListIds: List[String] = List()
+    val blackListNames: List[String] = List()
     val sourcePath = completePath + "/" + evalName + "/"
     val testPath = completePath + "/TH3/"
     val result = "/result/"
