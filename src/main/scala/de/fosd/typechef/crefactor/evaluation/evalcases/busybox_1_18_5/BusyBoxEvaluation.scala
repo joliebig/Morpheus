@@ -21,7 +21,7 @@ trait BusyBoxEvaluation extends Evaluation {
     val filesToEval: String = completePath + "/busybox_files"
     val evalFiles = getEvaluationFiles
     val blackListFiles: List[String] = Source.fromFile(completePath + "/busybox_blacklist").getLines().toList
-    val blackListIds: List[String] = List()
+    val blackListNames: List[String] = List()
     val sourcePath = completePath + "/" + evalName + "/"
     val testPath = completePath + "/" + evalName + "/"
     val result = "/result/"
