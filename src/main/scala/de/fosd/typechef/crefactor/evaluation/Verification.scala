@@ -45,8 +45,10 @@ trait Verification extends Evaluation {
 
         val confFeatures = new ConfigFeatures(allFeatures._1)
 
-        // get features
-        val featureCombinations = getFeatureCombinations(confFeatures, affectedFeatures)
+        // get known configurable feature combinations
+        val affectedKnownFeatures =
+            affectedFeatures.filter(_.collectDistinctFeatureObjects.forall(confFeatures.featureIDHashmap.contains))
+        val featureCombinations = getFeatureCombinations(confFeatures, affectedKnownFeatures)
 
         val fw = new java.io.FileWriter(new File(cfPath))
 
@@ -63,7 +65,7 @@ trait Verification extends Evaluation {
             if (writeConfigFlags(config, fw, noFiltering)) writtenConfigs += 1
         })
 
-        StatsCan.addStat(evalFile, Stats.Variants, writtenConfigs)
+        StatsCan.addStat(evalFile, Stats.Variants, writtenConfigs + 1)
 
         fw.flush
         fw.close
