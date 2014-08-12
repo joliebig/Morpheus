@@ -9,7 +9,7 @@ import de.fosd.typechef.crefactor.evaluation.evalcases.openSSL.refactor.{Inline,
 import de.fosd.typechef.crefactor.evaluation.Stats._
 import de.fosd.typechef.crefactor.Morpheus
 import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
-import de.fosd.typechef.parser.c.{TranslationUnit, ConditionalNavigation, ASTNavigation}
+import de.fosd.typechef.parser.c.{Id, TranslationUnit, ConditionalNavigation, ASTNavigation}
 
 trait OpenSSLEvaluation extends Evaluation with ASTNavigation with ConditionalNavigation {
 
@@ -19,7 +19,7 @@ trait OpenSSLEvaluation extends Evaluation with ASTNavigation with ConditionalNa
     val filesToEval: String = completePath + "/openssl_files"
     val evalFiles = getEvaluationFiles
     val blackListFiles: List[String] = List()
-    val blackListIds: List[String] = List()
+    val blackListNames: List[String] = Source.fromFile(completePath + "/openssl_blacklistnames").getLines().toList
     //Source.fromFile(getClass.getResource("/openssl_id_blacklist").getFile).getLines().toList
     //Source.fromFile(getClass.getResource("/openssl_blacklist").getFile).getLines().toList
     val sourcePath = completePath + "/" + evalName + "/"
@@ -81,4 +81,6 @@ trait OpenSSLEvaluation extends Evaluation with ASTNavigation with ConditionalNa
             }
         }
     }
+
+    override def isValidIdForRename(id : Id, morpheus : Morpheus) : Boolean = !blackListNames.contains(id.name)
 }
