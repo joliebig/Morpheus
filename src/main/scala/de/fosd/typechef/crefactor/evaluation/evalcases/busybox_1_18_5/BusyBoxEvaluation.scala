@@ -21,7 +21,7 @@ trait BusyBoxEvaluation extends Evaluation {
     val filesToEval: String = completePath + "/busybox_files"
     val evalFiles = getEvaluationFiles
     val blackListFiles: List[String] = Source.fromFile(completePath + "/busybox_blacklist").getLines().toList
-    val blackListNames: List[String] = List()
+    val blackListNames: List[String] = Source.fromFile(completePath + "/busybox_blacklist_names").getLines().toList
     val sourcePath = completePath + "/" + evalName + "/"
     val testPath = completePath + "/" + evalName + "/"
     val result = "/result/"
@@ -89,7 +89,8 @@ trait BusyBoxEvaluation extends Evaluation {
         }
     }
 
-    override def isValidIdForRename(id : Id, morpheus : Morpheus) : Boolean = !id.name.contains("_main")
+    override def isValidIdForRename(id : Id, morpheus : Morpheus) : Boolean =
+        !(id.name.contains("_main") || blackListNames.contains(id.name))
 
 }
 
