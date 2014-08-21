@@ -67,8 +67,12 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
         var succ = false
         var runMorpheus = morpheus
         var affectedFeatures = List[List[FeatureExpr]]()
-        var preparedRefactorings = preparedRefs
         var error = false
+
+        // clean prepared refactorings from case study specific blacklisted identifiers
+        var preparedRefactorings =
+            preparedRefs.copy(renaming = preparedRefs.renaming.par.
+                filter(id => !blackListNames.exists(_.equalsIgnoreCase(id.name))).toList)
 
         for (run <- 1 to REFACTOR_AMOUNT; if !error) {
             val (refResult, refTUnit, refAffectedFeaturs, refAffectedFiles, refPrepared) =
