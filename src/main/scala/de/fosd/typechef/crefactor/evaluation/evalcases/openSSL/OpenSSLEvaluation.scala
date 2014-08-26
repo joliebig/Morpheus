@@ -35,7 +35,7 @@ trait OpenSSLEvaluation extends Evaluation with ASTNavigation with ConditionalNa
 
     val runTimeout = 300000
 
-    val FORCE_VARIABILITY = true
+    val FORCE_VARIABILITY = false
     val FORCE_LINKING = false
 
     val openSSLNoFeaturePrefix = "OPENSSL_NO"
