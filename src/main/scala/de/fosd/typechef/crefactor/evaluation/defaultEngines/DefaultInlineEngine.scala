@@ -43,7 +43,7 @@ trait DefaultInlineEngine extends Refactoring with Evaluation {
 
         if (FORCE_VARIABILITY && variableFuncCalls.nonEmpty) Random.shuffle(variableFuncCalls)
         else if (FORCE_VARIABILITY) List()
-        else Random.shuffle(availableFuncCalls)
+        else Random.shuffle(variableFuncCalls) ::: Random.shuffle(availableFuncCalls.filterNot(aId => variableFuncCalls.par.exists(_.eq(aId))))
     }
 
     def refactor(morpheus: Morpheus, preparedRefactorings: PreparedRefactorings):
