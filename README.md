@@ -28,4 +28,4 @@ The commands create a run-script (morpheus.sh) for the project. Morpheus comes w
 License
 -------
 
-Morpheus is published as open source under LGPL 3.0. See [LICENSE](TypeChef/blob/master/LICENSE).
+Morpheus is published as open source under LGPL 3.0. See [LICENSE](LICENSE.md).
