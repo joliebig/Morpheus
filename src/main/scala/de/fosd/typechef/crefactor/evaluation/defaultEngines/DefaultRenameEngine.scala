@@ -72,7 +72,7 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
         // clean prepared refactorings from case study specific blacklisted identifiers
         var preparedRefactorings =
             preparedRefs.copy(renaming = preparedRefs.renaming.par.
-                filter(id => !blackListNames.exists(_.equalsIgnoreCase(id.name))).toList)
+                filter(id => !blackListNames.exists(_.trim.equalsIgnoreCase(id.name))).toList)
 
         for (run <- 1 to REFACTOR_AMOUNT; if !error) {
             val (refResult, refTUnit, refAffectedFeaturs, refAffectedFiles, refPrepared) =
