@@ -23,7 +23,7 @@ To install the last version of Morpheus simply run:
     cd Morpheus
     ./mkrun.sh
 
-The commands create a run-script (morpheus.sh) for the project. Morpheus comes with a simplified GUI (parameter: --showGUI) and a command line interface for evaluation of the refactorings. The simplified GUI is intended for testing and presentation only. To apply Morpheus in a real setting, a proper project setup has to be passed to the engine. Since the project setup of existing software systems is difficult to integrate with Morpheus, we currently support only three systems. The systems, including the proper setup to run with Morpheus, are available on github, too: [Busybox](https://github.com/aJanker/Morpheus-BusyBoxEvaluation), [OpenSSL](https://github.com/aJanker/Morpheus-OpenSSLEvaluation), and [SQLite](https://github.com/aJanker/Morpheus-SQLiteEvaluation).
+The commands create a run-script (morpheus.sh) for the project. Morpheus comes with a simplified GUI (parameter: --showGui) and a command line interface for evaluation of the refactorings. The simplified GUI is intended for testing and presentation only. To apply Morpheus in a real setting, a proper project setup has to be passed to the engine. Since the project setup of existing software systems is difficult to integrate with Morpheus, we currently support only three systems. The systems, including the proper setup to run with Morpheus, are available on github, too: [Busybox](https://github.com/aJanker/Morpheus-BusyBoxEvaluation), [OpenSSL](https://github.com/aJanker/Morpheus-OpenSSLEvaluation), and [SQLite](https://github.com/aJanker/Morpheus-SQLiteEvaluation).
 
 License
 -------
