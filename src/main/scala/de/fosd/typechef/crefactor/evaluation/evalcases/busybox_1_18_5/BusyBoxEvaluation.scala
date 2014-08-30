@@ -16,25 +16,25 @@ import de.fosd.typechef.parser.c.{Id, TranslationUnit}
 trait BusyBoxEvaluation extends Evaluation {
 
     val evalName = "busybox-1.18.5"
-    val caseStudyPath = "../cRefactor-BusyBoxEvaluation/"
+    val caseStudyPath = "../Morpheus-BusyBoxEvaluation/"
     val completePath = new File(caseStudyPath).getCanonicalPath
-    val filesToEval: String = completePath + "/busybox_files"
+    val filesToEval: String = completePath + "/casestudy/busybox_files"
     val evalFiles = getEvaluationFiles
-    val blackListFiles: List[String] = Source.fromFile(completePath + "/busybox_blacklist").getLines().toList
-    val blackListNames: List[String] = Source.fromFile(completePath + "/busybox_blacklist_names").getLines().toList
+    val blackListFiles: List[String] = Source.fromFile(completePath + "/casestudy/busybox_blacklist").getLines().toList
+    val blackListNames: List[String] = Source.fromFile(completePath + "/casestudy/busybox_blacklist_names").getLines().toList
     val sourcePath = completePath + "/" + evalName + "/"
     val testPath = completePath + "/" + evalName + "/"
     val result = "/result/"
 
     val filterFeatures = List("def(CONFIG_SELINUX)", "CONFIG_SELINUX", "def(CONFIG_TCPSVD)", "CONFIG_TCPSVD", "def(CONFIG_UDPSVD)", "CONFIG_UDPSVD", "def(CONFIG_MKFS_EXT2)", "CONFIG_MKFS_EXT2")
-    val allFeaturesFile = completePath + "/busyboxAllFeatures.config"
+    val allFeaturesFile = completePath + "/casestudy/busyboxAllFeatures.config"
     val allFeatures = getAllFeaturesFromConfigFile(null, new File(allFeaturesFile))
-    val pairWiseFeaturesFile = completePath + "/busybox_pairwise.configs"
-    val existingConfigsDir: String = completePath + "/existing_configs/"
+    val pairWiseFeaturesFile = completePath + "/casestudy/busybox_pairwise.configs"
+    val existingConfigsDir: String = completePath + "/casestudy/existing_configs/"
 
-    val featureModel: String = completePath + "/featureModel"
-    val featureModel_DIMACS: String = completePath + "/BB_fm.dimacs"
-    val featuresFile: String = completePath + "/features"
+    val featureModel: String = completePath + "/casestudy/featureModel"
+    val featureModel_DIMACS: String = completePath + "/casestudy/BB_fm.dimacs"
+    val featuresFile: String = completePath + "/casestudy/features"
 
     val runTimeout = 300000
 

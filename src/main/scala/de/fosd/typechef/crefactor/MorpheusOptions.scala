@@ -51,7 +51,7 @@ class MorpheusOptions extends FrontendOptionsWithConfigFiles {
                 new Options.Option("prettyPrint", LongOpt.NO_ARGUMENT, F_PRETTYPRINT, null,
                     "Pretty prints the parsed ast as .pp file."),
                 new Options.Option("showGui", LongOpt.NO_ARGUMENT, F_SHOWGUI, null,
-                    "Shows the cRefactor GUI")
+                    "Shows the Morpheus GUI")
             ))
 
         groups

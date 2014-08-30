@@ -14,24 +14,24 @@ import de.fosd.typechef.parser.c.{Id, TranslationUnit, ConditionalNavigation, AS
 trait OpenSSLEvaluation extends Evaluation with ASTNavigation with ConditionalNavigation {
 
     val evalName = "openssl"
-    val caseStudyPath = "../cRefactor-OpenSSLEvaluation/"
+    val caseStudyPath = "../Morpheus-OpenSSLEvaluation/"
     val completePath = new File(caseStudyPath).getCanonicalPath
-    val filesToEval: String = completePath + "/openssl_files"
+    val filesToEval: String = completePath + "/casestudy/openssl_files"
     val evalFiles = getEvaluationFiles
-    val blackListFiles: List[String] = Source.fromFile(completePath + "/openssl_blacklist").getLines().toList
-    val blackListNames: List[String] = Source.fromFile(completePath + "/openssl_blacklistnames").getLines().toList
+    val blackListFiles: List[String] = Source.fromFile(completePath + "/casestudy/openssl_blacklist").getLines().toList
+    val blackListNames: List[String] = Source.fromFile(completePath + "/casestudy/openssl_blacklistnames").getLines().toList
     val sourcePath = completePath + "/" + evalName + "/"
     val testPath = completePath + "/" + evalName + "/"
     val result = "/result/"
 
-    val filterFeatures = Source.fromFile(new File(completePath + "/buildAbleNoFeatures")).getLines().toList
-    val allFeaturesFile = completePath + "/allFeatures"
+    val filterFeatures = Source.fromFile(new File(completePath + "/casestudy/buildAbleNoFeatures")).getLines().toList
+    val allFeaturesFile = completePath + "/casestudy/allFeatures"
     val allFeatures = getAllFeaturesFromUniqueFeatureFile
-    val pairWiseFeaturesFile = sourcePath + "/openssl_pairwise_configs.csv"
-    val existingConfigsDir: String = completePath + "/existing_configs/"
+    val pairWiseFeaturesFile = sourcePath + "/casestudy/openssl_pairwise_configs.csv"
+    val existingConfigsDir: String = completePath + "/casestudy/existing_configs/"
 
-    val featureModel: String = sourcePath + "/featuremodel"
-    val featureModel_DIMACS: String = sourcePath + "/OpenSSL.dimacs"
+    val featureModel: String = sourcePath + "/casestudy/featuremodel"
+    val featureModel_DIMACS: String = sourcePath + "/casestudy/OpenSSL.dimacs"
 
     val runTimeout = 300000
 

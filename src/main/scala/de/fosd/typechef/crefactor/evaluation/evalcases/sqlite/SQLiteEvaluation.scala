@@ -13,9 +13,9 @@ import de.fosd.typechef.featureexpr.{FeatureExpr, FeatureModel}
 trait SQLiteEvaluation extends Evaluation with ASTNavigation with ConditionalNavigation {
 
     val evalName = "sqlite"
-    val caseStudyPath = "../cRefactor-SQLiteTH3Evaluation/"
+    val caseStudyPath = "../Morpheus-SQLiteTH3Evaluation/"
     val completePath = new File(caseStudyPath).getCanonicalPath
-    val filesToEval: String = completePath + "/sqlite_files"
+    val filesToEval: String = completePath + "/casestudy/sqlite_files"
     val evalFiles = getEvaluationFiles
     val blackListFiles: List[String] = List()
     val blackListNames: List[String] = List()
@@ -24,13 +24,13 @@ trait SQLiteEvaluation extends Evaluation with ASTNavigation with ConditionalNav
     val result = "/result/"
 
     val filterFeatures = List()
-    val allFeaturesFile = completePath + "/allFeatures"
+    val allFeaturesFile = completePath + "casestudy/allFeatures"
     val allFeatures = getAllFeaturesFromUniqueFeatureFile
     val pairWiseFeaturesFile = null
-    val existingConfigsDir: String = completePath + "/existing_configs/"
+    val existingConfigsDir: String = completePath + "casestudy/existing_configs/"
 
-    val featureModel: String = completePath + "/fm.txt"
-    val featureModel_DIMACS: String = completePath + "/sqlite.dimacs"
+    val featureModel: String = completePath + "casestudy/fm.txt"
+    val featureModel_DIMACS: String = completePath + "casestudy/sqlite.dimacs"
 
     val runTimeout = 4800000
 

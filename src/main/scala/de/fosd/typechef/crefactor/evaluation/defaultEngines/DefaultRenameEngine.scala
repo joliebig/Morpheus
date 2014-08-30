@@ -158,7 +158,6 @@ trait DefaultRenameEngine extends Refactoring with Evaluation {
                                     logger.info(fNameNoPrefix + "is cached.")
                                     (m, fPos)
                                 case _ =>
-                                    // TODO Check with duplicate short option exception
                                     logger.info("Loading: " + fNameNoPrefix.replace(".c", ".tunit"))
                                     val tu= CRefactorFrontend.loadSerializedTUnit(fNameNoPrefix.replace(".c", ".tunit"))
                                     (new Morpheus(tu, morpheus.getFM, fNameNoPrefix), fPos)
