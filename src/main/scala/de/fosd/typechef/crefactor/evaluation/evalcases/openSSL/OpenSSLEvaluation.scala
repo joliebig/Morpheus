@@ -27,11 +27,11 @@ trait OpenSSLEvaluation extends Evaluation with ASTNavigation with ConditionalNa
     val filterFeatures = Source.fromFile(new File(completePath + "/casestudy/buildAbleNoFeatures")).getLines().toList
     val allFeaturesFile = completePath + "/casestudy/allFeatures"
     val allFeatures = getAllFeaturesFromUniqueFeatureFile
-    val pairWiseFeaturesFile = sourcePath + "/casestudy/openssl_pairwise_configs.csv"
+    val pairWiseFeaturesFile = completePath + "/casestudy/openssl_pairwise_configs.csv"
     val existingConfigsDir: String = completePath + "/casestudy/existing_configs/"
 
-    val featureModel: String = sourcePath + "/casestudy/featuremodel"
-    val featureModel_DIMACS: String = sourcePath + "/casestudy/OpenSSL.dimacs"
+    val featureModel: String = completePath + "/openssl/featuremodel"
+    val featureModel_DIMACS: String = completePath + "/openssl/OpenSSL.dimacs"
 
     val runTimeout = 300000
 
